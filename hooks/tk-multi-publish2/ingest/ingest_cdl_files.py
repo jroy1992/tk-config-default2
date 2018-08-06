@@ -158,7 +158,7 @@ class IngestCDLFilesPlugin(HookBaseClass):
         """
         This method will check for ccc or cc files only
 
-        ccc file:
+        ccc / cdl file:
             Validation: Checks weather file has multiple "ColorCorrection" IDs exists or not. If exists then
                         function will return False else returns data required to write cc file
         cc file:
@@ -172,6 +172,7 @@ class IngestCDLFilesPlugin(HookBaseClass):
         cc_dict = {}
         file_path = item.properties["path"]
         xmldoc = minidom.parse(file_path)
+        default_tags = ['Slope', 'Offset', 'Power', 'Saturation']
 
         if file_path.endswith('.ccc'):
             tag = xmldoc.getElementsByTagName("ColorCorrectionCollection")[0]
@@ -181,11 +182,27 @@ class IngestCDLFilesPlugin(HookBaseClass):
             if len(cc_tags) > 1:
                 return "CCC file is invalid, because it contains multiple CC IDs..."
             cc_dict['description'] = str(tag.getElementsByTagName('ColorCorrection')[0].getAttribute('id'))
-            
+
+        elif file_path.endswith('.cdl'):
+            tag = xmldoc.getElementsByTagName("ColorDecisionList")[0]
+            cd_tag = tag.getElementsByTagName('ColorDecision')[0]
+            cc_tags = cd_tag.getElementsByTagName('ColorCorrection')
+            if len(cc_tags) > 1:
+                return "CDL file is invalid, because it contains multiple CC IDs..."
+
+            # check id attribute for "ColorCorrection" tag if not exists then use file name as id value
+            cc_tag = cc_tags[0]
+            if cc_tag.attributes.has_key('id'):
+                cc_dict['description'] = str(tag.getElementsByTagName('ColorCorrection')[0].getAttribute('id'))
+            else:
+                cc_dict['description'] = os.path.basename(file_path).split('.')[0]
+
+            default_tags.append('GUIPrinterPointOffset')
+
         else:
             line = ''
             tag = xmldoc.getElementsByTagName("ColorCorrection")[0]
-            for e_tag in ['Slope', 'Offset', 'Power', 'Saturation']:
+            for e_tag in default_tags:
                 tag_value = tag.getElementsByTagName(e_tag)[0].childNodes[0].data
                 if not tag_value:
                     line = line + '%s missing value' % e_tag + "\n"
@@ -193,14 +210,14 @@ class IngestCDLFilesPlugin(HookBaseClass):
                 return line
             cc_dict['description'] = str(tag.getAttribute('id'))
 
-        # if ccc file has only one 'ColorCorrection' tag then return data
-        for e_tag in ['Slope', 'Offset', 'Power', 'Saturation']:
+        # get values for common tags
+        for e_tag in default_tags:
             cc_dict[e_tag.lower()] = str(tag.getElementsByTagName(e_tag)[0].childNodes[0].data)
 
         return cc_dict
 
     @staticmethod
-    def write_cc(cc_path, description, slope, offset, power, saturation):
+    def write_cc(cc_path, description, slope, offset, power, saturation, guiprinterpointoffset=None):
         """
         Export the CC file to cc_path.
 
@@ -210,6 +227,7 @@ class IngestCDLFilesPlugin(HookBaseClass):
         :param offset:
         :param power:
         :param saturation:
+        :param guiprinterpointoffset:
         :return:
         """
 
@@ -236,6 +254,12 @@ class IngestCDLFilesPlugin(HookBaseClass):
         SOPNode_tag.appendChild(Slope_tag)
         info_tag = doc.createTextNode(power)
         Slope_tag.appendChild(info_tag)
+
+        if guiprinterpointoffset:
+            Slope_tag = doc.createElement("GUIPrinterPointOffset")
+            SOPNode_tag.appendChild(Slope_tag)
+            info_tag = doc.createTextNode(guiprinterpointoffset)
+            Slope_tag.appendChild(info_tag)
 
         SatNode_tag = doc.createElement("SatNode")
         root.appendChild(SatNode_tag)

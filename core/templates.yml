@@ -107,6 +107,7 @@ keys:
         choices:
             cc: cc
             ccc: ccc
+            cdl: cdl
         default: cc
         alias: extension
 
