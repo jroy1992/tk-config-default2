@@ -8,6 +8,13 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+includes:
+  - includes/common_keys.yml
+  - includes/common_strings.yml
+  - includes/common_aliases.yml
+  - '{preferences}/sgtk_config_templates.yaml'
+
+
 keys:
     # Defined by tk-hiero-export
     nukestudio.project:
@@ -28,7 +35,13 @@ keys:
         edit_types:
           - upper_case
 
+
 paths:
+
+    # TOP-LEVEL PUBLISH AREAS
+    project_publish_area:                       './SHARED'
+    sequence_publish_area:                      './{Sequence}/SHARED'
+    shot_publish_area:                          './{Sequence}/{Shot}/SHARED'
 
     # WORK AREAS
     tk-nukestudio_project_work_area:            './{department}/user/@user_work'
@@ -59,6 +72,15 @@ paths:
     tk-nukestudio_project_publish_quick:        '@project_publish_area_movie/quick/@tk-nukestudio_quick_version_name.mov'
     tk-nukestudio_sequence_publish_quick:       '@sequence_publish_area_movie/quick/@tk-nukestudio_quick_version_name.mov'
     tk-nukestudio_shot_publish_quick:           '@shot_publish_area_movie/quick/@tk-nukestudio_quick_version_name.mov'
+
+    # PUBLISH AREAS
+    project_publish_area_script:                '@project_publish_area/SCRIPT/{Step}'
+    sequence_publish_area_script:               '@sequence_publish_area/SCRIPT/{Step}'
+    shot_publish_area_script:                   '@shot_publish_area/SCRIPT/{Step}'
+
+    project_publish_area_movie:                 '@project_publish_area/MOV/{Step}'
+    sequence_publish_area_movie:                '@sequence_publish_area/MOV/{Step}'
+    shot_publish_area_movie:                    '@shot_publish_area/MOV/{Step}'
 
     # PUBLISH AREAS
     tk-nukestudio_publish_area:                 './{nukestudio.sequence}[/{nukestudio.shot}]/SHARED'
