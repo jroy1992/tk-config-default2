@@ -1,0 +1,45 @@
+# Copyright (c) 2017 Shotgun Software Inc.
+#
+# CONFIDENTIAL AND PROPRIETARY
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
+# Source Code License included in this distribution package. See LICENSE.
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
+# not expressly granted therein are reserved by Shotgun Software Inc.
+
+#
+# The strings section is similar to the paths section - but rather than defining paths
+# on disk, it contains a list of strings. Strings are typically used when you want to be
+# able to configure the way data is written to shotgun - it may be the name field for a
+# review version or the formatting of a publish.
+#
+strings:
+
+    # COMMON
+    user_work:                              'work.{User}'
+    image_subdirs:                          '{name}/v{version}/{width}x{height}'
+    proxy_subdirs:                          '{name}/v{version}/PROXY'
+    2k_subdirs:                             '{name}/v{version}/2K'
+    geom_subdirs:                           '{name}/v{version}[/{node}]'
+    texture_subdirs:                        '{name}/v{version}[/{node}]/{channel}[/{layer}]'
+
+    # SCENE PUBLISH NAMES
+    project_publish_name:                   '{Step}_{name}[-{node}]'
+    sequence_publish_name:                  '{Sequence}_{Step}_{name}[-{node}]'
+    shot_publish_name:                      '{Sequence}_{Shot}_{Step}_{name}[-{node}]'
+
+    # ASSET PUBLISH NAMES
+    project_asset_publish_name:             '{Step}_{AssetType}-{Asset}-{name}[-{node}]'
+    sequence_asset_publish_name:            '{Sequence}_{Step}_{AssetType}-{Asset}-{name}[-{node}]'
+    shot_asset_publish_name:                '{Sequence}_{Shot}_{Step}_{AssetType}-{Asset}-{name}[-{node}]'
+
+    # SCENE VERSION NAMES
+    project_version_name:                   '@project_publish_name.v{version}'
+    sequence_version_name:                  '@sequence_publish_name.v{version}'
+    shot_version_name:                      '@shot_publish_name.v{version}'
+
+    # ASSET VERSION NAMES
+    project_asset_version_name:             '@project_asset_publish_name.v{version}'
+    sequence_asset_version_name:            '@sequence_asset_publish_name.v{version}'
+    shot_asset_version_name:                '@shot_asset_publish_name.v{version}'

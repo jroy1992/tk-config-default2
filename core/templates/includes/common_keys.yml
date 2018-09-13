@@ -1,0 +1,151 @@
+# Copyright (c) 2017 Shotgun Software Inc.
+#
+# CONFIDENTIAL AND PROPRIETARY
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
+# Source Code License included in this distribution package. See LICENSE.
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
+# not expressly granted therein are reserved by Shotgun Software Inc.
+
+#
+# The keys section contains the definitions for all the different keys that are being
+# used by Sgtk. A key is a magic token that is replaced by a value at runtime, for example
+# {Shot}. The section below tells Sgtk which data types and formats to expect for each key.
+#
+keys:
+    # Shotgun Entity keys (CamelCase)
+    Sequence:
+        type: str
+        shotgun_entity_type: Sequence
+        shotgun_field_name: code
+        filter_by: alphanumeric
+    Shot:
+        type: str
+        shotgun_entity_type: Shot
+        shotgun_field_name: code
+        filter_by: alphanumeric
+    Asset:
+        type: str
+        shotgun_entity_type: Asset
+        shotgun_field_name: code
+        str_from_value_hook: 'name_converter'
+        edit_types:
+          - path_safe
+    AssetType:
+        type: str
+        shotgun_entity_type: Asset
+        shotgun_field_name: sg_asset_type
+        str_from_value_hook: 'name_converter'
+        edit_types:
+          - path_safe
+    Step:
+        type: str
+        shotgun_entity_type: Step
+        shotgun_field_name: short_name
+        filter_by: alphanumeric
+    Task:
+        type: str
+        shotgun_entity_type: Task
+        shotgun_field_name: content
+        str_from_value_hook: 'name_converter'
+        edit_types:
+          - path_safe
+    User:
+        type: str
+        shotgun_entity_type: HumanUser
+        shotgun_field_name: login
+
+    # Application-provided keys (snake_case)
+    name:
+        type: str
+        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
+        str_from_value_hook: 'name_converter'
+        edit_types:
+          - path_safe
+    version:
+        type: int
+        format_spec: '03'
+    timestamp:
+        type: str
+    width:
+        type: int
+    height:
+        type: int
+    node:
+        type: str
+        alias: output
+        str_from_value_hook: 'name_converter'
+        edit_types:
+          - path_safe
+    channel:
+        type: str
+    layer:
+        type: str
+    aov_name:
+        type: str
+    SEQ:
+        type: sequence
+        format_spec: '04'
+    UDIM:
+        type: sequence
+        format_spec: '04'
+        default: '<UDIM>'
+    eye:
+        type: str
+    img.ext:
+        type: str
+        choices:
+            exr: exr
+            jpg: jpeg
+            tif: tiff
+            png: png
+            dpx: dpx
+        default: exr
+        alias: extension
+    geo.ext:
+        type: str
+        choices:
+            bgeo: bgeo
+            obj: obj
+            fbx: fbx
+        default: fbx
+        alias: extension
+    tex.ext:
+        type: str
+        choices:
+            tif: tiff
+            tx: tx
+            tga: tga
+            dds: dds
+            rat: rat
+        default: tif
+        alias: extension
+    cdl.ext:
+        type: str
+        choices:
+            cc: cc
+            ccc: ccc
+        default: cc
+        alias: extension
+    maya.ext:
+        type: str
+        choices:
+            ma: Maya Ascii (.ma)
+            mb: Maya Binary (.mb)
+        default: ma
+        alias: extension
+    houdini.ext:
+        type: str
+        choices:
+            hip: hip
+            hipnc: hipnc
+        default: hip
+        alias: extension
+
+    # Hook-modified keys (camelCase)
+    customKeyExample:
+        type: str
+        validate_hook: 'templatekey_custom'
+        value_from_str_hook: 'templatekey_custom'
+        str_from_value_hook: 'templatekey_custom'
