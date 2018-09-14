@@ -12,11 +12,6 @@ includes:
   - common.yml
 
 
-keys:
-    iteration:
-        type: int
-
-
 paths:
 
     # WORK AREAS

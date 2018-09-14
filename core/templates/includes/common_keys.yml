@@ -68,6 +68,8 @@ keys:
         format_spec: '03'
     timestamp:
         type: str
+    iteration:
+        type: int
     width:
         type: int
     height:

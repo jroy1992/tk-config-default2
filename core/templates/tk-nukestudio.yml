@@ -93,6 +93,10 @@ paths:
     tk-nukestudio_publish_render:               '@tk-nukestudio_publish_area_render/@image_subdirs/@tk-nukestudio_version_name.{SEQ}.{img.ext}'
     tk-nukestudio_publish_plate:                '@tk-nukestudio_publish_area_plate/@tk-nukestudio_version_name.mov'
 
+    # PUBLISH PROJECTS
+    project_publish_nukestudio_project:         '@project_publish_area_script/@project_version_name.hrox'
+    sequence_publish_nukestudio_project:        '@sequence_publish_area_script/@sequence_version_name.hrox'
+    shot_publish_nukestudio_project:            '@shot_publish_area_script/@shot_version_name.hrox'
 
 aliases:
 
