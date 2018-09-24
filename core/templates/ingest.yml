@@ -44,6 +44,10 @@ keys:
         type: timestamp
         format_spec: '%Y%m%d'
 
+    ingestNoteTimeStamp:
+        type: timestamp
+        format_spec: '%H_%M_%S'
+
     ingestAssetType:
       type: str
       shotgun_entity_type: Asset
@@ -78,6 +82,10 @@ keys:
 
     vendorStep:
         type: str
+
+    notes_folder:
+        type: str
+        filter_by: '(^note_\w+)'
 
     # subcontext should not contain and non-character strings
     subcontext:
@@ -129,6 +137,11 @@ paths:
     ingest_sequence_asset_scene:            '@ingest_sequence_asset_area_scene/@ingest_sequence_asset_input_name.{maya_extension}'
     ingest_project_asset_scene:             '@ingest_project_asset_area_scene/@ingest_project_asset_input_name.{maya_extension}'
 
+#    # Annotations
+#    ingest_shot_annotation:                 '@ingest_folder/attachments/{notes_folder}/@ingest_shot_annotation_name.{SEQ}.{ingestImgExtension}'
+#    ingest_shot_kick_off:                   '@ingest_folder/attachments/{notes_folder}/@ingest_shot_kick_off_name.{SEQ}.{ingestImgExtension}'
+#    ingest_shot_dpt_kick_off:               '@ingest_folder/attachments/{notes_folder}/@ingest_shot_dpt_kick_off_name.{SEQ}.{ingestImgExtension}'
+
     # templates for output files
 
     # SCENES
@@ -175,6 +188,14 @@ strings:
     ingest_shot_input_name:                 '{ingestShot}_{name}_v{ingestVersion}'
     ingest_sequence_input_name:             '{ingestSequence}_{name}_v{ingestVersion}'
     ingest_project_input_name:              '{ingestStep}_{name}_v{ingestVersion}'
+
+    # strings for annotation names
+    ingest_shot_annotation_name:            '{ingestShot}_{ingestStep}_{name}_v{ingestVersion}.annotation'
+    ingest_shot_kickoff_name:               '{ingestShot}_{name}_v{ingestVersion}.kickoff'
+
+    # output for re-constructing back our pipeline name.
+    ingest_shot_output_annotation_name:     '{Sequence}_{Shot}_{Step}_{Step}_{name}[-{output}].v{version}'
+    ingest_shot_output_kickoff_name:        '{Sequence}_{Shot}_{Step}_{snapshot_type}_{name}[-{output}].v{version}'
 
     # strings for input asset names
     ingest_shot_asset_input_name:           '{ingestShot}_{Asset}_{name}_v{ingestVersion}'
