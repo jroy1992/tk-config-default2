@@ -38,6 +38,8 @@ settings.tk-multi-publish2.nuke.upload_version:           '@settings.tk-multi-pu
 settings.tk-multi-publish2.ingest.collector:              '@settings.tk-multi-publish2.basic.collector:{config}/tk-multi-publish2/ingest/collector.py'
 settings.tk-multi-publish2.ingest.publish_files:          '@settings.tk-multi-publish2.basic.publish_files:{config}/tk-multi-publish2/ingest/ingest_files.py'
 settings.tk-multi-publish2.ingest.color_process_files:    '@settings.tk-multi-publish2.ingest.publish_files:{config}/tk-multi-publish2/ingest/color_process_files.py'
+# we want to use publish_identifiers with this to map templates for mapping it back to our pipeline/entities.
+settings.tk-multi-publish2.ingest.upload_notes:           '@settings.tk-multi-publish2.ingest.publish_files:{config}/tk-multi-publish2/ingest/upload_notes.py'
 settings.tk-multi-publish2.ingest.publish_cdl_files:      '@settings.tk-multi-publish2.ingest.publish_files:{config}/tk-multi-publish2/ingest/ingest_cdl_files.py'
 settings.tk-multi-publish2.ingest.create_version:         '@settings.tk-multi-publish2.basic.create_version'
 settings.tk-multi-publish2.ingest.upload_version:         '@settings.tk-multi-publish2.basic.upload_version'
