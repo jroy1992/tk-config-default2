@@ -313,7 +313,11 @@ class UploadNotesPlugin(HookBaseClass):
                                                           "subject": item.properties.fields["snapshot_name"],
                                                           "project": item.context.project,
                                                           "note_links": note_links,
-                                                          "tasks": note_tasks})
+                                                          "tasks": note_tasks,
+                                                          "sg_note_type": "Client" if "sg_note_type" not in
+                                                                                      item.properties.fields else
+                                                          item.properties.fields["sg_note_type"]
+                                                          })
 
         self._upload_attachments(task_settings, item)
 
