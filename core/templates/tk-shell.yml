@@ -11,7 +11,6 @@
 includes:
   - common.yml
 
-
 keys:
     workarea_dir:
         type: str
@@ -95,8 +94,3 @@ paths:
     tk-shell_project_asset_work_movie:      '@tk-shell_project_asset_work_area/movies/@project_asset_version_name.mov'
     tk-shell_sequence_asset_work_movie:     '@tk-shell_sequence_asset_work_area/movies/@sequence_asset_version_name.mov'
     tk-shell_shot_asset_work_movie:         '@tk-shell_shot_asset_work_area/movies/@shot_asset_version_name.mov'
-
-
-includes:
-  - includes/ingest.yml
-  - includes/3dequalizer.yml

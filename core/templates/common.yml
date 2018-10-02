@@ -25,4 +25,6 @@ includes:
   - includes/common_paths.yml
   - includes/common_strings.yml
   - includes/common_aliases.yml
+  - includes/ingest.yml
+  - includes/3dequalizer.yml
   - '{preferences}/sgtk_config_templates.yaml'
