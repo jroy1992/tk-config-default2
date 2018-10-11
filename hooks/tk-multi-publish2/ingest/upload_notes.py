@@ -60,12 +60,29 @@ class UploadNotesPlugin(HookBaseClass):
                         "fields": ["context", "version", "[output]", "[name]", "*"]
                     },
                 },
-                "default_value": {"Shot": {"name": "%sg_client_name:is%"},
-                                  "Version": {"name": "#code:is:ingest_{env_name}_output_annotation_name#"}},
+                "default_value": {},
                 "description": (
                     "Dictionary of Identifier to figure out which type should be mapped how "
                     "If you use @key:relation@ it will just use that as a filter for querying the SG entity, "
-                    "If you use #sg_field:relation:template# it will resolve the value of the template from fields and use that value to query SG entity."
+                    "If you use #sg_field:relation:template# "
+                    "it will resolve the value of the template from fields and use that value to query SG entity."
+                    "If you use !template_for_fields:sg_field:relation:template_for_value! "
+                    "it will resolve the fields that were derived using the first template and use these to generate value from second template to query SG entity."
+                )
+            },
+            "ignored_identifiers": {
+                "type": "dict",
+                "values": {
+                    "type": "list",
+                    "values": {
+                        "type": "str",
+                        "description": "Strings to ignore when found for this key."
+                    },
+                },
+                "default_value": {},
+                "description": (
+                    "Dictionary of Identifiers to ignore in the manifest's linked entities"
+                    "for eg. 'name': ['cmp'] will ignore all values of name field that contain 'cmp' "
                 )
             },
         }
@@ -104,6 +121,7 @@ class UploadNotesPlugin(HookBaseClass):
         status = True
 
         entity_identifiers = task_settings.get("entity_identifiers")
+        ignored_identifiers = task_settings.get("ignored_identifiers")
         # resolve the dicts in this list to SG entities.
         note_links = fields["note_links"]
 
@@ -111,7 +129,22 @@ class UploadNotesPlugin(HookBaseClass):
 
         for note_link in note_links:
             entity_type = note_link.get("type")
-            if entity_type in entity_identifiers:
+
+            ignored_list = list(set(note_link.keys()).intersection(ignored_identifiers.keys()))
+            is_ignored = False
+            ignored_value = None
+
+            for ignored_key in ignored_list:
+                value = note_link[ignored_key]
+                ignored_values = ignored_identifiers[ignored_key]
+
+                is_ignored = any(re.match(ignore_regex, value) for ignore_regex in ignored_values)
+
+                if is_ignored:
+                    ignored_value = value
+                    break
+
+            if entity_type in entity_identifiers and not is_ignored:
                 identifier_mapping = entity_identifiers[entity_type]
                 for key, value in identifier_mapping.iteritems():
 
@@ -122,19 +155,21 @@ class UploadNotesPlugin(HookBaseClass):
                     key_substituion_match = re.match("%(\w+):(\w+)%", value)
                     # template value match
                     template_value_match = re.match("#(\w+):(\w+):(\w+)#", value)
+                    # fields resolution and template value match
+                    fields_resolution_template_value_match = re.match("!(\w+):(\w+):(\w+):(\w+)!", value)
 
                     if key_substituion_match:
                         groups = key_substituion_match.groups()
-                        field_name = groups[0]
+                        sg_field_name = groups[0]
                         relation = groups[1]
 
                         # construct the filter
-                        field_filter = [field_name, relation, note_link[key]]
+                        field_filter = [sg_field_name, relation, note_link[key]]
                         entity_filter.append(field_filter)
 
                     if template_value_match:
                         groups = template_value_match.groups()
-                        field_name = groups[0]
+                        sg_field_name = groups[0]
                         relation = groups[1]
                         template_for_value = self.tank.templates[groups[2]]
 
@@ -146,7 +181,30 @@ class UploadNotesPlugin(HookBaseClass):
                         template_value = template_for_value.apply_fields(processed_fields)
 
                         # construct the filter
-                        field_filter = [field_name, relation, template_value]
+                        field_filter = [sg_field_name, relation, template_value]
+                        entity_filter.append(field_filter)
+
+                    if fields_resolution_template_value_match:
+                        groups = fields_resolution_template_value_match.groups()
+
+                        template_for_fields = self.tank.templates[groups[0]]
+                        sg_field_name = groups[1]
+                        relation = groups[2]
+                        template_for_value = self.tank.templates[groups[3]]
+
+                        # get the fields from template
+                        fields_from_template = template_for_fields.validate_and_get_fields(note_link[key])
+                        processed_fields = copy.deepcopy(fields)
+                        # let's keep our item fields first
+                        processed_fields.update(item.context.as_template_fields(template_for_value))
+                        # then the fields from template
+                        processed_fields.update(fields_from_template)
+
+                        # get the value of the template
+                        template_value = template_for_value.apply_fields(processed_fields)
+
+                        # construct the filter
+                        field_filter = [sg_field_name, relation, template_value]
                         entity_filter.append(field_filter)
 
                     try:
@@ -179,6 +237,20 @@ class UploadNotesPlugin(HookBaseClass):
                                 }
                             }
                         )
+
+            elif is_ignored:
+                status = True
+                self.logger.warning(
+                    "Ignoring the value of %s for %s entity." % (ignored_value, entity_type),
+                    extra={
+                        "action_show_more_info": {
+                            "label": "Show Identifiers",
+                            "tooltip": "Show Ignored identifiers",
+                            "text": ignored_identifiers
+                        }
+                    }
+                )
+
             else:
                 status = False
                 self.logger.error(
