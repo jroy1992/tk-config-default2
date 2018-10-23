@@ -10,7 +10,11 @@
 
 import sgtk
 
+import hiero.core
+import hiero.ui
+
 from hiero.core import projects
+
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -35,11 +39,38 @@ class HieroCustomizeExportUI(HookBaseClass):
             if ".v" in project_name:
                 version = project_name.split(".")[1]
                 version_number = int(version.split("v")[1])
+                print "project, version: ", project_name, version_number
                 break
             else:
                 self.parent.logger.debug("Unsaved project {%s}. Do a Shotgun File Save." % project)
 
         return version_number
+
+    """
+    def get_default_version_number(self):
+    
+        version_number = 1
+        
+        view = hiero.ui.activeView()
+        if hasattr(view, 'selection'):
+            selection = view.selection()
+
+            if isinstance(view, hiero.ui.BinView):
+                item = selection[0]
+                while hasattr(item, 'parentBin') and item != isinstance(item.parentBin(), hiero.core.Project):
+                    item = item.parentBin()
+
+                project_name = item.name()
+                print "Project", item, project_name
+                if ".v" in project_name:
+                    version = project_name.split(".")[1]
+                    version_number = int(version.split("v")[1])
+                    print "---------------- project, version: ", project_name, version_number
+
+        return version_number
+    """
+
+
 
 
 
