@@ -13,6 +13,12 @@
 
 ################################################################################
 
+# 3de4
+engines.tk-3de4.location:
+  type: manual
+  name: tk-3de4
+  version: v0.x.x
+
 # Desktop
 engines.tk-desktop.location:
   type: manual
