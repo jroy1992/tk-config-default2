@@ -43,6 +43,18 @@ settings.tk-multi-loader2.entities: &loader2_entities
     hierarchy: [entity, content]
 
 
+# 3dequalizer
+settings.tk-multi-loader2.3dequalizer:
+  action_mappings:
+    Alembic Cache: [read_node]
+    Image: [read_node]
+    Rendered Image: [file_cop]
+    Movie: [read_node]
+  actions_hook: '{config}/tk-multi-loader2/{engine_name}_actions.py'
+  entities: *loader2_entities
+  publish_filters: [["sg_status_list", "is_not", null]]
+  location: "@apps.tk-multi-loader2.location"
+
 # houdini
 settings.tk-multi-loader2.houdini:
   action_mappings:
