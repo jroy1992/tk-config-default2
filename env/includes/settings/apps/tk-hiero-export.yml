@@ -31,6 +31,9 @@ settings.tk-hiero-export:
   hook_get_quicktime_settings: '{config}/tk-hiero-export/hiero_get_quicktime_settings.py'
   hook_resolve_custom_strings: '{config}/tk-hiero-export/hiero_resolve_custom_strings.py'
   hook_customize_export_ui: '{config}/tk-hiero-export/hiero_customize_export_ui.py'
+  hook_update_shot: '{config}/tk-hiero-export/hiero_update_shot.py'
+  hook_update_version_data: '{config}/tk-hiero-export/hiero_update_version_data.py'
+  hook_get_extra_publish_data: '{config}/tk-hiero-export/hiero_get_extra_publish_data.py'
   custom_template_fields:
     - {description: 'Clip Width', keyword: width}
     - {description: 'Clip Height', keyword: height}

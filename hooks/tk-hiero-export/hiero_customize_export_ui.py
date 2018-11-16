@@ -13,9 +13,6 @@ import sgtk
 import hiero.core
 import hiero.ui
 
-from hiero.core import projects
-
-
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
@@ -29,46 +26,74 @@ class HieroCustomizeExportUI(HookBaseClass):
     # the documentation at http://developer.shotgunsoftware.com/tk-hiero-export/
 
     def get_default_version_number(self):
-
-        version_number = 1
-        seq_projects = projects()
-
-        # Picks the first valid project (to do for selected project, if multiple projects are applicable)
-        for project in seq_projects:
-            project_name = project.name()
-            if ".v" in project_name:
-                version = project_name.split(".")[1]
-                version_number = int(version.split("v")[1])
-                print "project, version: ", project_name, version_number
-                break
-            else:
-                self.parent.logger.debug("Unsaved project {%s}. Do a Shotgun File Save." % project)
-
-        return version_number
-
-    """
-    def get_default_version_number(self):
     
         version_number = 1
-        
+
+        # from selected project
         view = hiero.ui.activeView()
         if hasattr(view, 'selection'):
             selection = view.selection()
 
             if isinstance(view, hiero.ui.BinView):
                 item = selection[0]
+
+                # iterate until you get project
                 while hasattr(item, 'parentBin') and item != isinstance(item.parentBin(), hiero.core.Project):
                     item = item.parentBin()
 
                 project_name = item.name()
-                print "Project", item, project_name
                 if ".v" in project_name:
                     version = project_name.split(".")[1]
                     version_number = int(version.split("v")[1])
-                    print "---------------- project, version: ", project_name, version_number
+                    print "Selected project: %s, version: %d" % (project_name, version_number)
 
         return version_number
-    """
+
+    def get_default_preset_properties(self):
+
+        properties = {
+
+            'shotgunShotCreateProperties': {
+                'sg_cut_type': 'Boards',
+                'collateSequence': False,
+                'collateShotNames': False,
+                'collateTracks': False,
+                'collateCustomStart': True,
+            },
+
+            'cutLength': True,
+            'cutUseHandles': False,
+            'cutHandles': 12,
+            'includeRetimes': False,
+            'startFrameSource': 'Custom',
+            'startFrameIndex': 1001,
+        }
+
+        return properties
+
+    def get_transcode_exporter_ui_properties(self):
+
+        return [
+
+            dict(
+                name="burninDataEnabled",
+                value=True,
+            ),
+            dict(
+                name="burninData",
+                value={
+                    'burnIn_bottomRight': '[frame]',
+                    'burnIn_topLeft': '',
+                    'burnIn_topMiddle': '',
+                    'burnIn_padding': 120,
+                    'burnIn_topRight': '',
+                    'burnIn_bottomMiddle': '[frames {first}]-[frames {last}]',
+                    'burnIn_bottomLeft': '{sequence}_{shot}',
+                    'burnIn_textSize': 28,
+                    'burnIn_font': "/dd/facility/lib/fonts/Arial Bold.ttf",
+                    },
+            ),
+        ]
 
 
 

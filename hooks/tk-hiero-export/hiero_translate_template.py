@@ -59,6 +59,19 @@ class HieroTranslateTemplate(Hook):
         if output_type == 'script':
             template_str = template_str.replace('{output}', 'scene')
 
+        # Nuke Studio project string has version number which is an issue when we have to resolve template by path
+        # so replacing {name} with 'plate' string
+        # and stripping {output} to simplify template to {Sequence}_{Shot}_{Step}_{name}.v{tk_version}.mov
+        # engine specific template would have been useful here (as could update only for nuke studio)
+        if output_type == "plate":
+            template_str = template_str.replace('{name}', 'plate')
+            template_str = template_str.replace('{output}', '')
+
+            # remove "-" from template string
+            if "-" in template_str:
+                temp_str = template_str.split("-")
+                template_str = temp_str[0] + temp_str[1]
+
         for (orig, repl) in mapping.iteritems():
             template_str = template_str.replace(orig, repl)
 

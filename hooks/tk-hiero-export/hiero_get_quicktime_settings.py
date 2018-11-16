@@ -33,17 +33,19 @@ class HieroGetQuicktimeSettings(Hook):
         import nuke
 
         if sys.platform.startswith("linux") and nuke.NUKE_VERSION_MAJOR < 11:
+
             file_type = "mov"
             properties = {
-                "encoder": "mov64",
-                "format": "default",
-                "codec": "jpeg",
-                "write_timecode": True,
-                "bitrate": 400000,
-                "bitrate_tolerance": 28000,
-                "quality_min": 1,
-                "quality_max": 2,
+                'quality_min': 1,
+                'codec': 'rle \tAnimation',
+                'bitrate_tolerance': 28000,
+                'format': 'default',
+                'quality_max': 2,
+                'bitrate': 400000,
+                'write_timecode': True,
+                'encoder': 'mov64',
             }
+
         else:
             file_type = "mov"
             properties = {
@@ -54,4 +56,5 @@ class HieroGetQuicktimeSettings(Hook):
                 "keyframerate": 1,
                 }
 
-        return (file_type, properties)
+        return file_type, properties
+
