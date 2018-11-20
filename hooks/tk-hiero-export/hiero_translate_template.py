@@ -9,12 +9,11 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import ast
+import sgtk
+HookBaseClass = sgtk.get_hook_baseclass()
 
-from tank import Hook
-import tank.templatekey
 
-
-class HieroTranslateTemplate(Hook):
+class HieroTranslateTemplate(HookBaseClass):
     """
     This class implements a hook that's responsible for translating a Toolkit
     template object into a Hiero export string.
@@ -39,47 +38,36 @@ class HieroTranslateTemplate(Hook):
         """
         # First add in any relevant fields from the context
         fields = self.parent.context.as_template_fields(template)
-        mapping = dict([("{%s}" % k, v) for k, v in fields.iteritems()])
-        
-        # Next update the mapping with variables from the session
-        mapping.update({
-            "{Sequence}": "{sequence}",
-            "{Shot}": "{shot}",
-            "{name}": "{project}",
-            "{output}": "{clip}",
-            "{version}": "{tk_version}",
-            "{extension}": "{ext}"
-        })
+        # Substitute the variables that Hiero will inject during export
+        hiero_fields = {
+            "Sequence": "{sequence}",
+            "Shot": "{shot}",
+            "name": "{project}",
+            "output": "{clip}",
+            "width": "{width}",
+            "height": "{height}",
+            "version": "{tk_version}",
+            "extension": "{ext}"
+        }
+        fields.update(hiero_fields)
 
-        # get the string representation of the template object
-        template_str = template.definition
+        for name, key in template.keys.iteritems():
+            if isinstance(key, sgtk.templatekey.SequenceKey):
+                fields.update({name: "FORMAT:#"})
 
         # simple string to string replacement
         # the nuke script name is hard coded to ensure a valid template
         if output_type == 'script':
-            template_str = template_str.replace('{output}', 'scene')
+            fields.update({"output": "scene"})
 
         # Nuke Studio project string has version number which is an issue when we have to resolve template by path
         # so replacing {name} with 'plate' string
         # and stripping {output} to simplify template to {Sequence}_{Shot}_{Step}_{name}.v{tk_version}.mov
         # engine specific template would have been useful here (as could update only for nuke studio)
         if output_type == "plate":
-            template_str = template_str.replace('{name}', 'plate')
-            template_str = template_str.replace('{output}', '')
+            fields.update({"name": "plate"})
+            del fields['output']
 
-            # remove "-" from template string
-            if "-" in template_str:
-                temp_str = template_str.split("-")
-                template_str = temp_str[0] + temp_str[1]
-
-        for (orig, repl) in mapping.iteritems():
-            template_str = template_str.replace(orig, repl)
-
-        # replace {SEQ} style keys with their translated string value
-        for (name, key) in template.keys.iteritems():
-            if isinstance(key, tank.templatekey.SequenceKey):
-                # this is a sequence template, for example {SEQ}
-                # replace it with ####
-                template_str = template_str.replace("{%s}" % name, key.str_from_value("FORMAT:#"))
+        template_str = template._apply_fields(fields, hiero_fields.keys())
 
         return template_str

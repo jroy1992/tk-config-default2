@@ -10,10 +10,9 @@
 
 import sgtk
 
-from tank import Hook
+HookBaseClass = sgtk.get_hook_baseclass()
 
-
-class HieroGetExtraPublishData(Hook):
+class HieroGetExtraPublishData(HookBaseClass):
     """
     This class defines a hook that can be used to gather additional data
     and add it to the data dictionary that's used to register any new

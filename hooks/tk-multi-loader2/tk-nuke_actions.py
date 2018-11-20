@@ -157,19 +157,27 @@ class CustomNukeActions(HookBaseClass):
         if not hiero.core.projects():
             raise Exception("An active project must exist to import clips into.")
 
-        # read published data
-        image_path = sg_publish_data['path']['local_path']
-        version_name = sg_publish_data['version']['name']
+        # get pipeline step from path
+        template = self.parent.sgtk.template_from_path(path)
+        fields = template.get_fields(path)
+        department = str(fields["Step"])
 
-        # get pipeline step (Shot context)
-        # eg. 'RND_000100_layout_bg.v009'
-        department = version_name.split('_')[2]
+        # get project dict from path
+        project = self.parent.sgtk.context_from_path(path).project
 
-        # set movie path (ensured 'sg_path_to_movie' not empty in the Version filter query @loader)
-        # alternately make a shotgun api query (which could be more expensive)
-        # setting movie path as per publish template
-        shared_path = image_path.split('IMG')[0]
-        movie_path = os.path.join(shared_path, "MOV", department, version_name) + ".mov"
+        # get version code from publish data
+        version_code = sg_publish_data['version']['name']
+
+        # query 'sg_path_to_movie'
+        version_filters = [
+            ["project", "is", project],
+            ["code", "is", version_code],
+            ["sg_path_to_movie", "is_not", ""]
+        ]
+        version_fields = ["sg_path_to_movie"]
+
+        result = self.parent.sgtk.shotgun.find_one("Version", version_filters, version_fields)
+        movie_path = result['sg_path_to_movie']
 
         # set department bin
         project = hiero.core.projects()[-1]
@@ -178,7 +186,7 @@ class CustomNukeActions(HookBaseClass):
         bin_exists = False
         for i, bin in enumerate(bins):
             if department == bin.name():
-                print "%s already exists" % department
+                self.parent.logger.info( "%s already exists" % department)
                 bin_exists = True
                 department_bin = bins[i]
                 break
@@ -186,7 +194,7 @@ class CustomNukeActions(HookBaseClass):
         if not bin_exists:
             department_bin = Bin(department)
             project.clipsBin().addItem(department_bin)
-            print "%s added." % department_bin.name()
+            self.parent.logger.info("%s added." % department_bin.name())
 
         # add clip to bin
         media_source = MediaSource(movie_path)
@@ -194,12 +202,12 @@ class CustomNukeActions(HookBaseClass):
         for i, item in enumerate(items):
             print "item.name()", item.name()
             if item.name() in media_source.filename():
-                print "%s already exists." % item.name()
+                self.parent.logger.info("%s already exists." % item.name())
                 return
 
         clip = Clip(media_source)
         department_bin.addItem(BinItem(clip))
-        print "%s added." % clip.name()
+        self.parent.logger.info("%s added." % clip.name())
 
     def _import_img_seq(self, path, sg_publish_data):
         """
@@ -215,12 +223,10 @@ class CustomNukeActions(HookBaseClass):
         if not hiero.core.projects():
             raise Exception("An active project must exist to import clips into.")
 
-        # read published data
-        version_name = sg_publish_data['version']['name']
-
-        # get pipeline step (Shot context)
-        # eg. 'RND_000100_layout_bg.v009'
-        department = version_name.split('_')[2]
+        # get pipeline step from path
+        template = self.parent.sgtk.template_from_path(path)
+        fields = template.get_fields(path)
+        department = str(fields["Step"])
 
         # set department bin
         project = hiero.core.projects()[-1]

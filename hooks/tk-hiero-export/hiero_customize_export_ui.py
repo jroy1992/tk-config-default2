@@ -29,6 +29,9 @@ class HieroCustomizeExportUI(HookBaseClass):
     
         version_number = 1
 
+        # project name template
+        template = self.sgtk.templates["project_version_name"]
+
         # from selected project
         view = hiero.ui.activeView()
         if hasattr(view, 'selection'):
@@ -43,9 +46,9 @@ class HieroCustomizeExportUI(HookBaseClass):
 
                 project_name = item.name()
                 if ".v" in project_name:
-                    version = project_name.split(".")[1]
-                    version_number = int(version.split("v")[1])
-                    print "Selected project: %s, version: %d" % (project_name, version_number)
+                    fields = template.get_fields(project_name)
+                    version_number = fields['version']
+                    self.parent.logger.info("Selected project: %s, version: %d" % (project_name, version_number))
 
         return version_number
 

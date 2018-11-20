@@ -54,8 +54,11 @@ class BreakdownSceneOperations(HookBaseClass):
         if self.parent.engine.studio_enabled or self.parent.engine.hiero_enabled:
             import hiero
 
-            # pipeline steps (would prefer to read from show config)
-            steps = ["layout", "anim", "light", "fx", "comp"]
+            # scan for only valid pipeline steps (shot entity)
+            filters = [["entity_type", "is", "Shot"]]
+            fields = ["short_name"]
+            result = self.parent.sgtk.shotgun.find("Step", filters, fields)
+            steps = list(set([step["short_name"] for step in result]))
 
             for project in hiero.core.projects():
                 for bin in project.clipsBin().bins():

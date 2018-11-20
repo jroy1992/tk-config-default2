@@ -9,11 +9,12 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sys
+import sgtk
 
-from tank import Hook
+HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class HieroGetQuicktimeSettings(Hook):
+class HieroGetQuicktimeSettings(HookBaseClass):
     """
     This class defines a hook that allows for customization of encoding
     settings for any Quicktimes written by the export process.

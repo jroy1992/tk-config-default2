@@ -10,10 +10,9 @@
 
 import sgtk
 
-from tank import Hook
+HookBaseClass = sgtk.get_hook_baseclass()
 
-
-class HieroUpdateVersionData(Hook):
+class HieroUpdateVersionData(HookBaseClass):
     """
     This class implements a hook that can be used to customize the data
     dictionary for a Version entity that is going to be created by the
