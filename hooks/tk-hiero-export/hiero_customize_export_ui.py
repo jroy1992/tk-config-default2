@@ -29,8 +29,9 @@ class HieroCustomizeExportUI(HookBaseClass):
     
         version_number = 1
 
-        # project name template
-        template = self.sgtk.templates["project_version_name"]
+        raw_template_name = "{env_name}_version_name"
+        resolved_template_name = self.parent.resolve_setting_expression(raw_template_name)
+        template = self.parent.get_template_by_name(resolved_template_name)
 
         # from selected project
         view = hiero.ui.activeView()
