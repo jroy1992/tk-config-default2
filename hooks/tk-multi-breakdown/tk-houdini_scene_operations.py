@@ -45,8 +45,8 @@ class BreakdownSceneOperations(Hook):
         items = []
 
         # get a list of all regular alembic nodes in the file
-        alembic_nodes = hou.nodeType(hou.sopNodeTypeCategory(),
-            "alembic").instances()
+        alembic_nodes = hou.nodeType(hou.objNodeTypeCategory(),
+            "alembicarchive").instances()
 
         # return an item for each alembic node found. the breakdown app will check
         # the paths of each looking for a template match and a newer version.
