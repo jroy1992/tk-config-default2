@@ -29,9 +29,12 @@ class HieroCustomizeExportUI(HookBaseClass):
     
         version_number = 1
 
-        raw_template_name = "{env_name}_version_name"
-        resolved_template_name = self.parent.resolve_setting_expression(raw_template_name)
-        template = self.parent.get_template_by_name(resolved_template_name)
+        # version number from workfiles app
+        workfiles_app = self.parent.engine.apps.get("tk-multi-workfiles2")
+        if not workfiles_app:
+            self.parent.logger.error("Unable to get default version number. The tk-multi-workfiles2 app isn't loaded.")
+            return version_number
+        work_template = workfiles_app.get_work_template()
 
         # from selected project
         view = hiero.ui.activeView()
@@ -45,11 +48,12 @@ class HieroCustomizeExportUI(HookBaseClass):
                 while hasattr(item, 'parentBin') and item != isinstance(item.parentBin(), hiero.core.Project):
                     item = item.parentBin()
 
-                project_name = item.name()
-                if ".v" in project_name:
-                    fields = template.get_fields(project_name)
-                    version_number = fields['version']
-                    self.parent.logger.info("Selected project: %s, version: %d" % (project_name, version_number))
+                project_path = item.path()
+                if not work_template.validate(project_path):
+                    self.parent.logger.error("Unable to default version number. The selected Project '%s' does not match the work template '%s'" % (ite.name(), str(work_template)))
+                    return  version_number
+                fields = work_template.get_fields(project_path)
+                version_number = fields.get('version', version_number)
 
         return version_number
 
