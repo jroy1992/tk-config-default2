@@ -137,17 +137,14 @@ class CustomHoudiniActions(HookBaseClass):
             file_sop.parm("reload").pressButton()
             node = file_sop
         else:
-            print "object context:", obj_context
             try:
                 alembic_node = obj_context.createNode("alembicarchive", name)
             except hou.OperationFailed:
                 # failed to create the node in this context, create at top-level
                 obj_context = hou.node("/obj")
                 alembic_node = obj_context.createNode("alembicarchive", name)
-            print "object context", obj_context
             alembic_node.parm("fileName").set(path)
             alembic_node.parm("buildHierarchy").pressButton()
-            alembic_node.parm("reloadGeometry").pressButton()
             node = alembic_node
 
         node_name = hou.nodeType(node.path()).name()
