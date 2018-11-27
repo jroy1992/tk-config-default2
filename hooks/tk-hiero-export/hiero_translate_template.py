@@ -10,6 +10,10 @@
 
 import ast
 import sgtk
+
+import hiero.core
+import hiero.ui
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
@@ -51,23 +55,50 @@ class HieroTranslateTemplate(HookBaseClass):
         }
         fields.update(hiero_fields)
 
+        # Update field name from work_template in tk-multi-workfiles2 app
+        workfiles_app = self.parent.engine.apps.get("tk-multi-workfiles2")
+        if not workfiles_app:
+            self.parent.logger.error("Unable to get the 'name' field. The tk-multi-workfiles2 app isn't loaded!")
+        else:
+            work_template = workfiles_app.get_work_template()
+
+            # from selected project
+            view = hiero.ui.activeView()
+            if hasattr(view, 'selection'):
+                selection = view.selection()
+
+                if isinstance(view, hiero.ui.BinView):
+                    item = selection[0]
+
+                    # iterate until you get project
+                    while hasattr(item, 'parentBin') and item != isinstance(item.parentBin(), hiero.core.Project):
+                        item = item.parentBin()
+
+                project_path = item.path()
+                if not work_template.get_fields(project_path):
+                    self.parent.logger.error("Unable to get the 'name' field. The selected Project '%s' does not match the work template '%s'" % (item.name(), str(work_template)))
+                else:
+                    tmpl_fields = work_template.get_fields(project_path)
+                    if "name" in tmpl_fields:
+                        fields["name"] = tmpl_fields["name"]
+
         for name, key in template.keys.iteritems():
             if isinstance(key, sgtk.templatekey.SequenceKey):
-                fields.update({name: "FORMAT:#"})
+                fields["name"] = "FORMAT:#"
 
         # simple string to string replacement
         # the nuke script name is hard coded to ensure a valid template
         if output_type == 'script':
-            fields.update({"output": "scene"})
+            fields["output"] = "scene"
 
         # Nuke Studio project string has version number which is an issue when we have to resolve template by path
         # so replacing {name} with 'plate' string
         # and stripping {output} to simplify template to {Sequence}_{Shot}_{Step}_{name}.v{tk_version}.mov
         # engine specific template would have been useful here (as could update only for nuke studio)
         if output_type == "plate":
-            fields.update({"name": "plate"})
+            fields["name"] = "plate"
             del fields['output']
 
-        template_str = template._apply_fields(fields, hiero_fields.keys())
+        template_str = template.apply_fields(fields, ignore_types=hiero_fields.keys())
 
         return template_str
