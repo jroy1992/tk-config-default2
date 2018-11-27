@@ -134,7 +134,6 @@ class CustomHoudiniActions(HookBaseClass):
                 padding = frame_match.group(2)
                 path = path.replace(full_frame_spec, "$F%s" % (padding,))
             file_sop.parm("file").set(path)
-            file_sop.parm("reload").pressButton()
             node = file_sop
         else:
             try:
