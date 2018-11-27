@@ -114,13 +114,14 @@ class BreakdownSceneOperations(Hook):
 
             file_path = file_path.replace("\\", "/")
 
-            # update the alembic fileName parm to the new path
+            # update the alembic archive fileName parm to the new path
             if node_type == "alembic":
 
                 alembic_node = hou.node(node_path)
                 engine.log_debug(
-                    "Updating alembic node '%s' to: %s" % (node_path, file_path))
+                    "Updating alembic archive node '%s' to: %s" % (node_path, file_path))
                 alembic_node.parm("fileName").set(file_path)
+                alembic_node.parm("buildHierarchy").pressButton()
             elif node_type == "file":
                 file_node = hou.node(node_path)
                 engine.log_debug(
