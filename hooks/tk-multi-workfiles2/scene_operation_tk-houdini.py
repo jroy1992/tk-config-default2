@@ -83,6 +83,9 @@ class SceneOperation(HookClass):
             return True
 
     def sync_frame_range(self):
+        # using sgtk.platform.current_engine() instead of self.parent.engine because
+        # context_change_allowed is False for houdini and tk-multi-workfiles app being in middle of execution
+        # continues with the same instance even upon context change giving different environment and engine contexts
         engine = sgtk.platform.current_engine()
         if engine.context.entity is None:
             # tk-multi-setframerange needs a context entity to work
