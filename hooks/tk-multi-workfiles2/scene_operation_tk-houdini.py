@@ -83,7 +83,7 @@ class SceneOperation(HookClass):
             return True
 
     def sync_frame_range(self):
-        engine = self.parent.engine
+        engine = sgtk.platform.current_engine()
         if engine.context.entity is None:
             # tk-multi-setframerange needs a context entity to work
             warning_message = "Your current context does not have an entity " \
