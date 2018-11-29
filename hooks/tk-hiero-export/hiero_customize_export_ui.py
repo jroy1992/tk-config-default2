@@ -50,8 +50,8 @@ class HieroCustomizeExportUI(HookBaseClass):
 
                 project_path = item.path()
                 if not work_template.validate(project_path):
-                    self.parent.logger.error("Unable to default version number. The selected Project '%s' does not match the work template '%s'" % (ite.name(), str(work_template)))
-                    return  version_number
+                    self.parent.logger.warning("Using default version number. The selected Project '%s' does not match the work template '%s'" % (item.name(), str(work_template)))
+                    return version_number
                 fields = work_template.get_fields(project_path)
                 version_number = fields.get('version', version_number)
 

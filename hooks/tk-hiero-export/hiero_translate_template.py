@@ -84,7 +84,7 @@ class HieroTranslateTemplate(HookBaseClass):
 
         for name, key in template.keys.iteritems():
             if isinstance(key, sgtk.templatekey.SequenceKey):
-                fields["name"] = "FORMAT:#"
+                fields[name] = "FORMAT:#"
 
         # simple string to string replacement
         # the nuke script name is hard coded to ensure a valid template
