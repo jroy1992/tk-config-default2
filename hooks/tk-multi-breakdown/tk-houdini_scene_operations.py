@@ -45,8 +45,8 @@ class BreakdownSceneOperations(Hook):
         items = []
 
         # get a list of all regular alembic nodes in the file
-        alembic_nodes = hou.nodeType(hou.sopNodeTypeCategory(),
-            "alembic").instances()
+        alembic_nodes = hou.nodeType(hou.objNodeTypeCategory(),
+            "alembicarchive").instances()
 
         # return an item for each alembic node found. the breakdown app will check
         # the paths of each looking for a template match and a newer version.
@@ -72,6 +72,19 @@ class BreakdownSceneOperations(Hook):
             items.append({
                 "node": file_node.path(),
                 "type": "file",
+                "path": file_path,
+            })
+
+        cam_nodes = hou.nodeType(hou.objNodeTypeCategory(),
+                                  "cam").instances()
+
+        for cam_node in cam_nodes:
+            file_parm = cam_node.parm("vm_background")
+            file_path = os.path.normpath(file_parm.eval())
+
+            items.append({
+                "node": cam_node.path(),
+                "type": "cam",
                 "path": file_path,
             })
 
@@ -101,16 +114,22 @@ class BreakdownSceneOperations(Hook):
 
             file_path = file_path.replace("\\", "/")
 
-            # update the alembic fileName parm to the new path
+            # update the alembic archive fileName parm to the new path
             if node_type == "alembic":
 
                 alembic_node = hou.node(node_path)
                 engine.log_debug(
-                    "Updating alembic node '%s' to: %s" % (node_path, file_path))
+                    "Updating alembic archive node '%s' to: %s" % (node_path, file_path))
                 alembic_node.parm("fileName").set(file_path)
+                alembic_node.parm("buildHierarchy").pressButton()
             elif node_type == "file":
                 file_node = hou.node(node_path)
                 engine.log_debug(
                     "Updating file node '%s' to: %s" % (node_path, file_path))
                 file_node.parm("file").set(file_path)
+            elif node_type == "cam":
+                cam_node = hou.node(node_path)
+                engine.log_debug(
+                    "Updating camera node '%s' to: %s" % (node_path, file_path))
+                cam_node.parm("vm_background").set(file_path)
 
