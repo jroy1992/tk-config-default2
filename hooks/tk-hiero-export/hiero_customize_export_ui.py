@@ -12,6 +12,7 @@ import sgtk
 
 import hiero.core
 import hiero.ui
+import os
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -98,7 +99,7 @@ class HieroCustomizeExportUI(HookBaseClass):
                     'burnIn_bottomMiddle': '[frames {first}]-[frames {last}]',
                     'burnIn_bottomLeft': '{sequence}_{shot}',
                     'burnIn_textSize': 28,
-                    'burnIn_font': "/dd/facility/lib/fonts/Arial Bold.ttf",
+                    'burnIn_font': os.path.join(os.environ["DD_FACILITY_ROOT"], "lib", "fonts", "Arial Bold.ttf"),
                     },
             ),
         ]
