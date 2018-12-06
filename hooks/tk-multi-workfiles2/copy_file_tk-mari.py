@@ -9,13 +9,19 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
+import glob
 import shutil
+
+import mari
+
 import sgtk
+from sgtk import TankError
 
 # DD
-from sgtk.util.filesystem import ensure_folder_exists
+from sgtk.util.filesystem import copy_folder, ensure_folder_exists
 
 HookClass = sgtk.get_hook_baseclass()
+
 
 class CopyFile(HookClass):
     """
@@ -26,17 +32,16 @@ class CopyFile(HookClass):
         """
         Main hook entry point
 
-        :param source_path: String
-                            Source file path to copy
+        :source_path:   String
+                        Source file path to copy
 
-        :param target_path: String
-                            Target file path to copy to
-
+        :target_path:   String
+                        Target file path to copy to
         """
-
         # create the folder if it doesn't exist
         dirname = os.path.dirname(target_path)
         ensure_folder_exists(dirname)
 
-        # copy the actual file
-        shutil.copy(source_path, target_path)
+        # In Mari, work file refers to a folder containing an msf file and associated data
+        copied_files_list = copy_folder(source_path, target_path)
+        return
