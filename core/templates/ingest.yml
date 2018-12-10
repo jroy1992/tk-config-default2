@@ -44,10 +44,6 @@ keys:
         type: timestamp
         format_spec: '%Y%m%d'
 
-    ingestNoteTimeStamp:
-        type: timestamp
-        format_spec: '%H_%M_%S'
-
     ingestAssetType:
       type: str
       shotgun_entity_type: Asset
@@ -82,10 +78,6 @@ keys:
 
     vendorStep:
         type: str
-
-    notes_folder:
-        type: str
-        filter_by: '(^note_\w+)'
 
     # subcontext should not contain and non-character strings
     subcontext:
@@ -136,11 +128,6 @@ paths:
     ingest_shot_asset_scene:                '@ingest_shot_asset_area_scene/@ingest_shot_asset_input_name.{maya_extension}'
     ingest_sequence_asset_scene:            '@ingest_sequence_asset_area_scene/@ingest_sequence_asset_input_name.{maya_extension}'
     ingest_project_asset_scene:             '@ingest_project_asset_area_scene/@ingest_project_asset_input_name.{maya_extension}'
-
-#    # Annotations
-#    ingest_shot_annotation:                 '@ingest_folder/attachments/{notes_folder}/@ingest_shot_annotation_name.{SEQ}.{ingestImgExtension}'
-#    ingest_shot_kick_off:                   '@ingest_folder/attachments/{notes_folder}/@ingest_shot_kick_off_name.{SEQ}.{ingestImgExtension}'
-#    ingest_shot_dpt_kick_off:               '@ingest_folder/attachments/{notes_folder}/@ingest_shot_dpt_kick_off_name.{SEQ}.{ingestImgExtension}'
 
     # templates for output files
 

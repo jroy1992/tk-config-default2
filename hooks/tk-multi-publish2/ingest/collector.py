@@ -78,7 +78,7 @@ class IngestCollectorPlugin(HookBaseClass):
             "type": "str",
             "description": "",
             "allows_empty": True,
-            "default_value": self.parent.settings["default_snapshot_type"],
+            "default_value": self.parent.settings["default_snapshot_type"].value,
         }
         items_schema["default_fields"] = {
             "type": dict,
@@ -145,14 +145,14 @@ class IngestCollectorPlugin(HookBaseClass):
 
         item_settings = settings["Item Types"].value.get(item_type)
         if item_settings:
-            default_snapshot_type = item_settings.get("default_snapshot_type")
-            default_fields = item_settings.get("default_fields")
+            default_snapshot_type = item_settings.get("default_snapshot_type").value
+            default_fields = item_settings.get("default_fields").value
 
             item_info["default_snapshot_type"] = default_snapshot_type
             item_info["default_fields"] = default_fields
         # item not found in our settings
         else:
-            item_info["default_snapshot_type"] = self.parent.settings["default_snapshot_type"]
+            item_info["default_snapshot_type"] = self.parent.settings["default_snapshot_type"].value
             item_info["default_fields"] = {}
 
         return item_info
@@ -172,9 +172,7 @@ class IngestCollectorPlugin(HookBaseClass):
 
         note_type_mappings = settings["Note Type Mappings"].value
 
-        unresolved_settings = self.plugin.unresolved_settings
-
-        raw_item_settings = unresolved_settings["Item Types"].value
+        raw_item_settings = settings["Item Types"].raw_value
 
         manifest_note_type = fields["note_type"]
 
@@ -204,7 +202,7 @@ class IngestCollectorPlugin(HookBaseClass):
         icon_path = relevant_item_settings.get("icon", "{self}/hooks/icons/file.png")
 
         template_names_per_env = [
-            self.parent.resolve_setting_expression(raw_template_name, self.parent.engine.instance_name, env_name) for
+            sgtk.platform.resolve_setting_expression(raw_template_name, self.parent.engine.instance_name, env_name) for
             env_name in envs]
 
         templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
@@ -299,7 +297,7 @@ class IngestCollectorPlugin(HookBaseClass):
             if items:
                 file_items.extend(items)
         else:
-            if publisher.settings["manifest_file_name"] in os.path.basename(path):
+            if publisher.settings["manifest_file_name"].value in os.path.basename(path):
                 items = self._collect_manifest_file(settings, parent_item, path)
                 if items:
                     file_items.extend(items)

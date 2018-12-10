@@ -343,7 +343,7 @@ class IngestFilesPlugin(HookBaseClass):
         If snapshot_type is not defined in item fields, it returns the entity set on app settings "default_entity_type".
         """
 
-        snapshot_settings = task_settings['snapshot_type_settings']
+        snapshot_settings = task_settings['snapshot_type_settings'].value
 
         item_fields = item.properties["fields"]
 

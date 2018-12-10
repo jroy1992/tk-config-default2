@@ -120,8 +120,8 @@ class UploadNotesPlugin(HookBaseClass):
         fields = item.properties.fields
         status = True
 
-        entity_identifiers = task_settings.get("entity_identifiers")
-        ignored_identifiers = task_settings.get("ignored_identifiers")
+        entity_identifiers = task_settings.get("entity_identifiers").value
+        ignored_identifiers = task_settings.get("ignored_identifiers").value
         # resolve the dicts in this list to SG entities.
         note_links = fields["note_links"]
 
