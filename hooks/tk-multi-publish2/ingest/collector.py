@@ -19,17 +19,28 @@ from tank_vendor import yaml
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
-NOTES_ENTITY_FILTER = "notes.entity.*"
-
 # This is a dictionary of fields in snapshot from manifest and it's corresponding field on the item.
 DEFAULT_MANIFEST_SG_MAPPINGS = {
-    "id": "sg_snapshot_id",
-    "notes": "description",
-    "name": "snapshot_name",
-    "user": "snapshot_user",
-    "version": "snapshot_version",
-    # notes related keys
-    "body": "content"
+    "file": {
+        "id": "sg_snapshot_id",
+        "notes": "description",
+        "user": "snapshot_user",
+        "name": "manifest_name",
+        "version": "snapshot_version",
+    },
+    "note": {
+        "notes": "description",
+        "name": "snapshot_name",
+        "user": "snapshot_user",
+        "version": "snapshot_version",
+        "body": "content",
+    },
+}
+
+# This is a dictionary of note_type values to item type.
+DEFAULT_NOTE_TYPES_MAPPINGS = {
+    "kickoff": "kickoff",
+    "role supervisor": "annotation",
 }
 
 
@@ -81,9 +92,21 @@ class IngestCollectorPlugin(HookBaseClass):
         schema["Manifest SG Mappings"] = {
             "type": "dict",
             "values": {
-                "type": "str",
+                "type": "dict",
+                "values": {
+                    "type": "str",
+                },
             },
             "default_value": DEFAULT_MANIFEST_SG_MAPPINGS,
+            "allows_empty": True,
+            "description": "Mapping of keys in Manifest to SG template keys."
+        }
+        schema["Note Type Mappings"] = {
+            "type": "dict",
+            "values": {
+                "type": "str",
+            },
+            "default_value": DEFAULT_NOTE_TYPES_MAPPINGS,
             "allows_empty": True,
             "description": "Mapping of keys in Manifest to SG template keys."
         }
@@ -134,41 +157,62 @@ class IngestCollectorPlugin(HookBaseClass):
 
         return item_info
 
-    def _add_note_item(self, settings, parent_item, attachments, is_sequence=False, seq_files=None):
+    def _add_note_item(self, settings, parent_item, fields, is_sequence=False, seq_files=None):
         """
         Process the supplied list of attachments, and create a note item.
 
         :param dict settings: Configured settings for this collector
         :param parent_item: parent item instance
-        :param attachments: List of attachment file paths
+        :param fields: Fields from manifest
 
         :returns: The item that was created
         """
 
         publisher = self.parent
 
-        item_types = settings["Item Types"].value
+        note_type_mappings = settings["Note Type Mappings"].value
 
-        # default values used if no specific type can be determined
-        type_display = "File"
-        item_type = "file.unknown"
+        unresolved_settings = self.plugin.unresolved_settings
+
+        raw_item_settings = unresolved_settings["Item Types"].value
+
+        manifest_note_type = fields["note_type"]
+
+        if manifest_note_type not in note_type_mappings:
+            self.logger.error(
+                "Note type not recognized" % manifest_note_type,
+                extra={
+                    "action_show_more_info": {
+                        "label": "Valid Types",
+                        "tooltip": "Show Valid Note Types",
+                        "text": "Valid Note Type Mappings: %s" % (pprint.pprint(note_type_mappings),)
+                    }
+                }
+            )
+            return
+
+        path = fields["sg_version"]["name"] + ".%s" % note_type_mappings[manifest_note_type]
+        display_name = path + ".notes"
+
+        item_type = "notes.entity.%s" % note_type_mappings[manifest_note_type]
+        relevant_item_settings = raw_item_settings[item_type]
+        raw_template_name = relevant_item_settings.get("work_path_template")
+        envs = self.parent.sgtk.pipeline_configuration.get_environments()
+
+        type_display = relevant_item_settings.get("type_display", "File")
         work_path_template = None
-        icon_path = "{self}/hooks/icons/file.png"
+        icon_path = relevant_item_settings.get("icon", "{self}/hooks/icons/file.png")
 
-        # since we only need one of the attachment frames to figure out the context
-        path = attachments.keys()[0]
-        display_name = publisher.util.get_publish_name(path)
+        template_names_per_env = [
+            self.parent.resolve_setting_expression(raw_template_name, self.parent.engine.instance_name, env_name) for
+            env_name in envs]
 
-        # # fetch all the settings of NOTES_ENTITY
-        # if NOTES_ENTITY_FILTER in item_types:
-        #     type_info = item_types[NOTES_ENTITY_FILTER]
-        #
-        #     type_display = type_info["type_display"]
-        #     icon_path = type_info["icon"]
-        #     work_path_template = type_info.get("work_path_template")
-        #     item_type = NOTES_ENTITY_FILTER
-        # else:
-        #     self.logger.error("Notes item is not setup for the collector, can't ingest notes!")
+        templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
+                             template_names_per_env if self.parent.get_template_by_name(template_name)]
+        for template in templates_per_env:
+            if template.validate(path):
+                # we have a match!
+                work_path_template = template.name
 
         # expand the icon path
         icon_path = publisher.expand_path(icon_path)
@@ -176,7 +220,7 @@ class IngestCollectorPlugin(HookBaseClass):
         # Define the item's properties
         properties = {}
 
-        # set the path and is_sequence properties for the plugins to use
+        # set the path and the extension to "notes" so that get item info can work fine
         properties["path"] = path
         properties["is_sequence"] = is_sequence
 
@@ -189,62 +233,6 @@ class IngestCollectorPlugin(HookBaseClass):
 
         # build the context of the item
         context = self._get_item_context_from_path(parent_item, properties, path)
-
-        # resolve the new plugin settings
-        # these are the correct settings for this context
-        plugin_settings = self.plugin.build_settings_dict(context)
-
-        # I did find a work-around to replacing env manually by building new settings dict, but it still feels patchy.
-        # TODO: Find a better way to support work_path_template based objects, which have similar extensions.
-        # i don't have any other way to resolve the correct template name
-        # since initially all the settings, resolve at the context of publisher
-        # path_env_name = self.tank.execute_core_hook(tank.platform.constants.PICK_ENVIRONMENT_CORE_HOOK_NAME,
-        #                                             context=context)
-        # publisher_env_name = self.tank.execute_core_hook(tank.platform.constants.PICK_ENVIRONMENT_CORE_HOOK_NAME,
-        #                                                  context=publisher.context)
-
-        tmpl_obj = self.sgtk.template_from_path(path)
-        template_name = None
-
-        if tmpl_obj:
-            template_name = tmpl_obj.name
-            # template_name = template_name.replace(path_env_name, publisher_env_name)
-
-        # extract the components of the supplied path
-        file_info = publisher.util.get_file_path_components(path)
-        extension = file_info["extension"]
-
-        extension_itemtype_mapping = dict()
-
-        for item_type, type_info in plugin_settings["Item Types"].value.iteritems():
-            for ext in type_info["extensions"]:
-                if ext not in extension_itemtype_mapping:
-                    extension_itemtype_mapping[ext] = list()
-
-                extension_itemtype_mapping[ext].append(item_type)
-
-        if extension in extension_itemtype_mapping:
-            for item_type in extension_itemtype_mapping[extension]:
-                type_info = plugin_settings["Item Types"].value[item_type]
-
-                work_path_template = type_info.get("work_path_template")
-
-                # template validation to check if the path matches work path template
-                # this will allow us to maintain multiple item types with similar extensions
-                # which can be used to specialize certain paths, and map them to different publish paths or even plugins
-                # eg. jpg's can be avidref, notes, or undist plates and all of them are treated differently.
-                if work_path_template == template_name:
-                    # we found our match
-                    # type_display, icon path, and work_path_template.
-                    type_display = type_info["type_display"]
-                    icon_path = type_info["icon"]
-                    work_path_template = type_info.get("work_path_template")
-
-                    break
-                else:
-                    # let's keep looping to find the next possible extension that matches us
-                    work_path_template = None
-                    continue
 
         # create and populate the item
         file_item = parent_item.create_item(
@@ -264,7 +252,7 @@ class IngestCollectorPlugin(HookBaseClass):
         file_item.thumbnail_enabled = False
 
         # only for the notes item preserve the settings, this will be used in get_item_info!
-        file_item.properties.note_item_settings = plugin_settings["Item Types"].value[item_type]
+        file_item.properties.note_item_settings = settings["Item Types"].value[item_type]
 
         return file_item
 
@@ -386,12 +374,16 @@ class IngestCollectorPlugin(HookBaseClass):
         """
 
         processed_snapshots = list()
-        manifest_mappings = settings['Manifest SG Mappings'].value
+        manifest_mappings = settings["Manifest SG Mappings"].value
+
+        file_item_manifest_mappings = manifest_mappings["file"]
+        note_item_manifest_mappings = manifest_mappings["note"]
         # yaml file stays at the base of the package
         base_dir = os.path.dirname(path)
 
         snapshots = list()
         notes = list()
+        notes_index = 0
 
         with open(path, 'r') as f:
             try:
@@ -415,7 +407,8 @@ class IngestCollectorPlugin(HookBaseClass):
         for snapshot in snapshots:
             # first replace all the snapshot with the Manifest SG Mappings
             data = dict()
-            data["fields"] = {manifest_mappings[k] if k in manifest_mappings else k: v for k, v in snapshot.items()}
+            data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
+                              for k, v in snapshot.iteritems()}
 
             # let's process file_types now!
             data["files"] = dict()
@@ -447,7 +440,20 @@ class IngestCollectorPlugin(HookBaseClass):
         for note in notes:
             # first replace all the snapshot with the Manifest SG Mappings
             data = dict()
-            data["fields"] = {manifest_mappings[k] if k in manifest_mappings else k: v for k, v in note.items()}
+            snapshot_data = dict()
+            data["fields"] = {note_item_manifest_mappings[k] if k in note_item_manifest_mappings else k: v
+                              for k, v in note.iteritems()}
+
+            # every note item has a corresponding snapshot associated with it
+            note_snapshot = snapshots[notes_index]
+            snapshot_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
+                                       for k, v in note_snapshot.iteritems()}
+
+            # pop the files from snapshot_data they are not useful
+            snapshot_data["fields"].pop("file_types")
+
+            # update the item fields with snapshot_data fields
+            data["fields"].update(snapshot_data["fields"])
 
             # let's process the attachments now!
             data["files"] = dict()
@@ -467,6 +473,9 @@ class IngestCollectorPlugin(HookBaseClass):
                 data["fields"]["attachments"].append(os.path.join(base_dir, attachment["path"]))
 
             processed_snapshots.append({"note": data})
+
+            # move to the next snapshot
+            notes_index += 1
 
         return processed_snapshots
 
@@ -543,7 +552,7 @@ class IngestCollectorPlugin(HookBaseClass):
                     # note type item
                     elif hook_type == "note":
                         # create a note item
-                        item = self._add_note_item(settings, parent_item, attachments=files)
+                        item = self._add_note_item(settings, parent_item, fields=fields)
                         if "snapshot_name" in fields:
                             item.description = fields["snapshot_name"]
                         if item:
