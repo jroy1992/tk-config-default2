@@ -178,12 +178,12 @@ class IngestCollectorPlugin(HookBaseClass):
 
         if manifest_note_type not in note_type_mappings:
             self.logger.error(
-                "Note type not recognized" % manifest_note_type,
+                "Note type not recognized %s" % manifest_note_type,
                 extra={
                     "action_show_more_info": {
                         "label": "Valid Types",
                         "tooltip": "Show Valid Note Types",
-                        "text": "Valid Note Type Mappings: %s" % (pprint.pprint(note_type_mappings),)
+                        "text": "Valid Note Type Mappings: %s" % (pprint.pformat(note_type_mappings),)
                     }
                 }
             )
@@ -193,6 +193,7 @@ class IngestCollectorPlugin(HookBaseClass):
         display_name = path + ".notes"
 
         item_type = "notes.entity.%s" % note_type_mappings[manifest_note_type]
+
         relevant_item_settings = raw_item_settings[item_type]
         raw_template_name = relevant_item_settings.get("work_path_template")
         envs = self.parent.sgtk.pipeline_configuration.get_environments()
@@ -443,6 +444,9 @@ class IngestCollectorPlugin(HookBaseClass):
                               for k, v in note.iteritems()}
 
             # every note item has a corresponding snapshot associated with it
+            if notes_index >= len(snapshots):
+                break
+
             note_snapshot = snapshots[notes_index]
             snapshot_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
                                        for k, v in note_snapshot.iteritems()}
@@ -551,9 +555,10 @@ class IngestCollectorPlugin(HookBaseClass):
                     elif hook_type == "note":
                         # create a note item
                         item = self._add_note_item(settings, parent_item, fields=fields)
-                        if "snapshot_name" in fields:
-                            item.description = fields["snapshot_name"]
                         if item:
+                            if "snapshot_name" in fields:
+                                item.description = fields["snapshot_name"]
+
                             new_items.append(item)
 
                     # inject the new fields into the item
