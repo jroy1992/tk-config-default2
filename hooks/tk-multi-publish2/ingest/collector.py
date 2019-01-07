@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
+import re
 import datetime
 import traceback
 import pprint
@@ -110,7 +111,83 @@ class IngestCollectorPlugin(HookBaseClass):
             "allows_empty": True,
             "description": "Mapping of keys in Manifest to SG template keys."
         }
+        schema["Ignore Extensions"] = {
+            "type": "list",
+            "values": {
+                "type": "str"
+            },
+            "allows_empty": True,
+            "default_value": [],
+            "description": "List of extensions to be ignored by the collector."
+        }
+        schema["Ignore Filename"] = {
+            "type": "list",
+            "values": {
+                "type": "str"
+            },
+            "allows_empty": True,
+            "default_value": [],
+            "description": "List of strings to ignore a filename by the collector."
+        }
         return schema
+
+    def _add_file_item(self, settings, parent_item, path, is_sequence=False, seq_files=None):
+        """
+        Creates a file item
+
+        :param dict settings: Configured settings for this collector
+        :param parent_item: parent item instance
+        :param path: Path to analyze
+        :param is_sequence: Bool as to whether to treat the path as a part of a sequence
+        :param seq_files: A list of files in the sequence
+
+        :returns: The item that was created
+        """
+        publisher = self.parent
+
+        if settings["Ignore Extensions"].value or settings["Ignore Filename"].value:
+            ignored_extensions = settings["Ignore Extensions"].value
+            ignored_filename = settings["Ignore Filename"].value
+
+            file_components = publisher.util.get_file_path_components(path)
+            file_ignored = False
+
+            if file_components["extension"] in ignored_extensions:
+                file_ignored = True
+
+            if ignored_filename:
+                file_ignored = any(re.match(ignored_string, file_components["filename"])
+                                   for ignored_string in ignored_filename)
+
+            if file_ignored:
+
+                if is_sequence:
+                    # include an indicator that this is an image sequence and the known
+                    # file that belongs to this sequence
+                    ignore_warning = (
+                        "The following files were ignored:<br>"
+                        "<pre>%s</pre>" % (pprint.pformat(seq_files),)
+                    )
+                else:
+                    ignore_warning = (
+                        "The following file was ignored:<br>"
+                        "<pre>%s</pre>" % (path,)
+                    )
+
+                self.logger.warning(
+                    "Ignoring the file: %s" % file_components["filename"],
+                    extra={
+                        "action_show_more_info": {
+                            "label": "Show File(s)",
+                            "tooltip": "Show the ignored file",
+                            "text": ignore_warning
+                        }
+                    }
+                )
+                return
+
+        item = super(IngestCollectorPlugin, self)._add_file_item(settings, parent_item, path, is_sequence, seq_files)
+        return item
 
     def _get_item_info(self, settings, path, is_sequence):
         """
@@ -145,8 +222,8 @@ class IngestCollectorPlugin(HookBaseClass):
 
         item_settings = settings["Item Types"].value.get(item_type)
         if item_settings:
-            default_snapshot_type = item_settings.get("default_snapshot_type").value
-            default_fields = item_settings.get("default_fields").value
+            default_snapshot_type = item_settings.get("default_snapshot_type")
+            default_fields = item_settings.get("default_fields")
 
             item_info["default_snapshot_type"] = default_snapshot_type
             item_info["default_fields"] = default_fields
