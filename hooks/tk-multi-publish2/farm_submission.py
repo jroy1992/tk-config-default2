@@ -32,8 +32,8 @@ from frangetools.frameRangeTools import FrameRange
 api.load('jstools')
 import jstools
 
-api.load('dd_disk')
-import dd_disk
+api.load('dd_disk', minimum_version='0.27.0')
+from dd_disk.temp import getSharedTemporaryDirectory
 
 api.load("wam")
 import wam
@@ -58,7 +58,7 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
 
         # Provision the top-level shared tmp location.
         # This lives on the network at SHARED/tmp/tk-multi-publish2
-        output_dir_base = dd_disk.temp.getToolTemporaryDirectory(self.parent.name, create=True)
+        output_dir_base = getSharedTemporaryDirectory(self.parent.name, create=True)
 
         # Use user+timestamp to distinguish this submission since we can't provision job_ids
         # before submission.
@@ -122,7 +122,7 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
 
                 if not submitted:
                     self.logger.error(
-                        'Job for item %s failed to submit.' % (item.name,),
+                        "Job for item '%s' failed to submit." % (item.name,),
                         extra={
                             "action_show_more_info": {
                                 "label": "Show Info",
@@ -187,11 +187,11 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
 
         sgtk_dir = os.path.join(python_dir, "sgtk")
         filesystem.ensure_folder_exists(sgtk_dir)
-        open(os.path.join(sgtk_dir, "__init__.py")).close()
+        open(os.path.join(sgtk_dir, "__init__.py"), 'w').close()
 
         actions_dir = os.path.join(sgtk_dir, "actions")
         filesystem.ensure_folder_exists(actions_dir)
-        open(os.path.join(actions_dir, "__init__.py")).close()
+        open(os.path.join(actions_dir, "__init__.py"), 'w').close()
 
         publish_action = os.path.join(actions_dir, "RunPublishAction.py")
         with open(publish_action, 'w') as of:
@@ -311,7 +311,6 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
         # Generate the job object
         job = Job(job_name=item.name, env=env)
         job.software = [_get_host_application()]
-        job.jobType = "wam"
         job.activity = "publish"
         job.notes = "SGTK Batch Publisher"
         job.log_dir = os.path.join(output_dir, "logs")
@@ -338,7 +337,7 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
 
         # Add any upstream dependencies
         if not item.is_root:
-            for parent_job_id in item.parent.get_property("job_ids", default_value=[]):
+            for parent_job_id in item.parent.properties.get("job_ids", []):
                 job.depend_on.append(parent_job_id, False)
 
         return job
