@@ -130,6 +130,9 @@ class SceneOperation(HookClass):
 
             # do new file:
             cmds.file(newFile=True, force=True)
+            if parent_action == "new_file":
+                self.set_show_preferences(file_path, context)
+                self.sync_frame_range()
             return True
 
     def set_show_preferences(self, file_path, context):
@@ -452,3 +455,49 @@ class SceneOperation(HookClass):
         prefix = prefix.replace("." + frame_sq_key.default, "")
 
         return prefix, ext
+
+    def sync_frame_range(self):
+        # role = os.getenv("DD_ROLE", "")
+        # pref = preferences.Preferences('sgtk_config_environments.yaml', package='sgtk_config',
+        #                                role=role,
+        #                                )
+        # in_frame = pref.get('default_in_frame')
+        # out_frame = pref.get('default_out_frame')
+        # if in_frame and out_frame:
+        #     import pymel.core as pm
+        #
+        #     # set frame ranges for plackback
+        #     pm.playbackOptions(minTime=in_frame,
+        #                        maxTime=out_frame,
+        #                        animationStartTime=in_frame,
+        #                        animationEndTime=out_frame)
+        #
+        #     # set frame ranges for rendering
+        #     defaultRenderGlobals = pm.PyNode('defaultRenderGlobals')
+        #     defaultRenderGlobals.startFrame.set(in_frame)
+        #     defaultRenderGlobals.endFrame.set(out_frame)
+        # else:
+        engine = self.parent.engine
+        if engine.context.entity is None:
+            # tk-multi-setframerange needs a context entity to work
+            warning_message = "Your current context does not have an entity " \
+                              "(e.g. a current Shot, current Asset etc). \nNot syncing frame range."
+            self.parent.logger.warning(warning_message)
+            QtGui.QMessageBox.warning(None, "Context has no entity", warning_message)
+            return
+
+        try:
+            # get app
+            frame_range_app = engine.apps["tk-multi-setframerange"]
+        except KeyError as ke:
+            error_message = "Unable to find {} in {} at this time. " \
+                            "Not syncing frame range automatically.".format(ke, engine.name)
+            # assume it is sequence/asset entity and do not give a pop-up warning
+            self.parent.logger.warning(error_message)
+        else:
+            try:
+                frame_range_app.run_app()
+            except TankError as te:
+                warning_message = "{}. Not syncing frame range.".format(te)
+                self.parent.logger.warning(warning_message)
+                QtGui.QMessageBox.warning(None, "Entity has no in/out frame", warning_message)
