@@ -13,6 +13,7 @@ import maya.cmds as cmds
 import maya.mel as mel
 
 import sgtk
+from sgtk import TankError
 from sgtk.platform.qt import QtGui
 
 HookClass = sgtk.get_hook_baseclass()
@@ -131,7 +132,6 @@ class SceneOperation(HookClass):
             # do new file:
             cmds.file(newFile=True, force=True)
             if parent_action == "new_file":
-                self.set_show_preferences(file_path, context)
                 self.sync_frame_range()
             return True
 
@@ -457,26 +457,6 @@ class SceneOperation(HookClass):
         return prefix, ext
 
     def sync_frame_range(self):
-        # role = os.getenv("DD_ROLE", "")
-        # pref = preferences.Preferences('sgtk_config_environments.yaml', package='sgtk_config',
-        #                                role=role,
-        #                                )
-        # in_frame = pref.get('default_in_frame')
-        # out_frame = pref.get('default_out_frame')
-        # if in_frame and out_frame:
-        #     import pymel.core as pm
-        #
-        #     # set frame ranges for plackback
-        #     pm.playbackOptions(minTime=in_frame,
-        #                        maxTime=out_frame,
-        #                        animationStartTime=in_frame,
-        #                        animationEndTime=out_frame)
-        #
-        #     # set frame ranges for rendering
-        #     defaultRenderGlobals = pm.PyNode('defaultRenderGlobals')
-        #     defaultRenderGlobals.startFrame.set(in_frame)
-        #     defaultRenderGlobals.endFrame.set(out_frame)
-        # else:
         engine = self.parent.engine
         if engine.context.entity is None:
             # tk-multi-setframerange needs a context entity to work
