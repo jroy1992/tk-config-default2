@@ -59,6 +59,7 @@ settings.tk-houdini.asset:
     tk-houdini-alembicnode: "@settings.tk-houdini-alembicnode"
     tk-houdini-geometrynode: "@settings.tk-houdini-geometrynode"
     tk-houdini-mantranode: "@settings.tk-houdini-mantranode"
+    tk-multi-setframerange: "@settings.tk-multi-setframerange"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   - {app_instance: tk-multi-snapshot, name: Snapshot...}
