@@ -24,6 +24,7 @@ includes:
 - ./apps/tk-nuke-quickdailies.yml
 - ./apps/tk-nuke-writenode.yml
 - ./apps/tk-multi-breakdown.yml
+- ./apps/tk-multi-setframerange.yml
 
 ################################################################################
 

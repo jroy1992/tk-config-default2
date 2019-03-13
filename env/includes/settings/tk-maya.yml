@@ -22,6 +22,7 @@ includes:
 - ./apps/tk-multi-snapshot.yml
 - ./apps/tk-multi-workfiles2.yml
 - ./apps/tk-multi-breakdown.yml
+- ./apps/tk-multi-setframerange.yml
 
 ################################################################################
 

@@ -25,6 +25,7 @@ includes:
 - ./apps/tk-houdini-alembicnode.yml
 - ./apps/tk-houdini-geometrynode.yml
 - ./apps/tk-houdini-mantranode.yml
+- ./apps/tk-multi-setframerange.yml
 
 ################################################################################
 
