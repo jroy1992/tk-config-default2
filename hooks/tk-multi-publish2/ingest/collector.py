@@ -103,6 +103,15 @@ class IngestCollectorPlugin(HookBaseClass):
             "default_value": {},
             "description": "Default fields to use, with this item"
         }
+        items_schema["non_editable_fields"] = {
+            "type": list,
+            "values": {
+                "type": "str",
+            },
+            "allows_empty": True,
+            "default_value": ["width", "height", "DD", "MM", "YYYY", "SEQ", "eye"],
+            "description": "List of non-editable fields for in the settings widget."
+        }
         schema["Manifest SG Mappings"] = {
             "type": "dict",
             "values": {
@@ -441,6 +450,9 @@ class IngestCollectorPlugin(HookBaseClass):
             for key, value in item_info["default_fields"].iteritems():
                 if key not in fields:
                     fields[key] = value
+
+        if "non_editable_fields" in item_info:
+            item.properties.non_editable_fields = item_info["non_editable_fields"]
 
         return fields
 
