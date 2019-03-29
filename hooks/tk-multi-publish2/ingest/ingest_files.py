@@ -67,15 +67,20 @@ class IngestFilesPlugin(HookBaseClass):
         contain simple html for formatting.
         """
 
-        return """
-        Ingests the file to the location specified by the publish_path_template for this item and
-        creates a <b>PublishedFile</b> entity in Shotgun, which will include a
-        reference to the file's published path on disk.
+        loader_url = "https://support.shotgunsoftware.com/hc/en-us/articles/219033078"
 
-        After the <b>PublishedFile</b> is created successfully, a <b>Plate/Asset</b> entity is also created.
-        The <b>PublishedFile</b> is then linked to it's corresponding <b>Plate/Asset</b> entity for other users to use.
-        Once the ingestion is complete these files can be accessed using the Loader window within each DCC.
-        """
+        return """
+        <p>Ingests the file to the location specified by the publish_path_template
+        for this item and creates a <b>PublishedFile</b> entity in Shotgun, 
+        which will include a reference to the file's published path on disk.</br>
+        
+        <h3>Ingestion Process</h3>
+        After the <b>PublishedFile</b> is created successfully, 
+        a <b>Plate/Asset</b> entity is also created.The <b>PublishedFile</b> is 
+        then linked to it's corresponding <b>Plate/Asset</b> entity for the users.
+        After ingestion these files can be accessed via the 
+        <b><a href='%s'>Loader</a></b></p>
+        """ % (loader_url,)
 
     def accept(self, task_settings, item):
         """
@@ -395,6 +400,10 @@ class IngestFilesPlugin(HookBaseClass):
         :param item: item to find the linked entity for.
         :return: linked entity or None if not found.
         """
+
+        # add the linked_entity_type to item properties
+        item.properties["linked_entity_type"] = self._resolve_linked_entity_type(task_settings, item)
+
         sg_filters = [
             ['project', 'is', item.context.project],
             ['code', 'is', item.properties["publish_linked_entity_name"]]
@@ -406,12 +415,12 @@ class IngestFilesPlugin(HookBaseClass):
             elif item.context.entity["type"] == "Sequence":
                 sg_filters.append(['sg_sequence', 'is', item.context.entity])
             elif item.context.entity["type"] == "Asset":
-                sg_filters.append(['parents', 'is', item.context.entity])
+                if item.properties["linked_entity_type"] == "Asset":
+                    sg_filters.append(['parents', 'is', item.context.entity])
+                if item.properties["linked_entity_type"] == "Element":
+                    sg_filters.append(['assets', 'in', item.context.entity])
 
         fields.extend(['shots', 'code', 'id'])
-
-        # add the linked_entity_type to item properties
-        item.properties["linked_entity_type"] = self._resolve_linked_entity_type(task_settings, item)
 
         item_fields = item.properties["fields"]
 
@@ -504,8 +513,13 @@ class IngestFilesPlugin(HookBaseClass):
                 data["sg_sequence"] = item.context.entity
             # link the new entity to an Asset
             elif item.context.entity["type"] == "Asset" and item.properties["linked_entity_type"] == "Asset":
-                # add the context asset entity as the parent asset
-                data["parents"] = [item.context.entity]
+                if item.properties["linked_entity_type"] == "Asset":
+                    # add the context asset entity as the parent asset
+                    data["parents"] = [item.context.entity]
+                if item.properties["linked_entity_type"] == "Element":
+                    # add the context asset entity as a plate
+                    data["elements"] = [item.context.entity]
+
 
                 # if it's a sequence based asset
                 sequence_entity = [entity for entity in item.context.additional_entities
