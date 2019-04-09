@@ -77,19 +77,17 @@ aliases:
     tk-mari_sequence_asset_publish_file:    'sequence_asset_publish_mari_session'
     tk-mari_shot_asset_publish_file:        'shot_asset_publish_mari_session'
 
-
-strings:
-
     # SHOT PROJECT NAME
-    tk-mari_project_project_name:           '{Step}_{mari.project_name}'
-    tk-mari_sequence_project_name:          '{Sequence}_{Step}_{mari.project_name}'
-    tk-mari_shot_project_name:              '{Sequence}_{Shot}_{Step}_{mari.project_name}'
+    tk-mari_project_project_name:           'project_publish_name'
+    tk-mari_sequence_project_name:          'sequence_publish_name'
+    tk-mari_shot_project_name:              'shot_publish_name'
 
     # ASSET PROJECT NAME
-    tk-mari_project_asset_project_name:     '{Step}_{AssetType}-{Asset}-{mari.project_name}'
-    tk-mari_sequence_asset_project_name:    '{Sequence}_{Step}_{AssetType}-{Asset}-{mari.project_name}'
-    tk-mari_shot_asset_project_name:        '{Sequence}_{Shot}_{Step}_{AssetType}-{Asset}-{mari.project_name}'
+    tk-mari_project_asset_project_name:     'project_asset_publish_name'
+    tk-mari_sequence_asset_project_name:    'sequence_asset_publish_name'
+    tk-mari_shot_asset_project_name:        'shot_asset_publish_name'
 
+strings:
     # SHOT ASSET TEXTURE NAME
     tk-mari_project_texture_name:           '@tk-mari_project_project_name@channel_name'
     tk-mari_sequence_texture_name:          '@tk-mari_sequence_project_name@channel_name'
