@@ -88,9 +88,14 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
             playback_end = pm.playbackOptions(q=True, maxTime=True)
             collected_playblast_firstframe = info_by_path.get(lss_path)['frame_range'][0]
             collected_playblast_lastframe = info_by_path.get(lss_path)['frame_range'][1]
-            if (collected_playblast_firstframe != playback_start) or (collected_playblast_lastframe != playback_end):
+            if (collected_playblast_firstframe > playback_start) or (collected_playblast_lastframe < playback_end):
                 self.logger.error("Incomplete playblast! All the frames are not in the playblast.")
                 return False
+            elif (collected_playblast_firstframe < playback_start) or (collected_playblast_lastframe > playback_end):
+                self.logger.warning("Playblast exceeds Shotgun frame range.")
+                QtGui.QMessageBox.warning(None, "PLayblast frame range mismatch!",
+                                          "WARNING! Playblast exceeds Shotgun frame range.")
+                return True
         return True
 
 

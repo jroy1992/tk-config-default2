@@ -68,10 +68,11 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         else:
             first_rendered_frame = info_by_path.get(lss_path)['frame_range'][0]
             last_rendered_frame = info_by_path.get(lss_path)['frame_range'][1]
-            if (first_rendered_frame < root.firstFrame()) or (last_rendered_frame < root.lastFrame()):
+
+            if (first_rendered_frame > root.firstFrame()) or (last_rendered_frame < root.lastFrame()):
                 self.logger.warning("Renders Mismatch! Incomplete renders on disk.")
                 nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Incomplete renders on disk.")
-            elif (first_rendered_frame > root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
+            elif (first_rendered_frame < root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
                 self.logger.warning("Renders Mismatch! Extra renders on disk.")
                 nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Extra renders on disk.")
         return True
