@@ -88,16 +88,20 @@ keys:
         type: int
     node:
         type: str
+        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
         alias: output
         str_from_value_hook: 'name_converter'
         edit_types:
           - path_safe
     channel:
         type: str
+        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
     layer:
         type: str
+        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
     aov_name:
         type: str
+        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
     SEQ:
         type: sequence
         format_spec: '04'
