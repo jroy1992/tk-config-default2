@@ -104,6 +104,7 @@ class SceneOperation(HookClass):
             # open the specified script
             self.set_show_preferences(fields)
             nuke.scriptOpen(file_path)
+            self.set_environment_variables(fields)
             self.set_ocio_context(fields)
 
             # reset any write node render paths:
@@ -154,6 +155,8 @@ class SceneOperation(HookClass):
             if parent_action == "new_file":
                 self.set_show_preferences(fields)
                 self.sync_frame_range()
+                self.set_environment_variables(fields)
+                self.set_ocio_context(fields)
 
             return True
 
@@ -218,12 +221,22 @@ class SceneOperation(HookClass):
             self.parent.logger.warning("Unable to find {} in show preferences. "
                                        "Not setting fps.".format(ke))
 
+    def set_environment_variables(self, fields):
+        """
+        Set Environment variables for current session
+        """
+        sequence = fields.get("Sequence", "")
+        shot = fields.get("Shot", "")
+
+        os.environ["DD_SEQ"] = sequence
+        os.environ["DD_SHOT"] = shot
+
     def set_ocio_context(self, fields):
         """
         Set OCIO context for current OCIODisplay node
         """
-        sequence = fields.get("Sequence")
-        shot = fields.get("Shot")
+        sequence = fields.get("Sequence", "")
+        shot = fields.get("Shot", "")
 
         ocio_display_node = nuke.ViewerProcess.node()
         if ocio_display_node and ocio_display_node.Class() == "OCIODisplay":
