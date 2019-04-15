@@ -291,8 +291,6 @@ class CustomMariActions(HookBaseClass):
         frame_range = self._find_sequence_range(path)
 
         if frame_range:
-            frame_number = frame_range[0]
-
             FRAME_PATTERN_REGEX = re.compile(r"([0-9#]+|[%]0\dd)$")
             root, ext = os.path.splitext(path)
             frame_pattern_match = re.search(FRAME_PATTERN_REGEX, root)
@@ -302,13 +300,21 @@ class CustomMariActions(HookBaseClass):
             frame_spec_pattern_match = re.search(FRAME_SPEC_REGEX, frame_pattern)
             padding = int(frame_spec_pattern_match.groups()[0])
 
-            path = path.replace(str(frame_pattern), str(frame_number).zfill(padding))
-            # TODO: #1275 change this later to give a pop-up and ask for frame number
-            # for now picking the first frame.
+            min_frame, max_frame = frame_range
+            if min_frame == max_frame:
+                frame_number = min_frame
+            else:
+                # ask user for frame number
+                frame_number, response = QtGui.QInputDialog.getInt(
+                    None, "Frame Number", "Enter the frame number ({}-{}) "
+                                          "that you want to load: ".format(min_frame, max_frame),
+                    minValue=min_frame, maxValue=max_frame
+                )
+                if not response:
+                    self.parent.logger.warning("User pressed Cancel. Not loading image.")
+                    return
 
-            # layer_name = "%s.v%s.%d" % (sg_publish_data.get("name"),
-            #                             sg_publish_data.get("version_number"),
-            #                             frame_number)
+            path = path.replace(str(frame_pattern), str(frame_number).zfill(padding))
 
             # add the image to image manager
             mari.images.open(path)
