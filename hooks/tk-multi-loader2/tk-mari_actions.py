@@ -18,10 +18,11 @@ import glob
 import yaml
 # sgtk
 import sgtk
+from sgtk.platform.qt import QtGui
 from sgtk import TankError
 # mari
 import mari
-from Qt import QtWidgets, QtCore
+
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -98,6 +99,12 @@ class CustomMariActions(HookBaseClass):
                                      "params": None,
                                      "caption": "Import Reference Camera",
                                      "description": "This will import camera as a projector."})
+        if 'swap_geometry' in actions:
+            action_instances.append({"name": "swap_geometry",
+                                     "params": None,
+                                     "caption": "Swap Current Geometry",
+                                     "description": "This will swap the current geometry with a "
+                                                    "Shotgun published geometry."})
 
         return action_instances
 
@@ -129,9 +136,27 @@ class CustomMariActions(HookBaseClass):
             self._add_to_image_manager(path, sg_publish_data)
         elif name == "ref_camera_import":
             self._import_ref_camera(path, sg_publish_data)
+        elif name == "swap_geometry":
+            geo = mari.geo.current()
+            self._swap_geometry(geo, sg_publish_data)
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
+
+    def _swap_geometry(self, geo, sg_publish_data):
+        mari_engine = self.parent.engine
+
+        version_list = geo.versionNames()
+        if len(version_list) > 1:
+            # warn that we are removing all of them
+            message = "The geo '{}' has multiple versions attached with it:\n{}\n" \
+                      "Are you sure you want to proceed?".format(geo.name(), version_list)
+            response = QtGui.QMessageBox.question(None, "Removing multiple geo versions!", message,
+                                                  QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+            if response == QtGui.QMessageBox.No:
+                return
+
+        mari_engine.swap_geometry(geo, sg_publish_data, options=None)
 
     @staticmethod
     def _sequence_range_from_path(path):
@@ -211,7 +236,7 @@ class CustomMariActions(HookBaseClass):
 
         # get the fields and find all matching files:
         fields = template.get_fields(path)
-        if not "SEQ" in fields:
+        if "SEQ" not in fields:
             # Ticket #655: older paths match wrong templates,
             # so fall back on path parsing
             return self._sequence_range_from_path(path)
@@ -237,8 +262,6 @@ class CustomMariActions(HookBaseClass):
 
         :param sg_publish_data:     Shotgun data dictionary with all the standard publish fields.
         """
-        mari_engine = self.parent.engine
-
         layer_name = "%s-%s.v%d" % (sg_publish_data.get("entity").get("name"),
                                     sg_publish_data.get("name"),
                                     sg_publish_data.get("version_number"))
@@ -280,7 +303,8 @@ class CustomMariActions(HookBaseClass):
             padding = int(frame_spec_pattern_match.groups()[0])
 
             path = path.replace(str(frame_pattern), str(frame_number).zfill(padding))
-            # TODO: #1275 change this later to give a pop-up and ask for frame number, for now picking the first frame.
+            # TODO: #1275 change this later to give a pop-up and ask for frame number
+            # for now picking the first frame.
 
             # layer_name = "%s.v%s.%d" % (sg_publish_data.get("name"),
             #                             sg_publish_data.get("version_number"),
@@ -294,12 +318,12 @@ class CustomMariActions(HookBaseClass):
 
     def _import_ref_camera(self, path, sg_publish_data):
         template = None
-        metadata_path = None
         data_loaded = None
         error_msg = ''
         missing_cam = []
         missing_img_path = []
         ref_image_missing = []
+
         try:
             template = self.parent.sgtk.template_from_path(path)
         except sgtk.TankError:
@@ -325,11 +349,12 @@ class CustomMariActions(HookBaseClass):
             self.parent.logger.warning("Unable to apply fields: {}"
                                        "\nto metadata template: {}".format(fields, metadata_template_name))
             return None
+
         try:
             with open(metadata_path, 'r') as stream:
                 data_loaded = yaml.load(stream)
         except:
-            self.warning_dialogue('WARNING', 'Unable to load metadata File')
+            self.warning_dialogue('WARNING', 'Unable to load metadata file')
 
         if data_loaded:
             # Checking for object in Metadata file and removing if object exists in the scene
@@ -359,25 +384,14 @@ class CustomMariActions(HookBaseClass):
             self.warning_dialogue('WARNING', 'Metadata file is empty')
 
         if ref_image_missing:
-            error_msg += 'Camera not found in metadata - {} \n'.format(str(ref_image_missing))
+            error_msg += 'Reference image not found in metadata for camera - {}\n'.format(str(ref_image_missing))
         if missing_cam:
-            error_msg += 'Camera not found in metadata - {} \n'.format(str(missing_cam))
+            error_msg += 'Camera not found in metadata - {}\n'.format(str(missing_cam))
 
         if missing_img_path:
-            error_msg += 'Image path for camera does not exists - {} \n'.format(str(missing_img_path))
+            error_msg += 'Image path for camera does not exist - {}\n'.format(str(missing_img_path))
         if error_msg:
             self.warning_dialogue('Object Missing', error_msg)
 
     def warning_dialogue(self, title, msg):
-        message = QtWidgets.QMessageBox.warning(None, title, msg,
-                                                        buttons=QtWidgets.QMessageBox.Ok)
-
-
-
-
-
-
-
-
-
-
+        QtGui.QMessageBox.warning(None, title, msg)
