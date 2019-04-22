@@ -98,4 +98,4 @@ strings:
     tk-mari_sequence_asset_texture_name:    '@sequence_asset_publish_name@channel_name'
     tk-mari_shot_asset_texture_name:        '@shot_asset_publish_name@channel_name'
 
-    channel_name:                           '[-{node}]-{channel}[-{layer}]'
+    channel_name:                           '-{channel}[-{layer}]'
