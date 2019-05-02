@@ -432,7 +432,8 @@ class ColorProcessFilesPlugin(HookBaseClass):
                                  }
                              }
                              )
-            publisher.util.delete_files(pre_processed_paths)
+            for path in pre_processed_paths:
+                self.delete_files(task_settings, item, path)
 
         sg_publish_data_list = item.properties.get("sg_publish_data_list")
 
