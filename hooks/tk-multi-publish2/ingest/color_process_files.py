@@ -402,6 +402,7 @@ class ColorProcessFilesPlugin(HookBaseClass):
 
             # delete the rendered files
             self.undo(task_settings, item)
+            raise TankError(error_message)
         else:
             # register publishes
             for processed_path in item.properties.pre_processed_paths:
