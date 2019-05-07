@@ -402,6 +402,7 @@ class ColorProcessFilesPlugin(HookBaseClass):
 
             # delete the rendered files
             self.undo(task_settings, item)
+            raise TankError(error_message)
         else:
             # register publishes
             for processed_path in item.properties.pre_processed_paths:
@@ -431,7 +432,8 @@ class ColorProcessFilesPlugin(HookBaseClass):
                                  }
                              }
                              )
-            publisher.util.delete_files(pre_processed_paths)
+            for path in pre_processed_paths:
+                self.delete_files(task_settings, item, path)
 
         sg_publish_data_list = item.properties.get("sg_publish_data_list")
 
