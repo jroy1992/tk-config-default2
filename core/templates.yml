@@ -136,10 +136,13 @@ keys:
         type: str
         choices:
             tiff: tiff
+            tif: tif
             tx: tx
             tga: tga
             dds: dds
             rat: rat
+            png: png
+            tx: tx
         default: tiff
         alias: extension
     cdl.ext:

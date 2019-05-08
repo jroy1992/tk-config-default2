@@ -150,6 +150,15 @@ paths:
     ingest_sequence_output_render:          '@sequence_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_sequence_output_name.{SEQ}.{img.ext}'
     ingest_shot_output_render:              '@shot_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_shot_output_name.{SEQ}.{img.ext}'
 
+    # TEXTURES
+    ingest_project_publish_texture:           '@project_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_project_output_name[.{UDIM}].{tex.ext}'
+    ingest_sequence_publish_texture:          '@sequence_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_sequence_output_name[.{UDIM}].{tex.ext}'
+    ingest_shot_publish_texture:              '@shot_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_shot_output_name[.{UDIM}].{tex.ext}'
+
+    ingest_project_asset_publish_texture:     '@project_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_project_asset_output_name[.{UDIM}].{tex.ext}'
+    ingest_sequence_asset_publish_texture:    '@sequence_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_sequence_asset_output_name[.{UDIM}].{tex.ext}'
+    ingest_shot_asset_publish_texture:        '@shot_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_shot_asset_output_name[.{UDIM}].{tex.ext}'
+
     # PROXIES
     project_proxy_image:                    '@project_publish_area_image/{snapshot_type}/@proxy_subdirs/@ingest_project_output_name.{SEQ}.{img.ext}'
     sequence_proxy_image:                   '@sequence_publish_area_image/{snapshot_type}/@proxy_subdirs/@ingest_sequence_output_name.{SEQ}.{img.ext}'
