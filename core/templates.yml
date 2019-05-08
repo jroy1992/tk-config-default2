@@ -142,7 +142,6 @@ keys:
             dds: dds
             rat: rat
             png: png
-            tx: tx
         default: tiff
         alias: extension
     cdl.ext:
