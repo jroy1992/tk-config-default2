@@ -458,9 +458,9 @@ class IngestFilesPlugin(HookBaseClass):
         """
         try:
             linked_entity = self._find_linked_entity(task_settings, item)
-        except Exception:
+        except Exception as e:
             self.logger.error(
-                "find_linked_entity failed for item: %s" % item.name,
+                "create_linked_entity failed for item: %s" % item.name,
                 extra={
                     "action_show_more_info": {
                         "label": "Show Error Log",
@@ -469,7 +469,7 @@ class IngestFilesPlugin(HookBaseClass):
                     }
                 }
             )
-            return
+            raise e
 
         data = dict(
             code=item.properties["publish_linked_entity_name"],
@@ -555,7 +555,7 @@ class IngestFilesPlugin(HookBaseClass):
                 )
 
             return linked_entity
-        except Exception:
+        except Exception as e:
             self.logger.error(
                 "create_linked_entity failed for item: %s" % item.name,
                 extra={
@@ -566,7 +566,7 @@ class IngestFilesPlugin(HookBaseClass):
                     }
                 }
             )
-            return
+            raise e
 
     def _link_published_files_to_entity(self, task_settings, item):
         """
