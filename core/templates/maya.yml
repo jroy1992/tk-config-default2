@@ -17,6 +17,11 @@ keys:
         default: ma
         alias: extension
 
+    maya.std.ext:
+        type: str
+        choices:
+            ass: Arnold (.ass)
+        default: ass
 
 paths:
 
@@ -110,6 +115,10 @@ paths:
     tk-maya_sequence_asset_work_metadata:   '@tk-maya_sequence_asset_work_area/cache/metadata/@geom_subdirs/@sequence_asset_version_name.yaml'
     tk-maya_shot_asset_work_metadata:       '@tk-maya_shot_asset_work_area/cache/metadata/@geom_subdirs/@shot_asset_version_name.yaml'
 
+    # STAND-IN
+    tk-maya_project_asset_work_standin:    '@tk-maya_project_asset_work_area/cache/standin/@geom_subdirs/@project_asset_version_name.{maya.std.ext}'
+    tk-maya_sequence_asset_work_standin:   '@tk-maya_sequence_asset_work_area/cache/standin/@geom_subdirs/@sequence_asset_version_name.{maya.std.ext}'
+    tk-maya_shot_asset_work_standin:       '@tk-maya_shot_asset_work_area/cache/standin/@geom_subdirs/@shot_asset_version_name.{maya.std.ext}'
 
 aliases:
 

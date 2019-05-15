@@ -378,6 +378,11 @@ paths:
     sequence_asset_publish_cache:           '@sequence_asset_publish_area_anim/alembic/@geom_subdirs/@sequence_asset_version_name.abc'
     shot_asset_publish_cache:               '@shot_asset_publish_area_anim/alembic/@geom_subdirs/@shot_asset_version_name.abc'
 
+    # STANDIN
+    project_asset_publish_standin:           '@project_asset_publish_area_scene/standin/@geom_subdirs/@project_asset_version_name.{maya.std.ext}'
+    sequence_asset_publish_standin:          '@sequence_asset_publish_area_scene/standin/@geom_subdirs/@sequence_asset_version_name.{maya.std.ext}'
+    shot_asset_publish_standin:              '@shot_asset_publish_area_scene/standin/@geom_subdirs/@shot_asset_version_name.{maya.std.ext}'
+
     # REFERENCE CAMERA
     project_publish_ref_cam:               '@project_publish_area_model/ref_cam/@geom_subdirs/@project_version_name.abc'
     sequence_publish_ref_cam:              '@sequence_publish_area_model/ref_cam/@geom_subdirs/@sequence_version_name.abc'
