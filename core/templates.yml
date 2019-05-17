@@ -95,7 +95,7 @@ keys:
           - path_safe
     channel:
         type: str
-        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
+        filter_by: alphanumeric
     layer:
         type: str
         filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
