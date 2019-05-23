@@ -111,12 +111,6 @@ class CustomMayaActions(HookBaseClass):
                                      "description": "Creates a Reference node that can be localized by our shelf button"
                                                     "This should allow users to rename the top group if needed."})
 
-        if "create_standin_reference" in actions and "create_standin_reference" not in action_names:
-            action_instances.append({"name": "create_standin_reference",
-                                     "params": None,
-                                     "caption": "Create .ass reference node",
-                                     "description": "Creates a standin node reference, which reads the .ass path"})
-
         if "create_standin" in actions and "create_standin" not in action_names:
             action_instances.append({"name": "create_standin",
                                      "params": None,
@@ -166,9 +160,6 @@ class CustomMayaActions(HookBaseClass):
 
         if name == "create_importable_reference":
             self._create_importable_reference(path, sg_publish_data)
-
-        if name == "create_standin_reference":
-            self._create_standin_reference(path, sg_publish_data)
 
         if name == "create_standin":
             self._create_standin(path, sg_publish_data)
@@ -523,9 +514,6 @@ class CustomMayaActions(HookBaseClass):
                         cmds.sets(mesh_name, e=True, forceElement=shader)
                     except:
                         print "%s Shader assignment failed for %s" % (shader, mesh_name)
-
-    def _create_standin_reference(self, path, sg_publish_data):
-        self._create_reference(path, sg_publish_data)
 
     def _create_standin(self, path, sg_publish_data):
         """
