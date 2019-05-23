@@ -1,0 +1,46 @@
+# Copyright (c) 2017 Shotgun Software Inc.
+#
+# CONFIDENTIAL AND PROPRIETARY
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
+# Source Code License included in this distribution package. See LICENSE.
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
+# not expressly granted therein are reserved by Shotgun Software Inc.
+
+################################################################################
+
+includes:
+- ../../app_locations.yml
+
+################################################################################
+
+# This configuration is used whenever a general file manager
+# is needed. This configuration doesn't look for files,
+# but only lets you switch to a valid work area. When a user
+# switches (by selecting a task), the engine is restarted, and
+# another environment is loaded in. This environment will
+# have another file manager app running, with different settings,
+# allowing files to be loaded and saved.
+#
+# References to this @workfiles2 include typically appears at
+# 'transit' levels in the configuration, where work normally
+# doesn't happen, but you just want the user to jump to their
+# work area. The work area is typically a task or pipeline step
+# and these 'transit' areas can be project, shot, or sequence level.
+
+#settings.tk-multi-workfiles2.entities: &workfiles2_entities
+#  - caption: 'Asset Tasks'
+#    entity_type: Task
+#    filters:
+#      - [entity, type_is, Asset]
+#    hierarchy: [entity.Asset.sg_asset_type, entity, step, content]
+#  - caption: 'Shot Tasks'
+#    entity_type: Task
+#    filters:
+#      - [entity, type_is, Shot]
+#    hierarchy: [entity.Shot.sg_sequence, entity, step, content]
+
+settings.tk-multi-timelogger:
+  my_tasks_extra_display_fields: [entity.Shot.sg_sequence.Sequence.code]
+  location: "@apps.tk-multi-timelogger.location"
