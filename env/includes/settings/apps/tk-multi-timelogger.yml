@@ -29,17 +29,6 @@ includes:
 # work area. The work area is typically a task or pipeline step
 # and these 'transit' areas can be project, shot, or sequence level.
 
-#settings.tk-multi-workfiles2.entities: &workfiles2_entities
-#  - caption: 'Asset Tasks'
-#    entity_type: Task
-#    filters:
-#      - [entity, type_is, Asset]
-#    hierarchy: [entity.Asset.sg_asset_type, entity, step, content]
-#  - caption: 'Shot Tasks'
-#    entity_type: Task
-#    filters:
-#      - [entity, type_is, Shot]
-#    hierarchy: [entity.Shot.sg_sequence, entity, step, content]
 
 settings.tk-multi-timelogger:
   my_tasks_extra_display_fields: [entity.Shot.sg_sequence.Sequence.code]
