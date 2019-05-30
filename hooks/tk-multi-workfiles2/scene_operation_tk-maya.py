@@ -197,6 +197,7 @@ class SceneOperation(HookClass):
                                                  role=fields.get("Step"),
                                                  seq_override=fields.get("Sequence"),
                                                  shot_override=fields.get("Shot"))
+            print '-------fields', fields
             self.set_render_settings(fields=fields,
                                      placeholder_render_path=render_path,
                                      frame_sq_key=frame_sq_key,
@@ -227,6 +228,7 @@ class SceneOperation(HookClass):
         return render_temp
 
     def apply_overrides(self, node, enum_overrides, other_overrides):
+        print ', node, enum_overrides, other_overrides', node, enum_overrides, other_overrides
         """
         Helper function to set attribute overrides for a maya node.
 
@@ -264,6 +266,7 @@ class SceneOperation(HookClass):
 
         :returns:               None
         """
+        print '----fields',fields
         render_path = placeholder_render_path.replace(LAYER_PLACEHOLDER, "<RenderLayer>")
         # set resolution
         self.unlock_and_set_attr("defaultResolution.aspectLock", False, lock=True)
@@ -289,9 +292,10 @@ class SceneOperation(HookClass):
         self.set_enum_attr("defaultRenderGlobals.periodInExt", "Period in Extension", lock=True)
 
         # set overrides from preferences, if any exist
-        enum_overrides = prefs.get("sgtk_render_settings", {}).get("default", {}).get("enum_attr", {})
-        other_overrides = prefs.get("sgtk_render_settings", {}).get("default", {}).get("other", {})
-        self.apply_overrides("defaultRenderGlobals", enum_overrides, other_overrides)
+        for e_item in ["defaultRenderGlobals", "defaultResolution"]:
+            enum_overrides = prefs.get("sgtk_render_settings", {}).get(e_item, {}).get("enum_attr", {})
+            other_overrides = prefs.get("sgtk_render_settings", {}).get(e_item, {}).get("other", {})
+            self.apply_overrides(e_item, enum_overrides, other_overrides)
 
     def set_vray_render_settings(self, fields, placeholder_render_path, frame_sq_key, prefs):
         """
