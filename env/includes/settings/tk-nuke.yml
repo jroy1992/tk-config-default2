@@ -42,7 +42,6 @@ settings.tk-nuke:
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   - {app_instance: tk-multi-timelogger, name: Time Logger...}
-  - {app_instance: tk-multi-loader2, name: Load...}
   run_at_startup:
   - {app_instance: tk-multi-shotgunpanel, name: 'Shotgun Panel...'}
   location: "@engines.tk-nuke.location"
