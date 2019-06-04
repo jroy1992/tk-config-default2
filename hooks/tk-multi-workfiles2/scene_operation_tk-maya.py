@@ -228,7 +228,6 @@ class SceneOperation(HookClass):
         return render_temp
 
     def apply_overrides(self, node, enum_overrides, other_overrides):
-        print ', node, enum_overrides, other_overrides', node, enum_overrides, other_overrides
         """
         Helper function to set attribute overrides for a maya node.
 
