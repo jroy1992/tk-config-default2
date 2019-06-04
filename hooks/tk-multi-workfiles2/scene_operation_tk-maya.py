@@ -133,6 +133,7 @@ class SceneOperation(HookClass):
             cmds.file(newFile=True, force=True)
             if parent_action == "new_file":
                 self.sync_frame_range()
+                self.parent.engine.commands["File Save..."]["callback"]()
             return True
 
     def set_show_preferences(self, file_path, context):
@@ -197,7 +198,6 @@ class SceneOperation(HookClass):
                                                  role=fields.get("Step"),
                                                  seq_override=fields.get("Sequence"),
                                                  shot_override=fields.get("Shot"))
-            print '-------fields', fields
             self.set_render_settings(fields=fields,
                                      placeholder_render_path=render_path,
                                      frame_sq_key=frame_sq_key,
@@ -266,7 +266,6 @@ class SceneOperation(HookClass):
 
         :returns:               None
         """
-        print '----fields',fields
         render_path = placeholder_render_path.replace(LAYER_PLACEHOLDER, "<RenderLayer>")
         # set resolution
         self.unlock_and_set_attr("defaultResolution.aspectLock", False, lock=True)
@@ -378,7 +377,8 @@ class SceneOperation(HookClass):
                                          attribute_type="string", lock=True)
                 if ext == "exr":
                     # if not exr, assume other settings are specified as overrides
-                    self.set_enum_attr("{}.exrCompression".format(node), "zips", lock=True)
+                    exr_compression = enum_overrides.get('exrCompression', 'dwaa')
+                    self.set_enum_attr("{}.exrCompression".format(node), exr_compression, lock=True)
             else:
                 self.unlock_and_set_attr("{}.prefix".format(node),
                                          prefix.replace(LAYER_PLACEHOLDER, "<RenderLayer>Deep"),
