@@ -132,6 +132,7 @@ class SceneOperation(HookClass):
             # do new file:
             cmds.file(newFile=True, force=True)
             if parent_action == "new_file":
+                self.parent.engine.commands["File Save..."]["callback"]()
                 self.sync_frame_range()
             return True
 
