@@ -133,6 +133,7 @@ class SceneOperation(HookClass):
             cmds.file(newFile=True, force=True)
             if parent_action == "new_file":
                 self.sync_frame_range()
+                self.parent.engine.commands["File Save..."]["callback"]()
             return True
 
     def set_show_preferences(self, file_path, context):
@@ -289,9 +290,10 @@ class SceneOperation(HookClass):
         self.set_enum_attr("defaultRenderGlobals.periodInExt", "Period in Extension", lock=True)
 
         # set overrides from preferences, if any exist
-        enum_overrides = prefs.get("sgtk_render_settings", {}).get("default", {}).get("enum_attr", {})
-        other_overrides = prefs.get("sgtk_render_settings", {}).get("default", {}).get("other", {})
-        self.apply_overrides("defaultRenderGlobals", enum_overrides, other_overrides)
+        for e_item in ["defaultRenderGlobals", "defaultResolution"]:
+            enum_overrides = prefs.get("sgtk_render_settings", {}).get(e_item, {}).get("enum_attr", {})
+            other_overrides = prefs.get("sgtk_render_settings", {}).get(e_item, {}).get("other", {})
+            self.apply_overrides(e_item, enum_overrides, other_overrides)
 
     def set_vray_render_settings(self, fields, placeholder_render_path, frame_sq_key, prefs):
         """
@@ -374,7 +376,8 @@ class SceneOperation(HookClass):
                                          attribute_type="string", lock=True)
                 if ext == "exr":
                     # if not exr, assume other settings are specified as overrides
-                    self.set_enum_attr("{}.exrCompression".format(node), "zips", lock=True)
+                    exr_compression = enum_overrides.get('exrCompression', 'dwaa')
+                    self.set_enum_attr("{}.exrCompression".format(node), exr_compression, lock=True)
             else:
                 self.unlock_and_set_attr("{}.prefix".format(node),
                                          prefix.replace(LAYER_PLACEHOLDER, "<RenderLayer>Deep"),
