@@ -30,6 +30,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         # call base init
         super(NukePublishDDValidationPlugin, self).__init__(parent, **kwargs)
         self.visited_dict = {}
+        self.write_node_paths_dict = {}
 
 
     def _build_dict(self, seq, key):
@@ -252,6 +253,27 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         return True
 
 
+    def _check_write_node_paths(self, item):
+        node_path = item.properties['node']['cached_path'].value()
+        node_name = item.properties['node'].name()
+        all_paths = self.write_node_paths_dict.values()
+        if node_path in all_paths:
+            duplicate_node_name = [key for (key, value) in self.write_node_paths_dict.items() if value == node_path]
+            self.logger.error("Duplicate output path.",
+                              extra={
+                                  "action_show_more_info": {
+                                      "label": "Show Info",
+                                      "tooltip": "Show node(s) with identical output path",
+                                      "text": "Following node(s) have same output path as {}:\n\n{}".
+                              format(node_name, '\n'.join(duplicate_node_name))
+                                  }
+                              }
+                              )
+            return False
+        self.write_node_paths_dict[node_name] = node_path
+        return True
+
+
     def validate(self, task_settings, item):
         """
         Validates the given item to check that it is ok to publish. Returns a
@@ -278,6 +300,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
 
             status = self._read_and_camera_file_paths(item) and status
             status = self._framerange_to_be_published(item) and status
+            status = self._check_write_node_paths(item) and status
 
         if not status:
             return status
