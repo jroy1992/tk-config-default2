@@ -253,7 +253,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         return True
 
 
-    def _check_write_node_paths(self, item):
+    def _check_write_node_path(self, item):
         node_path = item.properties['node']['cached_path'].value()
         node_name = item.properties['node'].name()
         all_paths = self.write_node_paths_dict.values()
@@ -300,7 +300,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
 
             status = self._read_and_camera_file_paths(item) and status
             status = self._framerange_to_be_published(item) and status
-            status = self._check_write_node_paths(item) and status
+            status = self._check_write_node_path(item) and status
 
         if not status:
             return status
