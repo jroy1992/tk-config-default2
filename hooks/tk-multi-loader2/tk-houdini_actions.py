@@ -172,6 +172,14 @@ class CustomHoudiniActions(HookBaseClass):
 
         # houdini doesn't like UNC paths.
         path = path.replace("\\", "/")
+        # replace any %0#d format string with the corresponding houdini frame
+        # env variable. example %04d => $F4
+        frame_pattern = re.compile("(%0(\d)d)")
+        frame_match = re.search(frame_pattern, path)
+        if frame_match:
+            full_frame_spec = frame_match.group(1)
+            padding = frame_match.group(2)
+            path = path.replace(full_frame_spec, "$F%s" % (padding,))
 
         obj_context = parent_module._get_current_context("/obj")
 
