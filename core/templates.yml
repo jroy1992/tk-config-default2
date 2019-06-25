@@ -152,6 +152,13 @@ keys:
         default: cc
         alias: extension
 
+    sil.ext:
+        type: str
+        choices:
+            sfx: sfx
+        default: sfx
+        alias: extension
+
     # Hook-modified keys (camelCase)
     customKeyExample:
         type: str
@@ -309,6 +316,11 @@ paths:
     project_asset_publish_maya_scene:       '@project_asset_publish_area_scene/@project_asset_version_name.{maya.ext}'
     sequence_asset_publish_maya_scene:      '@sequence_asset_publish_area_scene/@sequence_asset_version_name.{maya.ext}'
     shot_asset_publish_maya_scene:          '@shot_asset_publish_area_scene/@shot_asset_version_name.{maya.ext}'
+
+    # Silhouette SCENES
+    project_publish_sil_scene:             '@project_publish_area_scene/@project_version_name.{sil.ext}'
+    sequence_publish_sil_scene:            '@sequence_publish_area_scene/@sequence_version_name.{sil.ext}'
+    shot_publish_sil_scene:                '@shot_publish_area_scene/@shot_version_name.{sil.ext}'
 
     # NUKE SCRIPTS
     project_publish_nuke_script:            '@project_publish_area_script/@project_version_name.nk'
