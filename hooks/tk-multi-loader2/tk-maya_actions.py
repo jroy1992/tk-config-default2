@@ -123,6 +123,12 @@ class CustomMayaActions(HookBaseClass):
                                      "caption": "Import Standin To Selected Node",
                                      "description": "Add standin path to selected node"})
 
+        if "import_without_namespace" in actions:
+            action_instances.append( {"name": "import_without_namespace",
+                                      "params": None,
+                                      "caption": "Import into Scene without namespace",
+                                      "description": "This will import the item into the current scene without namespace."} )
+
         return action_instances
 
     def execute_action(self, name, params, sg_publish_data):
@@ -166,6 +172,9 @@ class CustomMayaActions(HookBaseClass):
 
         if name == "import_standin":
             self._import_standin(path, sg_publish_data)
+
+        if name == "import_without_namespace":
+            self._do_import_without_namespace(path, sg_publish_data)
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
@@ -545,3 +554,26 @@ class CustomMayaActions(HookBaseClass):
         # change aiTranslator type and add .ass file path
         cmds.setAttr("{}.aiTranslator".format(shape_node[0]), "procedural", type="string")
         cmds.setAttr("{}.dso".format(shape_node[0]), path, type="string")
+
+    def _do_import_without_namespace(self, path, sg_publish_data):
+        """
+        Create a reference with the same settings Maya would use
+        if you used the create settings dialog without namespace.
+
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        """
+        if not os.path.exists(path):
+            raise Exception("File not found on disk - '%s'" % path)
+
+        # make a name space out of entity name + publish name
+        # e.g. bunny_upperbody
+        namespace = "%s %s" % (sg_publish_data.get("entity").get("name"), sg_publish_data.get("name"))
+        namespace = namespace.replace(" ", "_")
+        namespace = namespace.replace("-", "_")
+
+        # perform a more or less standard maya import, putting all nodes brought in into a specific namespace
+        cmds.file(path, i=True, renameAll=True, namespace='', loadReferenceDepth="all", preserveReferences=True)
+        # remove the namespace
+        # we cannot import without namespace since maya will then use fine name as default namespace
+        cmds.namespace(rm=namespace, mnr=True)
