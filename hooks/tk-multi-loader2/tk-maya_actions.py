@@ -566,14 +566,13 @@ class CustomMayaActions(HookBaseClass):
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
 
-        # make a name space out of entity name + publish name
-        # e.g. bunny_upperbody
-        namespace = "%s %s" % (sg_publish_data.get("entity").get("name"), sg_publish_data.get("name"))
-        namespace = namespace.replace(" ", "_")
-        namespace = namespace.replace("-", "_")
+        renaming_prefix = sg_publish_data.get("code")
+        # split at the last period to remove the maya extension
+        renaming_prefix = renaming_prefix.rsplit('.', 1)[0]
+        # replace [" ", "-", "."] with underscore and that will be the renamingPrefix used
+        for item in [" ", "-", "."]:
+            renaming_prefix = renaming_prefix.replace(item, "_")
 
-        # perform a more or less standard maya import, putting all nodes brought in into a specific namespace
-        cmds.file(path, i=True, renameAll=True, namespace='', loadReferenceDepth="all", preserveReferences=True)
-        # remove the namespace
-        # we cannot import without namespace since maya will then use fine name as default namespace
-        cmds.namespace(rm=namespace, mnr=True)
+        cmds.file(path, i=True, loadReferenceDepth="all", preserveReferences=True, mergeNamespacesOnClash=False,
+                  options="v=0;p=17;f=0", ignoreVersion=1, type="mayaAscii",
+                  renamingPrefix=renaming_prefix, importTimeRange="combine")
