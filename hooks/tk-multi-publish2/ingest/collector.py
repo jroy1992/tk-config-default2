@@ -14,6 +14,9 @@ import traceback
 import pprint
 import re
 
+from functools import reduce
+import operator
+
 import sgtk
 import tank
 from tank_vendor import yaml
@@ -40,8 +43,15 @@ DEFAULT_MANIFEST_SG_MAPPINGS = {
 
 # This is a dictionary of note_type values to item type.
 DEFAULT_NOTE_TYPES_MAPPINGS = {
+    None: "kickoff",
     "kickoff": "kickoff",
     "role supervisor": "annotation",
+}
+
+# This is a dictionary of note_type values to their access keys in the fields dict.
+DEFAULT_NOTE_TYPES_ACCESS_KEYS = {
+    "kickoff": ["sg_version", "name"],
+    "annotation": ["sg_version", "name"],
 }
 
 
@@ -109,7 +119,19 @@ class IngestCollectorPlugin(HookBaseClass):
             },
             "default_value": DEFAULT_NOTE_TYPES_MAPPINGS,
             "allows_empty": True,
-            "description": "Mapping of keys in Manifest to SG template keys."
+            "description": "dictionary of note_type values to their item type."
+        }
+        schema["Note Type Access Keys"] = {
+            "type": "dict",
+            "values": {
+                "type": "list",
+                "values": {
+                    "type": "str",
+                },
+            },
+            "default_value": DEFAULT_NOTE_TYPES_ACCESS_KEYS,
+            "allows_empty": True,
+            "description": "Dictionary of note_type values to their access keys in the fields dict."
         }
         schema["Ignore Extensions"] = {
             "type": "list",
@@ -237,6 +259,7 @@ class IngestCollectorPlugin(HookBaseClass):
         publisher = self.parent
 
         note_type_mappings = settings["Note Type Mappings"].value
+        note_type_acess_keys = settings["Note Type Access Keys"].value
 
         raw_item_settings = settings["Item Types"].raw_value
 
@@ -255,10 +278,12 @@ class IngestCollectorPlugin(HookBaseClass):
             )
             return
 
-        path = fields["sg_version"]["name"] + ".%s" % note_type_mappings[manifest_note_type]
+        note_type = note_type_mappings[manifest_note_type]
+
+        path = reduce(operator.getitem, note_type_acess_keys[note_type], fields) + ".%s" % note_type
         display_name = path + ".notes"
 
-        item_type = "notes.entity.%s" % note_type_mappings[manifest_note_type]
+        item_type = "notes.entity.%s" % note_type
 
         relevant_item_settings = raw_item_settings[item_type]
         raw_template_name = relevant_item_settings.get("work_path_template")
@@ -276,9 +301,13 @@ class IngestCollectorPlugin(HookBaseClass):
         templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
                              template_names_per_env if self.parent.get_template_by_name(template_name)]
         for template in templates_per_env:
-            if template.validate(path):
+            try:
+                template.get_fields(path)
                 # we have a match!
                 work_path_template = template.name
+            except:
+                # it errored out
+                continue
 
         if work_path_template:
             # calculate the context and give to the item
@@ -422,6 +451,7 @@ class IngestCollectorPlugin(HookBaseClass):
 
         snapshots = list()
         notes = list()
+        versions = list()
         notes_index = 0
 
         with open(path, 'r') as f:
@@ -430,6 +460,8 @@ class IngestCollectorPlugin(HookBaseClass):
                 snapshots = contents["snapshots"]
                 if "notes" in contents:
                     notes = contents["notes"]
+                if "versions" in contents:
+                    versions = contents["versions"]
             except Exception:
                 self.logger.error(
                     "Failed to read the manifest file %s" % path,
@@ -481,14 +513,28 @@ class IngestCollectorPlugin(HookBaseClass):
 
             data = dict()
             snapshot_data = dict()
+            version_data = dict()
             data["fields"] = {note_item_manifest_mappings[k] if k in note_item_manifest_mappings else k: v
                               for k, v in note.iteritems()}
 
-            # every note item has a corresponding snapshot associated with it
-            if notes_index >= len(snapshots):
+            # every note item has a corresponding snapshot and version associated with it
+            if notes_index >= len(snapshots) or notes_index >= len(versions):
                 break
 
             note_snapshot = snapshots[notes_index]
+            note_version = versions[notes_index]
+
+            # pop the notes from version_data they are already stored
+            note_version.pop("notes")
+
+            version_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
+                                      for k, v in note_version.iteritems()}
+
+            # update the item fields with version_data fields
+            data["fields"].update(version_data["fields"])
+
+            # snapshot fields get priority over version fields
+
             snapshot_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
                                        for k, v in note_snapshot.iteritems()}
 
@@ -574,6 +620,47 @@ class IngestCollectorPlugin(HookBaseClass):
         for entity in processed_entities:
             for hook_type, item_data in entity.iteritems():
                 files = item_data["files"]
+                # notes can be ingested without attachments as well.
+                if not files and hook_type == "note":
+                    # fields and items setup
+                    fields = item_data["fields"].copy()
+                    new_items = list()
+                    # create a note item
+                    item = self._add_note_item(settings, parent_item, fields=fields)
+                    if item:
+                        if "snapshot_name" in fields:
+                            item.description = fields["snapshot_name"]
+
+                        new_items.append(item)
+
+                    for new_item in new_items:
+                        # create a new property that stores the fields contained in manifest file for this item.
+                        new_item.properties.manifest_file_fields = fields
+
+                        item_fields = new_item.properties["fields"]
+                        item_fields.update(fields)
+
+                        if not new_item.description:
+                            # adding a default description to item
+                            new_item.description = "Created by shotgun_ingest on %s" % str(datetime.date.today())
+
+                        self.logger.info(
+                            "Updated fields from snapshot for item: %s" % new_item.name,
+                            extra={
+                                "action_show_more_info": {
+                                    "label": "Show Info",
+                                    "tooltip": "Show more info",
+                                    "text": "Updated fields:\n%s" %
+                                            (pprint.pformat(new_item.properties["fields"]))
+                                }
+                            }
+                        )
+
+                        # we can't let the user change the context of the file being ingested using manifest files
+                        new_item.context_change_allowed = False
+                    # put the new items back in collector
+                    file_items.extend(new_items)
+
                 for p_file, tags in files.iteritems():
                     # fields and items setup
                     fields = item_data["fields"].copy()

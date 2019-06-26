@@ -193,7 +193,7 @@ class UploadNotesPlugin(HookBaseClass):
                         template_for_value = self.tank.templates[groups[3]]
 
                         # get the fields from template
-                        fields_from_template = template_for_fields.validate_and_get_fields(note_link[key])
+                        fields_from_template = template_for_fields.get_fields(note_link[key])
                         processed_fields = copy.deepcopy(fields)
                         # let's keep our item fields first
                         processed_fields.update(item.context.as_template_fields(template_for_value))
