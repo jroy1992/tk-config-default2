@@ -474,6 +474,7 @@ strings:
     # COMMON
     user_work:                              'work.{User}'
     image_subdirs:                          '{name}/v{version}/{width}x{height}'
+    playblast_subdirs:                      'playblasts/{name}/v{version}'
     proxy_subdirs:                          '{name}/v{version}/PROXY'
     2k_subdirs:                             '{name}/v{version}/2K'
     geom_subdirs:                           '{name}/v{version}[/{node}]'
