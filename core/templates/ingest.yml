@@ -189,6 +189,10 @@ paths:
     ingest_sequence_output_abc:           '@sequence_publish_area_anim/{snapshot_type}/v{version}/@ingest_sequence_output_name.abc'
     ingest_shot_output_abc:               '@shot_publish_area_anim/{snapshot_type}/v{version}/@ingest_shot_output_name.abc'
 
+    ingest_project_asset_output_abc:      '@project_asset_publish_area_scene/{snapshot_type}/@ingest_project_asset_output_name.abc'
+    ingest_sequence_asset_output_abc:     '@sequence_asset_publish_area_scene/{snapshot_type}/@ingest_sequence_asset_output_name.abc'
+    ingest_shot_asset_output_abc:         '@shot_asset_publish_area_scene/{snapshot_type}/@ingest_shot_asset_output_name.abc'
+
 strings:
     # strings for input names
     ingest_shot_input_name:                 '{ingestShot}_{name}_v{ingestVersion}'
