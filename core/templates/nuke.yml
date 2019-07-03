@@ -51,6 +51,15 @@ paths:
     tk-nuke_sequence_asset_work_render:         '@tk-nuke_sequence_asset_work_area/images/{Step}/@image_subdirs/@sequence_asset_version_name.{SEQ}.{img.ext}'
     tk-nuke_shot_asset_work_render:             '@tk-nuke_shot_asset_work_area/images/{Step}/@image_subdirs/@shot_asset_version_name.{SEQ}.{img.ext}'
 
+    # DEEP RENDERS
+    tk-nuke_project_work_deep_render:           '@tk-nuke_project_work_area/images/{Step}/@deep_subdirs/@project_version_name.{SEQ}.{deep.ext}'
+    tk-nuke_sequence_work_deep_render:          '@tk-nuke_sequence_work_area/images/{Step}/@deep_subdirs/@sequence_version_name.{SEQ}.{deep.ext}'
+    tk-nuke_shot_work_deep_render:              '@tk-nuke_shot_work_area/images/{Step}/@deep_subdirs/@shot_version_name.{SEQ}.{deep.ext}'
+
+    tk-nuke_project_asset_work_deep_render:     '@tk-nuke_project_asset_work_area/images/{Step}/@deep_subdirs/@project_asset_version_name.{SEQ}.{deep.ext}'
+    tk-nuke_sequence_asset_work_deep_render:    '@tk-nuke_sequence_asset_work_area/images/{Step}/@deep_subdirs/@sequence_asset_version_name.{SEQ}.{deep.ext}'
+    tk-nuke_shot_asset_work_deep_render:        '@tk-nuke_shot_asset_work_area/images/{Step}/@deep_subdirs/@shot_asset_version_name.{SEQ}.{deep.ext}'
+
     # MOVIES
     tk-nuke_project_work_movie:                 '@tk-nuke_project_work_area/movies/@project_version_name.mov'
     tk-nuke_sequence_work_movie:                '@tk-nuke_sequence_work_area/movies/@sequence_version_name.mov'

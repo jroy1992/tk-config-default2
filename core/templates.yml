@@ -121,6 +121,13 @@ keys:
             dpx: dpx
         default: exr
         alias: extension
+    deep.ext:
+        type: str
+        choices:
+            exr: exr
+            dtex: dtex
+        default: exr
+        alias: extension
     geo.ext:
         type: str
         choices:
@@ -345,6 +352,15 @@ paths:
     sequence_asset_publish_render:          '@sequence_asset_publish_area_image/@image_subdirs/@sequence_asset_version_name.{SEQ}.{img.ext}'
     shot_asset_publish_render:              '@shot_asset_publish_area_image/@image_subdirs/@shot_asset_version_name.{SEQ}.{img.ext}'
 
+    # DEEP RENDERS
+    project_publish_deep_render:            '@project_publish_area_image/@deep_subdirs/@project_version_name.{SEQ}.{deep.ext}'
+    sequence_publish_deep_render:           '@sequence_publish_area_image/@deep_subdirs/@sequence_version_name.{SEQ}.{deep.ext}'
+    shot_publish_deep_render:               '@shot_publish_area_image/@deep_subdirs/@shot_version_name.{SEQ}.{deep.ext}'
+
+    project_asset_publish_deep_render:      '@project_asset_publish_area_image/@deep_subdirs/@project_asset_version_name.{SEQ}.{deep.ext}'
+    sequence_asset_publish_deep_render:     '@sequence_asset_publish_area_image/@deep_subdirs/@sequence_asset_version_name.{SEQ}.{deep.ext}'
+    shot_asset_publish_deep_render:         '@shot_asset_publish_area_image/@deep_subdirs/@shot_asset_version_name.{SEQ}.{deep.ext}'
+
     # MOVIES
     project_publish_movie:                  '@project_publish_area_movie/@project_version_name.mov'
     sequence_publish_movie:                 '@sequence_publish_area_movie/@sequence_version_name.mov'
@@ -474,6 +490,7 @@ strings:
     # COMMON
     user_work:                              'work.{User}'
     image_subdirs:                          '{name}/v{version}/{width}x{height}'
+    deep_subdirs:                           '{name}/v{version}/deep/{width}x{height}'
     playblast_subdirs:                      'playblasts/{name}/v{version}'
     proxy_subdirs:                          '{name}/v{version}/PROXY'
     2k_subdirs:                             '{name}/v{version}/2K'
