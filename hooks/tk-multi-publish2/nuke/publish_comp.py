@@ -33,7 +33,7 @@ class NukePublishDDCompValidationPlugin(HookBaseClass):
         :param key: dictionary key from which to create the dictionary
         :return: dict with information for that particular key
         """
-        return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))
+        return dict((d[key], d) for d in seq)
 
 
     def _framerange_to_be_published(self, item):
@@ -56,16 +56,21 @@ class NukePublishDDCompValidationPlugin(HookBaseClass):
         # If there are no missing frames, then checking if the first and last frames match with root first and last
         # Checking with root because _sync_frame_range() will ensure root is up to date with shotgun
         if missing_frames:
-            self.logger.error("Renders Mismatch! Incomplete renders on disk.")
+            self.logger.error("Renders Mismatch! Incomplete renders on disk. "
+                              "Missing frames: {}".format(missing_frames))
             return False
         else:
             first_rendered_frame = info_by_path.get(lss_path)['frame_range'][0]
             last_rendered_frame = info_by_path.get(lss_path)['frame_range'][1]
-            if (first_rendered_frame != root.firstFrame()) or (last_rendered_frame != root.lastFrame()):
-                self.logger.error("Renders Mismatch! Incomplete renders on disk.")
+            if (first_rendered_frame > root.firstFrame()) or (last_rendered_frame < root.lastFrame()):
+                self.logger.error("Renders Mismatch! Incomplete renders on disk. "
+                                  "Expected: {}-{}. Found: {}-{}".format(root.firstFrame(), root.lastFrame(),
+                                                                         first_rendered_frame, last_rendered_frame))
                 return False
-            elif (first_rendered_frame > root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
-                self.logger.error("Renders Mismatch! Extra renders on disk.")
+            elif (first_rendered_frame < root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
+                self.logger.error("Renders Mismatch! Extra renders on disk. "
+                                  "Expected: {}-{}. Found: {}-{}".format(root.firstFrame(), root.lastFrame(),
+                                                                         first_rendered_frame, last_rendered_frame))
                 return False
             return True
 
@@ -159,9 +164,9 @@ class NukePublishDDCompValidationPlugin(HookBaseClass):
         # Segregating the checks, specifically for write nodes and for general nuke script
         if item.properties.get("node"):
             status = self._bbsize(item) and status
-            status = self._framerange_to_be_published(item) and status
-            if item.properties['node']['tank_channel'].value() == 'main':
+            if item.properties['fields'].get('output') == 'main':
                 status = self._sync_frame_range(item) and status
+            status = self._framerange_to_be_published(item) and status
 
         if not status:
             return status
