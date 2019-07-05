@@ -61,6 +61,22 @@ keys:
       edit_types:
         - lower_case
 
+    instanceName:
+        type: str
+        alias: name
+        filter_by: '^[a-zA-Z0-9](\w+)?[a-zA-Z0-9]$'
+
+    vendorAssetType:
+        type: str
+        filter_by: '^([A-Za-z0-9]+)$'
+
+    deep.type:
+        type: str
+        choices:
+            deepimg: deepimg
+            deepshad: deepshad
+        default: deepshad
+
     # removed duplicate cdl keys, moved to templates.yml
 
     ingestCdlName:
@@ -110,6 +126,12 @@ paths:
     ingest_sequence_area_cdl:               '@ingest_sequence_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
     ingest_project_area_cdl:                '@ingest_project_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
 
+    # deep image paths
+    # TODO: Remove the _exr context_type hardcoding?
+    ingest_shot_area_deep_image:            '@ingest_shot_area/IMG/{vendorStep}_{deep.type}/{ingestShot}_{name}_exr_v{ingestVersion}.{subcontext}'
+    ingest_sequence_area_deep_image:        '@ingest_sequence_area/IMG/{vendorStep}_{deep.type}/{ingestSequence}_{name}_exr_v{ingestVersion}.{subcontext}'
+    ingest_project_area_deep_image:         '@ingest_project_area/IMG/{vendorStep}_{deep.type}/{name}_exr_v{ingestVersion}.{subcontext}'
+
     # image paths
     ingest_shot_area_image:                 '@ingest_shot_area/IMG/{vendorStep}/{ingestShot}_{name}_v{ingestVersion}.{subcontext}'
     ingest_sequence_area_image:             '@ingest_sequence_area/IMG/{vendorStep}/{ingestSequence}_{name}_v{ingestVersion}.{subcontext}'
@@ -123,6 +145,11 @@ paths:
     ingest_shot_render:                     '@ingest_shot_area_image/@ingest_shot_input_name.{SEQ}.{ingestImgExtension}'
     ingest_sequence_render:                 '@ingest_sequence_area_image/@ingest_sequence_input_name.{SEQ}.{ingestImgExtension}'
     ingest_project_render:                  '@ingest_project_area_image/@ingest_project_input_name.{SEQ}.{ingestImgExtension}'
+
+    # Deep image inputs
+    ingest_shot_deep_render:                '@ingest_shot_area_deep_image/@ingest_shot_input_name.{SEQ}.{ingestImgExtension}'
+    ingest_sequence_deep_render:            '@ingest_sequence_area_deep_image/@ingest_sequence_input_name.{SEQ}.{ingestImgExtension}'
+    ingest_project_deep_render:             '@ingest_project_area_deep_image/@ingest_project_input_name.{SEQ}.{ingestImgExtension}'
 
     # parsing asset maya files
     ingest_shot_asset_scene:                '@ingest_shot_asset_area_scene/@ingest_shot_asset_input_name.{maya.ext}'
@@ -155,14 +182,19 @@ paths:
     ingest_sequence_output_render:          '@sequence_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_sequence_output_name.{SEQ}.{img.ext}'
     ingest_shot_output_render:              '@shot_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_shot_output_name.{SEQ}.{img.ext}'
 
-    # TEXTURES
-    ingest_project_publish_texture:           '@project_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_project_output_name[.{UDIM}].{tex.ext}'
-    ingest_sequence_publish_texture:          '@sequence_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_sequence_output_name[.{UDIM}].{tex.ext}'
-    ingest_shot_publish_texture:              '@shot_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_shot_output_name[.{UDIM}].{tex.ext}'
+    # DEEP RENDERS
+    ingest_project_output_deep_render:      '@project_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_project_output_name.{SEQ}.{img.ext}'
+    ingest_sequence_output_deep_render:     '@sequence_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_sequence_output_name.{SEQ}.{img.ext}'
+    ingest_shot_output_deep_render:         '@shot_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_shot_output_name.{SEQ}.{img.ext}'
 
-    ingest_project_asset_publish_texture:     '@project_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_project_asset_output_name[.{UDIM}].{tex.ext}'
-    ingest_sequence_asset_publish_texture:    '@sequence_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_sequence_asset_output_name[.{UDIM}].{tex.ext}'
-    ingest_shot_asset_publish_texture:        '@shot_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_shot_asset_output_name[.{UDIM}].{tex.ext}'
+    # TEXTURES
+    ingest_project_publish_texture:         '@project_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_project_output_name[.{UDIM}].{tex.ext}'
+    ingest_sequence_publish_texture:        '@sequence_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_sequence_output_name[.{UDIM}].{tex.ext}'
+    ingest_shot_publish_texture:            '@shot_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_shot_output_name[.{UDIM}].{tex.ext}'
+
+    ingest_project_asset_publish_texture:   '@project_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_project_asset_output_name[.{UDIM}].{tex.ext}'
+    ingest_sequence_asset_publish_texture:  '@sequence_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_sequence_asset_output_name[.{UDIM}].{tex.ext}'
+    ingest_shot_asset_publish_texture:      '@shot_asset_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_shot_asset_output_name[.{UDIM}].{tex.ext}'
 
     # PROXIES
     project_proxy_image:                    '@project_publish_area_image/{snapshot_type}/@proxy_subdirs/@ingest_project_output_name.{SEQ}.{img.ext}'
@@ -185,19 +217,51 @@ paths:
     ingest_shot_output_cache:               '@shot_publish_area_anim/{snapshot_type}/@ingest_shot_output_name.{geo.ext}'
 
     # ABC
-    ingest_project_output_abc:            '@project_publish_area_anim/{snapshot_type}/v{version}/@ingest_project_output_name.abc'
-    ingest_sequence_output_abc:           '@sequence_publish_area_anim/{snapshot_type}/v{version}/@ingest_sequence_output_name.abc'
-    ingest_shot_output_abc:               '@shot_publish_area_anim/{snapshot_type}/v{version}/@ingest_shot_output_name.abc'
+    ingest_project_output_abc:              '@project_publish_area_anim/{snapshot_type}/v{version}/@ingest_project_output_name.abc'
+    ingest_sequence_output_abc:             '@sequence_publish_area_anim/{snapshot_type}/v{version}/@ingest_sequence_output_name.abc'
+    ingest_shot_output_abc:                 '@shot_publish_area_anim/{snapshot_type}/v{version}/@ingest_shot_output_name.abc'
 
-    ingest_project_asset_output_abc:      '@project_asset_publish_area_scene/{snapshot_type}/@ingest_project_asset_output_name.abc'
-    ingest_sequence_asset_output_abc:     '@sequence_asset_publish_area_scene/{snapshot_type}/@ingest_sequence_asset_output_name.abc'
-    ingest_shot_asset_output_abc:         '@shot_asset_publish_area_scene/{snapshot_type}/@ingest_shot_asset_output_name.abc'
+    ingest_project_asset_output_abc:        '@project_asset_publish_area_scene/{snapshot_type}/@ingest_project_asset_output_name.abc'
+    ingest_sequence_asset_output_abc:       '@sequence_asset_publish_area_scene/{snapshot_type}/@ingest_sequence_asset_output_name.abc'
+    ingest_shot_asset_output_abc:           '@shot_asset_publish_area_scene/{snapshot_type}/@ingest_shot_asset_output_name.abc'
+
+    # YRT/2940/SHARED/ANIM/char/captainmarvel_body1/alembic_cache/md/integ/yrt2940_out_v001.abc
+    # YRT/2940/SHARED/ANIM/char/captainmarvel_body1/alembic_cache/md/integ/yrt2940_alembic_v001.mb
+
+    # Shotmodel
+    ingest_shot_area_shotmodel:             '@ingest_shot_area/SHOTMODEL/{vendorAssetType}/{instanceName}/{snapshot_type}/{subcontext}/{vendorDepartment}'
+    ingest_shot_input_scene_shotmodel:      '@ingest_shot_area_shotmodel/@ingest_shot_input_name_scene_shotmodel.{maya.ext}'
+    ingest_shot_input_abc_shotmodel:        '@ingest_shot_area_shotmodel/@ingest_shot_input_name_scene_shotmodel.abc'
+
+    # Integ
+
+    # ORG/6300/SHARED/MODEL/integ/trkgeo/plate/obj_v005/oilrig_derrickc_vendor_lo_v003.obj
+    # ORG/6300/SHARED/MODEL/integ/trkgeo/plate/obj_v005/WenchBobby_trkGeo_v01.obj
+    ingest_shot_integ_bundle:               '@ingest_shot_area/MODEL/integ/trkgeo/{subcontext}/obj_v{version}'
+    ingest_shot_integ_bundle_obj:           '@ingest_shot_integ_bundle/{name}_v{ingestVersion}.{geo.ext}'
+
+    ingest_shot_area_integ:                 '@ingest_shot_area/ANIM/{vendorDepartment}/vendor/{vendorDepartment}/{snapshot_type}/{instanceName}_{subcontext}_v{version}'
+    ingest_shot_input_scene_integ:          '@ingest_shot_area_integ/@ingest_shot_input_name_scene_integ.{maya.ext}'
+    ingest_shot_input_abc_integ:            '@ingest_shot_area_integ/@ingest_shot_input_name_scene_integ.abc'
+
+    ingest_shot_area_mm:                    '@ingest_folder/{ingestSequence}/{Shot}/SHARED/ANIM/{vendorAssetType}/{instanceName}/{snapshot_type}/{subcontext}/{vendorDepartment}'
+    ingest_shot_input_scene_mm:             '@ingest_shot_area_mm/@ingest_shot_input_name_scene_mm.{maya.ext}'
+    ingest_shot_input_cache_mm:             '@ingest_shot_area_mm/@ingest_shot_input_name_scene_mm.abc'
+
 
 strings:
+
+    ingest_deep_subdirs:                    '{name}/v{version}/{deep.type}/{width}x{height}'
+
     # strings for input names
     ingest_shot_input_name:                 '{ingestShot}_{name}_v{ingestVersion}'
     ingest_sequence_input_name:             '{ingestSequence}_{name}_v{ingestVersion}'
     ingest_project_input_name:              '{ingestStep}_{name}_v{ingestVersion}'
+    # strings for integ
+    ingest_shot_input_name_scene_integ:     '{ingestShot}_{instanceName}_v{version}'
+    ingest_shot_input_name_scene_mm:        '{ingestShot}_{node}_v{version}'
+    # strings for shotmodel
+    ingest_shot_input_name_scene_shotmodel: '{ingestShot}_{node}_v{version}'
 
     # strings for annotation names
     ingest_shot_annotation_name:            '{ingestShot}_{ingestStep}_{name}_v{ingestVersion}.annotation'
@@ -246,10 +310,6 @@ strings:
     ingest_shot_script:                     '@ingest_shot_input_name.nk'
     ingest_sequence_script:                 '@ingest_sequence_input_name.nk'
     ingest_project_script:                  '@ingest_project_input_name.nk'
-
-    ingest_shot_cache:                      '@ingest_shot_input_name.{geo.ext}'
-    ingest_sequence_cache:                  '@ingest_sequence_input_name.{geo.ext}'
-    ingest_project_cache:                   '@ingest_project_input_name.{geo.ext}'
 
     ingest_shot_movie:                      '@ingest_shot_input_name.mov'
     ingest_sequence_movie:                  '@ingest_sequence_input_name.mov'
