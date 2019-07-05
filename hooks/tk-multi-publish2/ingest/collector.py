@@ -48,6 +48,9 @@ DEFAULT_NOTE_TYPES_MAPPINGS = {
     "role supervisor": "annotation",
 }
 
+# Default snapshot_type
+DEFAULT_SNAPSHOT_TYPE = "ingest"
+
 # This is a dictionary of note_type values to their access keys in the fields dict.
 DEFAULT_NOTE_TYPES_ACCESS_KEYS = {
     "kickoff": ["sg_version", "name"],
@@ -89,7 +92,7 @@ class IngestCollectorPlugin(HookBaseClass):
             "type": "str",
             "description": "Specifies the default snapshot type to be used for an ingested item.",
             "allows_empty": True,
-            "default_value": "ingest",
+            "default_value": DEFAULT_SNAPSHOT_TYPE,
         }
         items_schema["default_fields"] = {
             "type": dict,
@@ -205,16 +208,17 @@ class IngestCollectorPlugin(HookBaseClass):
             ignored_filename = settings["Ignore Filename"].value
 
             file_components = publisher.util.get_file_path_components(path)
-            file_ignored = False
+            extension_ignored = False
+            filename_ignored = False
 
             if file_components["extension"] in ignored_extensions:
-                file_ignored = True
+                extension_ignored = True
 
             if ignored_filename:
-                file_ignored = any(re.match(ignored_string, file_components["filename"])
-                                   for ignored_string in ignored_filename)
+                filename_ignored = any(re.match(ignored_string, file_components["filename"])
+                                       for ignored_string in ignored_filename)
 
-            if file_ignored:
+            if extension_ignored or filename_ignored:
 
                 if is_sequence:
                     # include an indicator that this is an image sequence and the known
@@ -355,6 +359,32 @@ class IngestCollectorPlugin(HookBaseClass):
                     file_items.append(item)
 
         return file_items
+
+    def _get_item_type_info(self, settings, item_type):
+        """
+        Return the dictionary corresponding to this item's 'Item Types' settings.
+
+        :param dict settings: Configured settings for this collector
+        :param item_type: The type of Item to identify info for
+
+        :return: A dictionary of information about the item to create::
+
+            # item_type = "file.image.sequence"
+
+            {
+                "extensions": ["jpeg", "jpg", "png"],
+                "type_display": "Rendered Image Sequence",
+                "icon_path": "/path/to/some/icons/folder/image_sequence.png",
+                "work_path_template": "some_template_name"
+            }
+        """
+        item_info = super(IngestCollectorPlugin, self)._get_item_type_info(settings, item_type)
+
+        item_info.setdefault("default_snapshot_type", DEFAULT_SNAPSHOT_TYPE)
+        item_info.setdefault("default_fields", dict())
+
+        # everything should now be populated, so return the dictionary
+        return item_info
 
     def _resolve_item_fields(self, settings, item):
         """
