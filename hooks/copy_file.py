@@ -10,10 +10,12 @@
 
 import os
 import shutil
+import stat
 import sgtk
 
 # DD
 from sgtk import dd_jstools_utils
+from sgtk.util.filesystem import copy_file
 
 HookClass = sgtk.get_hook_baseclass()
 
@@ -22,7 +24,7 @@ class CopyFile(HookClass):
     Hook called when a file needs to be copied
     """
 
-    def execute(self, source_path, target_path, **kwargs):
+    def execute(self, source_path, target_path, read_only=False, **kwargs):
         """
         Main hook entry point
 
@@ -43,4 +45,14 @@ class CopyFile(HookClass):
             dd_jstools_utils.makedir_with_jstools(dirname)
             os.umask(old_umask)
 
-        shutil.copy(source_path, target_path)
+        current_permission = os.stat(source_path).st_mode
+        if read_only:
+            # make file read_only
+            ro_mask = 0777 ^ (stat.S_IWRITE | stat.S_IWGRP | stat.S_IWOTH)
+            permission = current_permission & ro_mask
+        else:
+            # make file writeable by user+group
+            rw_mask = stat.S_IWRITE | stat.S_IWGRP
+            permission = current_permission | rw_mask
+
+        copy_file(source_path, target_path, permission)
