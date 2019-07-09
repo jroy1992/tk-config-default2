@@ -61,11 +61,6 @@ keys:
       edit_types:
         - lower_case
 
-    instanceName:
-        type: str
-        alias: name
-        filter_by: '^[a-zA-Z0-9](\w+)?[a-zA-Z0-9]$'
-
     vendorAssetType:
         type: str
         filter_by: '^([A-Za-z0-9]+)$'
@@ -229,9 +224,9 @@ paths:
     # YRT/2940/SHARED/ANIM/char/captainmarvel_body1/alembic_cache/md/integ/yrt2940_alembic_v001.mb
 
     # Shotmodel
-    ingest_shot_area_shotmodel:             '@ingest_shot_area/SHOTMODEL/{vendorAssetType}/{instanceName}/{snapshot_type}/{subcontext}/{vendorDepartment}'
-    ingest_shot_input_scene_shotmodel:      '@ingest_shot_area_shotmodel/@ingest_shot_input_name_scene_shotmodel.{maya.ext}'
-    ingest_shot_input_abc_shotmodel:        '@ingest_shot_area_shotmodel/@ingest_shot_input_name_scene_shotmodel.abc'
+    ingest_shot_area_shotmodel:             '@ingest_shot_area/SHOTMODEL/{vendorAssetType}/{name}/{snapshot_type}/{subcontext}/{vendorDepartment}'
+    ingest_shot_input_scene_shotmodel:      '@ingest_shot_area_shotmodel/@ingest_shot_input_name_scene.{maya.ext}'
+    ingest_shot_input_abc_shotmodel:        '@ingest_shot_area_shotmodel/@ingest_shot_input_name_scene.abc'
 
     # Integ
 
@@ -240,13 +235,14 @@ paths:
     ingest_shot_integ_bundle:               '@ingest_shot_area/MODEL/integ/trkgeo/{subcontext}/obj_v{version}'
     ingest_shot_integ_bundle_obj:           '@ingest_shot_integ_bundle/{name}_v{ingestVersion}.{geo.ext}'
 
-    ingest_shot_area_integ:                 '@ingest_shot_area/ANIM/{vendorDepartment}/vendor/{vendorDepartment}/{snapshot_type}/{instanceName}_{subcontext}_v{version}'
-    ingest_shot_input_scene_integ:          '@ingest_shot_area_integ/@ingest_shot_input_name_scene_integ.{maya.ext}'
-    ingest_shot_input_abc_integ:            '@ingest_shot_area_integ/@ingest_shot_input_name_scene_integ.abc'
+    # Integ vendor data
+    ingest_shot_area_integ:                 '@ingest_shot_area/ANIM/{vendorDepartment}/vendor/{vendorDepartment}/{snapshot_type}/{name}_{subcontext}_v{version}'
+    ingest_shot_input_scene_integ:          '@ingest_shot_area_integ/@ingest_shot_input_name.{maya.ext}'
+    ingest_shot_input_abc_integ:            '@ingest_shot_area_integ/@ingest_shot_input_name.abc'
 
-    ingest_shot_area_mm:                    '@ingest_folder/{ingestSequence}/{Shot}/SHARED/ANIM/{vendorAssetType}/{instanceName}/{snapshot_type}/{subcontext}/{vendorDepartment}'
-    ingest_shot_input_scene_mm:             '@ingest_shot_area_mm/@ingest_shot_input_name_scene_mm.{maya.ext}'
-    ingest_shot_input_cache_mm:             '@ingest_shot_area_mm/@ingest_shot_input_name_scene_mm.abc'
+    ingest_shot_area_mm:                    '@ingest_shot_area/ANIM/{vendorAssetType}/{name}/{snapshot_type}/{subcontext}/{vendorDepartment}'
+    ingest_shot_input_scene_mm:             '@ingest_shot_area_mm/@ingest_shot_input_name_scene.{maya.ext}'
+    ingest_shot_input_cache_mm:             '@ingest_shot_area_mm/@ingest_shot_input_name_scene.abc'
 
 
 strings:
@@ -257,11 +253,8 @@ strings:
     ingest_shot_input_name:                 '{ingestShot}_{name}_v{ingestVersion}'
     ingest_sequence_input_name:             '{ingestSequence}_{name}_v{ingestVersion}'
     ingest_project_input_name:              '{ingestStep}_{name}_v{ingestVersion}'
-    # strings for integ
-    ingest_shot_input_name_scene_integ:     '{ingestShot}_{instanceName}_v{version}'
-    ingest_shot_input_name_scene_mm:        '{ingestShot}_{node}_v{version}'
-    # strings for shotmodel
-    ingest_shot_input_name_scene_shotmodel: '{ingestShot}_{node}_v{version}'
+    # strings for integ scenes
+    ingest_shot_input_name_scene:           '{ingestShot}_{node}_v{version}'
 
     # strings for annotation names
     ingest_shot_annotation_name:            '{ingestShot}_{ingestStep}_{name}_v{ingestVersion}.annotation'

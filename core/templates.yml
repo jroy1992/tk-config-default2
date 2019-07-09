@@ -73,7 +73,7 @@ keys:
     # Application-provided keys (snake_case)
     name:
         type: str
-        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
+        filter_by: '^[a-zA-Z0-9](\w+)?[a-zA-Z0-9]$'
         str_from_value_hook: 'name_converter'
         edit_types:
           - path_safe
