@@ -33,6 +33,13 @@ settings.tk-multi-loader2.entities: &loader2_entities
     filters:
       - [project, is, '{context.project}']
     hierarchy: [sg_shot.Shot.sg_sequence, sg_shot, code]
+  - caption: Shot Data
+    type: Query
+    entity_type: Asset
+    filters:
+      - [project, is, '{context.project}']
+      - [sg_shot, is_not, null]
+    hierarchy: [sg_sequence, sg_shot, code]
 
 # houdini
 settings.tk-multi-loader2.houdini:
