@@ -132,12 +132,12 @@ class BreakdownSceneOperations(Hook):
                 cam_node = hou.node(node_path)
                 # replace any %0#d format string with the corresponding houdini frame
                 # env variable. example %04d => $F4
-                frame_pattern = re.compile("(%0(\d)d)")
-                frame_match = re.search(frame_pattern, file_path)
-                if frame_match:
-                    full_frame_spec = frame_match.group(1)
-                    padding = frame_match.group(2)
-                    file_path = file_path.replace(full_frame_spec, "$F%s" % (padding,))
+                template = self.sgtk.template_from_path(file_path)
+                fields = template.get_fields(file_path)
+                if fields.get('SEQ'):
+                    fields['SEQ'] = 'FORMAT: $F'
+                    file_path = template.apply_fields(fields)
+
                 engine.log_debug(
                     "Updating camera node '%s' to: %s" % (node_path, file_path))
                 cam_node.parm("vm_background").set(file_path)
