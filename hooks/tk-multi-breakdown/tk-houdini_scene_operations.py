@@ -13,7 +13,6 @@ import os
 from tank import Hook
 
 import hou
-import re
 
 class BreakdownSceneOperations(Hook):
     """
