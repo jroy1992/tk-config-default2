@@ -26,18 +26,30 @@ HookBaseClass = sgtk.get_hook_baseclass()
 # This is a dictionary of fields in snapshot from manifest and it's corresponding field on the item.
 DEFAULT_MANIFEST_SG_MAPPINGS = {
     "file": {
-        "id": "sg_snapshot_id",
-        "notes": "description",
-        "user": "snapshot_user",
-        "name": "manifest_name",
-        "version": "snapshot_version",
+        "snapshots": {
+            "id": "sg_snapshot_id",
+            "user": "snapshot_user",
+            "name": "manifest_name",
+            "version": "snapshot_version",
+        },
     },
     "note": {
-        "notes": "description",
-        "name": "snapshot_name",
-        "user": "snapshot_user",
-        "version": "snapshot_version",
-        "body": "content",
+        "notes": {
+            "notes": "description",
+            "name": "snapshot_name",
+            "body": "content",
+            "id": "sg_client_note_id",
+        },
+        "snapshots": {
+            "id": "sg_snapshot_id",
+            "user": "snapshot_user",
+            "name": "manifest_name",
+            "version": "snapshot_version",
+        },
+        "versions": {
+            "id": "sg_client_version_id",
+            "name": "version_name",
+        },
     },
 }
 
@@ -46,15 +58,16 @@ DEFAULT_NOTE_TYPES_MAPPINGS = {
     None: "kickoff",
     "kickoff": "kickoff",
     "role supervisor": "annotation",
+    "dailies": "annotation",
 }
 
 # Default snapshot_type
 DEFAULT_SNAPSHOT_TYPE = "ingest"
 
 # This is a dictionary of note_type values to their access keys in the fields dict.
-DEFAULT_NOTE_TYPES_ACCESS_KEYS = {
-    "kickoff": ["sg_version", "name"],
-    "annotation": ["sg_version", "name"],
+DEFAULT_NOTE_TYPES_ACCESS_FALLBACKS = {
+    "kickoff": [["original_name"], ["sg_version", "name"]],
+    "annotation": [["original_name"], ["sg_version", "name"]]
 }
 
 
@@ -103,21 +116,15 @@ class IngestCollectorPlugin(HookBaseClass):
             "default_value": {},
             "description": "Default fields to use, with this item"
         }
-        items_schema["non_editable_fields"] = {
-            "type": list,
-            "values": {
-                "type": "str",
-            },
-            "allows_empty": True,
-            "default_value": ["width", "height", "DD", "MM", "YYYY", "SEQ", "eye"],
-            "description": "List of non-editable fields for in the settings widget."
-        }
         schema["Manifest SG Mappings"] = {
             "type": "dict",
             "values": {
                 "type": "dict",
                 "values": {
-                    "type": "str",
+                    "type": "dict",
+                    "values": {
+                        "type": "str",
+                    },
                 },
             },
             "default_value": DEFAULT_MANIFEST_SG_MAPPINGS,
@@ -133,17 +140,20 @@ class IngestCollectorPlugin(HookBaseClass):
             "allows_empty": True,
             "description": "dictionary of note_type values to their item type."
         }
-        schema["Note Type Access Keys"] = {
+        schema["Note Type Access Fallbacks"] = {
             "type": "dict",
             "values": {
                 "type": "list",
                 "values": {
-                    "type": "str",
+                    "type": "list",
+                    "values": {
+                        "type": "str",
+                    },
                 },
             },
-            "default_value": DEFAULT_NOTE_TYPES_ACCESS_KEYS,
+            "default_value": DEFAULT_NOTE_TYPES_ACCESS_FALLBACKS,
             "allows_empty": True,
-            "description": "Dictionary of note_type values to their access keys in the fields dict."
+            "description": "Dictionary of note_type values to a list of access keys in the fields dict."
         }
         schema["Ignore Extensions"] = {
             "type": "list",
@@ -272,7 +282,7 @@ class IngestCollectorPlugin(HookBaseClass):
         publisher = self.parent
 
         note_type_mappings = settings["Note Type Mappings"].value
-        note_type_acess_keys = settings["Note Type Access Keys"].value
+        note_type_acess_fallbacks = settings["Note Type Access Fallbacks"].value
 
         raw_item_settings = settings["Item Types"].raw_value
 
@@ -293,47 +303,55 @@ class IngestCollectorPlugin(HookBaseClass):
 
         note_type = note_type_mappings[manifest_note_type]
 
-        path = reduce(operator.getitem, note_type_acess_keys[note_type], fields) + ".%s" % note_type
-        display_name = path + ".notes"
-
-        item_type = "notes.entity.%s" % note_type
-
-        relevant_item_settings = raw_item_settings[item_type]
-        raw_template_name = relevant_item_settings.get("work_path_template")
-        envs = self.parent.sgtk.pipeline_configuration.get_environments()
-
-        # type_display = relevant_item_settings.get("type_display", "File")
-        # work_path_template = None
-        # icon_path = relevant_item_settings.get("icon", "{self}/hooks/icons/file.png")
         work_path_template = None
 
-        template_names_per_env = [
-            sgtk.platform.resolve_setting_expression(raw_template_name, self.parent.engine.instance_name, env_name) for
-            env_name in envs]
+        for note_type_acess_keys in note_type_acess_fallbacks[note_type]:
+            path = reduce(operator.getitem, note_type_acess_keys, fields) + ".%s" % note_type
+            display_name = path + ".notes"
 
-        templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
-                             template_names_per_env if self.parent.get_template_by_name(template_name)]
-        for template in templates_per_env:
-            try:
-                template.get_fields(path)
-                # we have a match!
-                work_path_template = template.name
-            except:
-                # it errored out
-                continue
+            item_type = "notes.entity.%s" % note_type
 
-        if work_path_template:
-            # calculate the context and give to the item
-            context = self._get_item_context_from_path(work_path_template, path, parent_item)
+            relevant_item_settings = raw_item_settings[item_type]
+            raw_template_name = relevant_item_settings.get("work_path_template")
+            envs = self.parent.sgtk.pipeline_configuration.get_environments()
 
-            file_item = self._add_file_item(settings, parent_item, path, item_name=display_name,
-                                            item_type=item_type, context=context)
+            template_names_per_env = [
+                sgtk.platform.resolve_setting_expression(raw_template_name,
+                                                         self.parent.engine.instance_name,
+                                                         env_name) for env_name in envs
+            ]
 
-            return file_item
-        else:
-            self.logger.warning("No matching template found for %s with raw template %s" % (path,
-                                                                                            raw_template_name))
-            return
+            templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
+                                 template_names_per_env if self.parent.get_template_by_name(template_name)]
+            for template in templates_per_env:
+                try:
+                    template.get_fields(path)
+                    # we have a match!
+                    work_path_template = template.name
+                except:
+                    # it errored out
+                    continue
+
+            if work_path_template:
+                # calculate the context and give to the item
+                context = self._get_item_context_from_path(work_path_template, path, parent_item)
+
+                file_item = self._add_file_item(settings, parent_item, path, item_name=display_name,
+                                                item_type=item_type, context=context)
+
+                # we found the template match in one of the fallbacks, break-out
+                return file_item
+            else:
+                self.logger.warning("No matching template found for %s with raw template %s" % (path,
+                                                                                                raw_template_name),
+                                    extra={
+                                        "action_show_more_info": {
+                                            "label": "Show Fields",
+                                            "tooltip": "Show the fields used.",
+                                            "text": note_type_acess_keys
+                                        }
+                                    })
+                return
 
     def process_file(self, settings, parent_item, path):
         """
@@ -451,9 +469,6 @@ class IngestCollectorPlugin(HookBaseClass):
                 if key not in fields:
                     fields[key] = value
 
-        if "non_editable_fields" in item_info:
-            item.properties.non_editable_fields = item_info["non_editable_fields"]
-
         return fields
 
     def _process_manifest_file(self, settings, path):
@@ -486,7 +501,11 @@ class IngestCollectorPlugin(HookBaseClass):
         processed_snapshots = list()
         manifest_mappings = settings["Manifest SG Mappings"].value
 
-        file_item_manifest_mappings = manifest_mappings["file"]
+        # since we only process snapshots in this manifest.
+        file_item_manifest_mappings = manifest_mappings["file"]["snapshots"]
+
+        # this is a bit more special since it has three different sources being processed.
+        # notes, snapshots, versions. Each can have overlapping fields.
         note_item_manifest_mappings = manifest_mappings["note"]
         # yaml file stays at the base of the package
         base_dir = os.path.dirname(path)
@@ -556,7 +575,9 @@ class IngestCollectorPlugin(HookBaseClass):
             data = dict()
             snapshot_data = dict()
             version_data = dict()
-            data["fields"] = {note_item_manifest_mappings[k] if k in note_item_manifest_mappings else k: v
+
+            note_manifest_mappings = note_item_manifest_mappings["notes"]
+            data["fields"] = {note_manifest_mappings[k] if k in note_manifest_mappings else k: v
                               for k, v in note.iteritems()}
 
             # every note item has a corresponding snapshot and version associated with it
@@ -569,15 +590,16 @@ class IngestCollectorPlugin(HookBaseClass):
             # pop the notes from version_data they are already stored
             note_version.pop("notes")
 
-            version_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
+            version_manifest_mappings = note_item_manifest_mappings["versions"]
+            version_data["fields"] = {version_manifest_mappings[k] if k in version_manifest_mappings else k: v
                                       for k, v in note_version.iteritems()}
 
             # update the item fields with version_data fields
             data["fields"].update(version_data["fields"])
 
             # snapshot fields get priority over version fields
-
-            snapshot_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
+            snapshot_manifest_mappings = note_item_manifest_mappings["snapshots"]
+            snapshot_data["fields"] = {snapshot_manifest_mappings[k] if k in snapshot_manifest_mappings else k: v
                                        for k, v in note_snapshot.iteritems()}
 
             # pop the files from snapshot_data they are not useful
