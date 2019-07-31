@@ -425,6 +425,12 @@ class IngestCollectorPlugin(HookBaseClass):
 
         fields = super(IngestCollectorPlugin, self)._resolve_item_fields(settings, item)
 
+        # make sure we don't pick a default name from the task, else everything will end up as "vendor"
+        # this only happens in case of custom ingestion, since we let the user choose a vendor task
+        # instead of automatically resolving to a "Vendor" Step.
+        if item.context.task:
+            fields.pop("name")
+
         item_info = self._get_item_type_info(settings, item.type)
 
         # restore the fields from the manifest file, even though we currently don't allow users to change context
