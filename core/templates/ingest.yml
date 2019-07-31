@@ -54,6 +54,8 @@ keys:
       edits:
         replace:
           char: "Character"
+          veh: "Vehicle"
+          set: "Environment"
 
     vendorDepartment:
       type: str
@@ -292,9 +294,13 @@ strings:
     ingest_shot_annotation_name:            '{ingestShot}_{ingestStep}_{name}_v{ingestVersion}.annotation'
     ingest_shot_kickoff_name:               '{ingestShot}_{name}_v{ingestVersion}.kickoff'
 
+    ingest_project_asset_annotation_name:   'ASSETDEV{Asset}_{ingestStep}_{node}_v{ingestVersion}.annotation'
+
     # output for re-constructing back our pipeline name.
     ingest_shot_output_annotation_name:     '{Sequence}_{Shot}_{Step}_{Step}_{name}[-{node}].v{version}'
     ingest_shot_output_kickoff_name:        '{Sequence}_{Shot}_{Step}_{snapshot_type}_{name}[-{node}].v{version}'
+
+    ingest_project_asset_output_annotation_name:    '{Step}_{AssetType}-{Asset}-{Step}[-{node}].v{version}'
 
     # strings for input asset names
     ingest_shot_asset_input_name:           '{ingestShot}_{Asset}_{name}_v{ingestVersion}'
