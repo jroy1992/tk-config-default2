@@ -13,6 +13,7 @@ import datetime
 import traceback
 import pprint
 import re
+import urllib
 
 from functools import reduce
 import operator
@@ -429,7 +430,9 @@ class IngestCollectorPlugin(HookBaseClass):
         # this only happens in case of custom ingestion, since we let the user choose a vendor task
         # instead of automatically resolving to a "Vendor" Step.
         if item.context.task:
-            fields.pop("name")
+            name_field = item.context.task["name"]
+            if fields["name"] == urllib.quote(name_field.replace(" ", "_").lower(), safe=''):
+                fields.pop("name")
 
         item_info = self._get_item_type_info(settings, item.type)
 
@@ -801,40 +804,87 @@ class IngestCollectorPlugin(HookBaseClass):
         """
         publisher = self.parent
 
-        sg_filters = [
-            ['short_name', 'is', "vendor"]
-        ]
-
-        # TODO-- this is not needed right now, since our keys only depend on short_name key of the Step
-        # Environment resolution hook anyways, doesn't validate if the Step entity belongs to the same class or not.
-        # make sure we get the correct Step!
-        # if base_context.entity:
-        #     # this should handle whether the Step is from Sequence/Shot/Asset
-        #     sg_filters.append(["entity_type", "is", base_context.entity["type"]])
-        # elif base_context.project:
-        #     # this should handle pro
-        #     sg_filters.append(["entity_type", "is", base_context.project["type"]])
-
-        fields = ['entity_type', 'code', 'id']
-
-        # add a vendor step to all ingested files
-        step_entity = self.sgtk.shotgun.find_one(
-            entity_type='Step',
-            filters=sg_filters,
-            fields=fields
-        )
-
-        default_entities = [step_entity]
-
         work_tmpl = publisher.get_template_by_name(work_path_template)
         if work_tmpl and isinstance(work_tmpl, tank.template.TemplateString):
             # use file name if we got TemplateString
             path = os.path.basename(path)
 
-        return super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
+        context = super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
+                                                                                 path,
+                                                                                 parent_item,
+                                                                                 default_entities)
+        if context.entity:
+            step_filters = list()
+            step_filters.append(['short_name', 'is', "vendor"])
+
+            # make sure we get the correct Step!
+            # this should handle whether the Step is from Sequence/Shot/Asset
+            step_filters.append(["entity_type", "is", context.entity["type"]])
+
+            fields = ['entity_type', 'code', 'id']
+
+            # add a vendor step to all ingested files
+            step_entity = self.sgtk.shotgun.find_one(
+                entity_type='Step',
+                filters=step_filters,
+                fields=fields
+            )
+
+            if step_entity:
+                default_entities = [step_entity]
+
+                task_filters = [
+                    ['step', 'is', step_entity],
+                    ['entity', 'is', context.entity],
+                    ['project', 'is', context.project],
+                    ['content', 'is', 'Vendor']
+                ]
+
+                task_fields = ['content', 'entity_type', 'id']
+
+                task_entity = self.sgtk.shotgun.find_one(
+                    entity_type='Task',
+                    filters=task_filters,
+                    fields=task_fields
+                )
+
+                # create the task:
+                if not task_entity:
+
+                    data = {
+                        "step": step_entity,
+                        "project": context.project,
+                        "entity": context.entity,
+                        "content": "Vendor"
+                    }
+
+                    task_entity = self.sgtk.shotgun.create("Task", data, return_fields=task_fields)
+                    if not task_entity:
+                        self.logger.error("Failed to create Ingestion Task.",
+                                          extra={
+                                              "action_show_more_info": {
+                                                  "label": "Show Data",
+                                                  "tooltip": "Show the error log",
+                                                  "text": "Data: %s\nPath: %s" % (pprint.pformat(data),
+                                                                                  path)
+                                              }
+                                          })
+
+                if task_entity:
+                    # try to clear the status of the task entity.
+                    try:
+                        self.sgtk.shotgun.update("Task", task_entity["id"], {"sg_status_list": None})
+                    except:
+                        pass
+
+                    default_entities.append(task_entity)
+
+                context = super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
                                                                               path,
                                                                               parent_item,
                                                                               default_entities)
+
+        return context
 
     def _get_work_path_template_from_settings(self, settings, item_type, path):
         """

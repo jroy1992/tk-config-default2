@@ -69,7 +69,7 @@ class IngestBasePlugin(HookBaseClass):
             self.logger.error("Ingestion at project level is not allowed! Please Contact TDs.")
             return False
         # context check needs to run before the other validations do.
-        if not item.context.step:
+        if not item.context.task:
             # Item doesn't contain a step entity! Intimate the user to create one, if they want to ingest.
             step_filters = list()
             step_filters.append(['short_name', 'is', "vendor"])
@@ -104,6 +104,7 @@ class IngestBasePlugin(HookBaseClass):
             task_filters = [
                 ['step', 'is', step_entity],
                 ['entity', 'is', item.context.entity],
+                ['project', 'is', item.context.project],
                 ['content', 'is', 'Vendor']
             ]
 
