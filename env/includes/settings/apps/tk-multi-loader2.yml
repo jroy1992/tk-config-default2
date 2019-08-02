@@ -16,6 +16,20 @@ includes:
 ################################################################################
 
 settings.tk-multi-loader2.entities: &loader2_entities
+  - caption: Shot Data
+    type: Query
+    entity_type: Task
+    filters:
+      - [project, is, '{context.project}']
+      - [entity.Shot.code, is_not, null]
+    hierarchy: [entity.Shot.sg_sequence, entity.Shot.code, step, content]
+  - caption: Asset Data
+    type: Query
+    entity_type: Task
+    filters:
+      - [project, is, '{context.project}']
+      - [entity.Asset.code, is_not, null]
+    hierarchy: [entity.Asset.sg_asset_type, entity.Asset.code, step, content]
   - caption: Current Project
     type: Hierarchy
     root: '{context.project}'
@@ -27,19 +41,7 @@ settings.tk-multi-loader2.entities: &loader2_entities
       - [project, is, '{context.project}']
       - [task_assignees, is, '{context.user}']
     hierarchy: [entity, content]
-  - caption: Plates
-    type: Query
-    entity_type: Element
-    filters:
-      - [project, is, '{context.project}']
-    hierarchy: [sg_shot.Shot.sg_sequence, sg_shot, code]
-  - caption: Shot Data
-    type: Query
-    entity_type: Asset
-    filters:
-      - [project, is, '{context.project}']
-      - [sg_shot, is_not, null]
-    hierarchy: [sg_sequence, sg_shot, code]
+
 
 # houdini
 settings.tk-multi-loader2.houdini:
