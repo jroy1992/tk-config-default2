@@ -118,10 +118,16 @@ paths:
     ingest_sequence_asset_area_scene:       '@ingest_sequence_asset_area/{snapshot_type}/{subcontext}'
     ingest_project_asset_area_scene:        '@ingest_project_asset_area/{snapshot_type}/{subcontext}'
 
+    # ORG/5880/SHARED/SCRIPTS/nuke/avidgrades/avidgrade_v001/0068.cc
     # cdl paths
-    ingest_shot_area_cdl:                   '@ingest_shot_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
-    ingest_sequence_area_cdl:               '@ingest_sequence_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
-    ingest_project_area_cdl:                '@ingest_project_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+    ingest_shot_area_legacy_cdl:            '@ingest_shot_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+    ingest_sequence_area_legacy_cdl:        '@ingest_sequence_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+    ingest_project_area_legacy_cdl:         '@ingest_project_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+
+    # ORG/1400/SHARED/COMP/scene/nukescript_avidgrade/nuke_avidgrade/main/avidgrade_v001/0003.cc
+    ingest_shot_area_cdl:                   '@ingest_shot_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
+    ingest_sequence_area_cdl:               '@ingest_sequence_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
+    ingest_project_area_cdl:                '@ingest_project_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
 
     # deep image paths
     # TODO: Remove the _exr context_type hardcoding?
@@ -135,6 +141,10 @@ paths:
     ingest_project_area_image:              '@ingest_project_area/IMG/{vendorStep}/{name}_v{ingestVersion}.{subcontext}'
 
     # templates for parsing files
+    ingest_shot_legacy_cdl:                 '@ingest_shot_area_legacy_cdl/{name}.{cdl.ext}'
+    ingest_sequence_legacy_cdl:             '@ingest_sequence_area_legacy_cdl/{name}.{cdl.ext}'
+    ingest_project_legacy_cdl:              '@ingest_project_area_legacy_cdl/{name}.{cdl.ext}'
+
     ingest_shot_cdl:                        '@ingest_shot_area_cdl/{name}.{cdl.ext}'
     ingest_sequence_cdl:                    '@ingest_sequence_area_cdl/{name}.{cdl.ext}'
     ingest_project_cdl:                     '@ingest_project_area_cdl/{name}.{cdl.ext}'

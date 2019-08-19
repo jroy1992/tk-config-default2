@@ -814,30 +814,37 @@ class IngestCollectorPlugin(HookBaseClass):
                                                                                  parent_item,
                                                                                  default_entities)
         if context.entity:
-            step_filters = list()
-            step_filters.append(['short_name', 'is', "vendor"])
+            # if the context already has a valid step use that.
+            # we extract the step from the work_path_template, in case of notes.
+            if not context.step:
+                step_filters = list()
+                step_filters.append(['short_name', 'is', "vendor"])
 
-            # make sure we get the correct Step!
-            # this should handle whether the Step is from Sequence/Shot/Asset
-            step_filters.append(["entity_type", "is", context.entity["type"]])
+                # make sure we get the correct Step!
+                # this should handle whether the Step is from Sequence/Shot/Asset
+                step_filters.append(["entity_type", "is", context.entity["type"]])
 
-            fields = ['entity_type', 'code', 'id']
+                fields = ['entity_type', 'code', 'id', 'name']
 
-            # add a vendor step to all ingested files
-            step_entity = self.sgtk.shotgun.find_one(
-                entity_type='Step',
-                filters=step_filters,
-                fields=fields
-            )
+                # add a vendor step to all ingested files
+                step_entity = self.sgtk.shotgun.find_one(
+                    entity_type='Step',
+                    filters=step_filters,
+                    fields=fields
+                )
+            else:
+                step_entity = context.step
 
             if step_entity:
                 default_entities = [step_entity]
+                # FIXME: step entity in context has "name" and entity queried from shotgun has "code"
+                content = step_entity["name"] if step_entity.get("name") else step_entity["code"]
 
                 task_filters = [
                     ['step', 'is', step_entity],
                     ['entity', 'is', context.entity],
                     ['project', 'is', context.project],
-                    ['content', 'is', 'Vendor']
+                    ['content', 'is', content]
                 ]
 
                 task_fields = ['content', 'entity_type', 'id']
@@ -855,7 +862,7 @@ class IngestCollectorPlugin(HookBaseClass):
                         "step": step_entity,
                         "project": context.project,
                         "entity": context.entity,
-                        "content": "Vendor"
+                        "content": content
                     }
 
                     task_entity = self.sgtk.shotgun.create("Task", data, return_fields=task_fields)
