@@ -91,8 +91,6 @@ settings.tk-multi-workfiles2.task: &default_workfiles2_task_settings
 # 3dequalizer task
 settings.tk-multi-workfiles2.3dequalizer.task:
   <<: *default_workfiles2_task_settings
-  template_publish_area:
-  template_publish:
   launch_at_startup: false
   hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
