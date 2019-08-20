@@ -34,3 +34,23 @@ paths:
     tk-3de4_project_asset_nuke_export:      '@tk-3de4_project_asset_work_area/export/@project_asset_version_name.nk'
     tk-3de4_sequence_asset_nuke_export:     '@tk-3de4_sequence_asset_work_area/export/@sequence_asset_version_name.nk'
     tk-3de4_shot_asset_nuke_export:         '@tk-3de4_shot_asset_work_area/export/@shot_asset_version_name.nk'
+
+aliases:
+
+    # PUBLISH AREAS
+    tk-3de4_project_publish_area:               'project_publish_area_3de'
+    tk-3de4_sequence_publish_area:              'sequence_publish_area_3de'
+    tk-3de4_shot_publish_area:                  'shot_publish_area_3de'
+
+    tk-3de4_project_asset_publish_area:         'project_asset_publish_area_3de'
+    tk-3de4_sequence_asset_publish_area:        'sequence_asset_publish_area_3de'
+    tk-3de4_shot_asset_publish_area:            'shot_asset_publish_area_3de'
+
+    # PUBLISH FILES
+    tk-3de4_project_publish_file:               'project_publish_3de_file'
+    tk-3de4_sequence_publish_file:              'sequence_publish_3de_file'
+    tk-3de4_shot_publish_file:                  'shot_publish_3de_file'
+
+    tk-3de4_project_asset_publish_file:         'project_asset_publish_3de_file'
+    tk-3de4_sequence_asset_publish_file:        'sequence_asset_publish_3de_file'
+    tk-3de4_shot_asset_publish_file:            'shot_asset_publish_3de_file'
