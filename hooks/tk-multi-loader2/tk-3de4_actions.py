@@ -18,9 +18,11 @@ import sys
 
 import sgtk
 
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
-class 3de4Actions(HookBaseClass):
+
+class TDE4Actions(HookBaseClass):
     
     ##############################################################################################################
     # public interface - to be overridden by deriving classes 
