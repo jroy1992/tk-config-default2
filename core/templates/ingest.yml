@@ -279,6 +279,13 @@ paths:
     ingest_shot_integ_bundle:               '@ingest_shot_area/MODEL/integ/trkgeo/{subcontext}/obj_v{version}'
     ingest_shot_integ_bundle_obj:           '@ingest_shot_integ_bundle/{name}_v{ingestVersion}.{geo.ext}'
 
+    # FF/0465/SHARED/IMG/vendor/ictrain/vendor_paint/ff0465_paint_pl01_dn_rt_default_v004.odd/ff0465_paint_pl01_dn_rt_overlay_v004.1062.exr
+    # IMG/vendor/{{snapshot.department}}/{{snapshot.context_type}}/{{container.name}}_{{snapshot.subcontext}}_{{snapshot.version | version}}.odd
+    # Roto/Paint Vendor data
+    ingest_shot_area_paint:                 '@ingest_shot_area/IMG/vendor/{vendorDepartment}/{snapshot_type}/{ingestShot}_{subcontext}_v{ingestVersion}.odd'
+    ingest_shot_input_render_paint:         '@ingest_shot_area_paint/@ingest_shot_input_name.{SEQ}.{ingestImgExtension}'
+
+
     # Integ vendor data
     ingest_shot_area_integ:                 '@ingest_shot_area/ANIM/{vendorDepartment}/vendor/{vendorDepartment}/{snapshot_type}/{name}_{subcontext}_v{version}'
     ingest_shot_input_scene_integ:          '@ingest_shot_area_integ/@ingest_shot_input_name.{maya.ext}'
