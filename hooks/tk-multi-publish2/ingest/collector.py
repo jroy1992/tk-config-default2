@@ -13,6 +13,7 @@ import datetime
 import traceback
 import pprint
 import re
+import urllib
 
 from functools import reduce
 import operator
@@ -26,18 +27,30 @@ HookBaseClass = sgtk.get_hook_baseclass()
 # This is a dictionary of fields in snapshot from manifest and it's corresponding field on the item.
 DEFAULT_MANIFEST_SG_MAPPINGS = {
     "file": {
-        "id": "sg_snapshot_id",
-        "notes": "description",
-        "user": "snapshot_user",
-        "name": "manifest_name",
-        "version": "snapshot_version",
+        "snapshots": {
+            "id": "sg_snapshot_id",
+            "user": "snapshot_user",
+            "name": "manifest_name",
+            "version": "snapshot_version",
+        },
     },
     "note": {
-        "notes": "description",
-        "name": "snapshot_name",
-        "user": "snapshot_user",
-        "version": "snapshot_version",
-        "body": "content",
+        "notes": {
+            "notes": "description",
+            "name": "snapshot_name",
+            "body": "content",
+            "id": "sg_client_note_id",
+        },
+        "snapshots": {
+            "id": "sg_snapshot_id",
+            "user": "snapshot_user",
+            "name": "manifest_name",
+            "version": "snapshot_version",
+        },
+        "versions": {
+            "id": "sg_client_version_id",
+            "name": "version_name",
+        },
     },
 }
 
@@ -46,15 +59,16 @@ DEFAULT_NOTE_TYPES_MAPPINGS = {
     None: "kickoff",
     "kickoff": "kickoff",
     "role supervisor": "annotation",
+    "dailies": "annotation",
 }
 
 # Default snapshot_type
 DEFAULT_SNAPSHOT_TYPE = "ingest"
 
 # This is a dictionary of note_type values to their access keys in the fields dict.
-DEFAULT_NOTE_TYPES_ACCESS_KEYS = {
-    "kickoff": ["sg_version", "name"],
-    "annotation": ["sg_version", "name"],
+DEFAULT_NOTE_TYPES_ACCESS_FALLBACKS = {
+    "kickoff": [["original_name"], ["sg_version", "name"]],
+    "annotation": [["original_name"], ["sg_version", "name"]]
 }
 
 
@@ -108,7 +122,10 @@ class IngestCollectorPlugin(HookBaseClass):
             "values": {
                 "type": "dict",
                 "values": {
-                    "type": "str",
+                    "type": "dict",
+                    "values": {
+                        "type": "str",
+                    },
                 },
             },
             "default_value": DEFAULT_MANIFEST_SG_MAPPINGS,
@@ -124,17 +141,20 @@ class IngestCollectorPlugin(HookBaseClass):
             "allows_empty": True,
             "description": "dictionary of note_type values to their item type."
         }
-        schema["Note Type Access Keys"] = {
+        schema["Note Type Access Fallbacks"] = {
             "type": "dict",
             "values": {
                 "type": "list",
                 "values": {
-                    "type": "str",
+                    "type": "list",
+                    "values": {
+                        "type": "str",
+                    },
                 },
             },
-            "default_value": DEFAULT_NOTE_TYPES_ACCESS_KEYS,
+            "default_value": DEFAULT_NOTE_TYPES_ACCESS_FALLBACKS,
             "allows_empty": True,
-            "description": "Dictionary of note_type values to their access keys in the fields dict."
+            "description": "Dictionary of note_type values to a list of access keys in the fields dict."
         }
         schema["Ignore Extensions"] = {
             "type": "list",
@@ -263,7 +283,7 @@ class IngestCollectorPlugin(HookBaseClass):
         publisher = self.parent
 
         note_type_mappings = settings["Note Type Mappings"].value
-        note_type_acess_keys = settings["Note Type Access Keys"].value
+        note_type_acess_fallbacks = settings["Note Type Access Fallbacks"].value
 
         raw_item_settings = settings["Item Types"].raw_value
 
@@ -284,47 +304,55 @@ class IngestCollectorPlugin(HookBaseClass):
 
         note_type = note_type_mappings[manifest_note_type]
 
-        path = reduce(operator.getitem, note_type_acess_keys[note_type], fields) + ".%s" % note_type
-        display_name = path + ".notes"
-
-        item_type = "notes.entity.%s" % note_type
-
-        relevant_item_settings = raw_item_settings[item_type]
-        raw_template_name = relevant_item_settings.get("work_path_template")
-        envs = self.parent.sgtk.pipeline_configuration.get_environments()
-
-        # type_display = relevant_item_settings.get("type_display", "File")
-        # work_path_template = None
-        # icon_path = relevant_item_settings.get("icon", "{self}/hooks/icons/file.png")
         work_path_template = None
 
-        template_names_per_env = [
-            sgtk.platform.resolve_setting_expression(raw_template_name, self.parent.engine.instance_name, env_name) for
-            env_name in envs]
+        for note_type_acess_keys in note_type_acess_fallbacks[note_type]:
+            path = reduce(operator.getitem, note_type_acess_keys, fields) + ".%s" % note_type
+            display_name = path + ".notes"
 
-        templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
-                             template_names_per_env if self.parent.get_template_by_name(template_name)]
-        for template in templates_per_env:
-            try:
-                template.get_fields(path)
-                # we have a match!
-                work_path_template = template.name
-            except:
-                # it errored out
-                continue
+            item_type = "notes.entity.%s" % note_type
 
-        if work_path_template:
-            # calculate the context and give to the item
-            context = self._get_item_context_from_path(work_path_template, path, parent_item)
+            relevant_item_settings = raw_item_settings[item_type]
+            raw_template_name = relevant_item_settings.get("work_path_template")
+            envs = self.parent.sgtk.pipeline_configuration.get_environments()
 
-            file_item = self._add_file_item(settings, parent_item, path, item_name=display_name,
-                                            item_type=item_type, context=context)
+            template_names_per_env = [
+                sgtk.platform.resolve_setting_expression(raw_template_name,
+                                                         self.parent.engine.instance_name,
+                                                         env_name) for env_name in envs
+            ]
 
-            return file_item
-        else:
-            self.logger.warning("No matching template found for %s with raw template %s" % (path,
-                                                                                            raw_template_name))
-            return
+            templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
+                                 template_names_per_env if self.parent.get_template_by_name(template_name)]
+            for template in templates_per_env:
+                try:
+                    template.get_fields(path)
+                    # we have a match!
+                    work_path_template = template.name
+                except:
+                    # it errored out
+                    continue
+
+            if work_path_template:
+                # calculate the context and give to the item
+                context = self._get_item_context_from_path(work_path_template, path, parent_item)
+
+                file_item = self._add_file_item(settings, parent_item, path, item_name=display_name,
+                                                item_type=item_type, context=context)
+
+                # we found the template match in one of the fallbacks, break-out
+                return file_item
+            else:
+                self.logger.warning("No matching template found for %s with raw template %s" % (path,
+                                                                                                raw_template_name),
+                                    extra={
+                                        "action_show_more_info": {
+                                            "label": "Show Fields",
+                                            "tooltip": "Show the fields used.",
+                                            "text": note_type_acess_keys
+                                        }
+                                    })
+                return
 
     def process_file(self, settings, parent_item, path):
         """
@@ -397,6 +425,14 @@ class IngestCollectorPlugin(HookBaseClass):
         """
 
         fields = super(IngestCollectorPlugin, self)._resolve_item_fields(settings, item)
+
+        # make sure we don't pick a default name from the task, else everything will end up as "vendor"
+        # this only happens in case of custom ingestion, since we let the user choose a vendor task
+        # instead of automatically resolving to a "Vendor" Step.
+        if item.context.task:
+            name_field = item.context.task["name"]
+            if fields["name"] == urllib.quote(name_field.replace(" ", "_").lower(), safe=''):
+                fields.pop("name")
 
         item_info = self._get_item_type_info(settings, item.type)
 
@@ -474,7 +510,11 @@ class IngestCollectorPlugin(HookBaseClass):
         processed_snapshots = list()
         manifest_mappings = settings["Manifest SG Mappings"].value
 
-        file_item_manifest_mappings = manifest_mappings["file"]
+        # since we only process snapshots in this manifest.
+        file_item_manifest_mappings = manifest_mappings["file"]["snapshots"]
+
+        # this is a bit more special since it has three different sources being processed.
+        # notes, snapshots, versions. Each can have overlapping fields.
         note_item_manifest_mappings = manifest_mappings["note"]
         # yaml file stays at the base of the package
         base_dir = os.path.dirname(path)
@@ -544,7 +584,9 @@ class IngestCollectorPlugin(HookBaseClass):
             data = dict()
             snapshot_data = dict()
             version_data = dict()
-            data["fields"] = {note_item_manifest_mappings[k] if k in note_item_manifest_mappings else k: v
+
+            note_manifest_mappings = note_item_manifest_mappings["notes"]
+            data["fields"] = {note_manifest_mappings[k] if k in note_manifest_mappings else k: v
                               for k, v in note.iteritems()}
 
             # every note item has a corresponding snapshot and version associated with it
@@ -557,15 +599,16 @@ class IngestCollectorPlugin(HookBaseClass):
             # pop the notes from version_data they are already stored
             note_version.pop("notes")
 
-            version_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
+            version_manifest_mappings = note_item_manifest_mappings["versions"]
+            version_data["fields"] = {version_manifest_mappings[k] if k in version_manifest_mappings else k: v
                                       for k, v in note_version.iteritems()}
 
             # update the item fields with version_data fields
             data["fields"].update(version_data["fields"])
 
             # snapshot fields get priority over version fields
-
-            snapshot_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
+            snapshot_manifest_mappings = note_item_manifest_mappings["snapshots"]
+            snapshot_data["fields"] = {snapshot_manifest_mappings[k] if k in snapshot_manifest_mappings else k: v
                                        for k, v in note_snapshot.iteritems()}
 
             # pop the files from snapshot_data they are not useful
@@ -761,40 +804,94 @@ class IngestCollectorPlugin(HookBaseClass):
         """
         publisher = self.parent
 
-        sg_filters = [
-            ['short_name', 'is', "vendor"]
-        ]
-
-        # TODO-- this is not needed right now, since our keys only depend on short_name key of the Step
-        # Environment resolution hook anyways, doesn't validate if the Step entity belongs to the same class or not.
-        # make sure we get the correct Step!
-        # if base_context.entity:
-        #     # this should handle whether the Step is from Sequence/Shot/Asset
-        #     sg_filters.append(["entity_type", "is", base_context.entity["type"]])
-        # elif base_context.project:
-        #     # this should handle pro
-        #     sg_filters.append(["entity_type", "is", base_context.project["type"]])
-
-        fields = ['entity_type', 'code', 'id']
-
-        # add a vendor step to all ingested files
-        step_entity = self.sgtk.shotgun.find_one(
-            entity_type='Step',
-            filters=sg_filters,
-            fields=fields
-        )
-
-        default_entities = [step_entity]
-
         work_tmpl = publisher.get_template_by_name(work_path_template)
         if work_tmpl and isinstance(work_tmpl, tank.template.TemplateString):
             # use file name if we got TemplateString
             path = os.path.basename(path)
 
-        return super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
+        context = super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
+                                                                                 path,
+                                                                                 parent_item,
+                                                                                 default_entities)
+        if context.entity:
+            # if the context already has a valid step use that.
+            # we extract the step from the work_path_template, in case of notes.
+            if not context.step:
+                step_filters = list()
+                step_filters.append(['short_name', 'is', "vendor"])
+
+                # make sure we get the correct Step!
+                # this should handle whether the Step is from Sequence/Shot/Asset
+                step_filters.append(["entity_type", "is", context.entity["type"]])
+
+                fields = ['entity_type', 'code', 'id', 'name']
+
+                # add a vendor step to all ingested files
+                step_entity = self.sgtk.shotgun.find_one(
+                    entity_type='Step',
+                    filters=step_filters,
+                    fields=fields
+                )
+            else:
+                step_entity = context.step
+
+            if step_entity:
+                default_entities = [step_entity]
+                # FIXME: step entity in context has "name" and entity queried from shotgun has "code"
+                content = step_entity["name"] if step_entity.get("name") else step_entity["code"]
+
+                task_filters = [
+                    ['step', 'is', step_entity],
+                    ['entity', 'is', context.entity],
+                    ['project', 'is', context.project],
+                    ['content', 'is', content]
+                ]
+
+                task_fields = ['content', 'entity_type', 'id']
+
+                task_entity = self.sgtk.shotgun.find_one(
+                    entity_type='Task',
+                    filters=task_filters,
+                    fields=task_fields
+                )
+
+                # create the task:
+                if not task_entity:
+
+                    data = {
+                        "step": step_entity,
+                        "project": context.project,
+                        "entity": context.entity,
+                        "content": content
+                    }
+
+                    task_entity = self.sgtk.shotgun.create("Task", data, return_fields=task_fields)
+                    if not task_entity:
+                        self.logger.error("Failed to create Ingestion Task.",
+                                          extra={
+                                              "action_show_more_info": {
+                                                  "label": "Show Data",
+                                                  "tooltip": "Show the error log",
+                                                  "text": "Data: %s\nPath: %s" % (pprint.pformat(data),
+                                                                                  path)
+                                              }
+                                          })
+
+                if task_entity:
+                    # try to clear the status of the task entity.
+                    try:
+                        self.sgtk.shotgun.update("Task", task_entity["id"], {"sg_status_list": None})
+                    except:
+                        pass
+
+                    default_entities.append(task_entity)
+
+                context = super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
                                                                               path,
                                                                               parent_item,
                                                                               default_entities)
+
+        return context
 
     def _get_work_path_template_from_settings(self, settings, item_type, path):
         """

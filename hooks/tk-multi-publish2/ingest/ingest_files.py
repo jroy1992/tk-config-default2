@@ -17,6 +17,8 @@ import sgtk
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
+UNLINKED_ENTITY_TYPE = "(UNLINKED)"
+
 
 class IngestFilesPlugin(HookBaseClass):
     """
@@ -47,11 +49,13 @@ class IngestFilesPlugin(HookBaseClass):
         ingest_schema = {
             "additional_publish_fields": {
                 "default_value": {"name": "sg_element", "output": "sg_output",
-                                  "tags": "tags", "sg_snapshot_id": "sg_snapshot_id"}
+                                  "tags": "tags", "sg_snapshot_id": "sg_snapshot_id",
+                                  "snapshot_type": "sg_snapshot_type"}
             },
             "snapshot_type_settings": {
-                "default_value": {"work_plate": "Element", "match_qt": "Element", "*": "Asset",
-                                  "ingest": "Element"}
+                # custom entities can still be enabled.
+                # "default_value": {"work_plate": "Element", "match_qt": "Element", "*": "Asset", "ingest": "Element"}
+                "default_value": {"*": UNLINKED_ENTITY_TYPE}
             }
         }
 
@@ -67,15 +71,20 @@ class IngestFilesPlugin(HookBaseClass):
         contain simple html for formatting.
         """
 
-        return """
-        Ingests the file to the location specified by the publish_path_template for this item and
-        creates a <b>PublishedFile</b> entity in Shotgun, which will include a
-        reference to the file's published path on disk.
+        loader_url = "https://support.shotgunsoftware.com/hc/en-us/articles/219033078"
 
-        After the <b>PublishedFile</b> is created successfully, a <b>Plate/Asset</b> entity is also created.
-        The <b>PublishedFile</b> is then linked to it's corresponding <b>Plate/Asset</b> entity for other users to use.
-        Once the ingestion is complete these files can be accessed using the Loader window within each DCC.
-        """
+        return """
+        <p>Ingests the file to the location specified by the publish_path_template
+        for this item and creates a <b>PublishedFile</b> entity in Shotgun, 
+        which will include a reference to the file's published path on disk.</br>
+        
+        <h3>Ingestion Process</h3>
+        After the <b>PublishedFile</b> is created successfully, 
+        a <b>Plate/Asset</b> entity is also created.The <b>PublishedFile</b> is 
+        then linked to it's corresponding <b>Plate/Asset</b> entity for the users.
+        After ingestion these files can be accessed via the 
+        <b><a href='%s'>Loader</a></b></p>
+        """ % (loader_url,)
 
     def accept(self, task_settings, item):
         """
@@ -127,10 +136,10 @@ class IngestFilesPlugin(HookBaseClass):
 
         # ---- this check will only run if the status of the published files is true.
         # ---- check for matching linked_entity of this path with a status.
-        if status:
-            linked_entity_fields = ["sg_status_list"]
-            linked_entity = self._find_linked_entity(task_settings, item, linked_entity_fields)
-
+        # ---- In case of unlinked entity, this validation doesn't run.
+        linked_entity_fields = ["sg_status_list"]
+        linked_entity = self._find_linked_entity(task_settings, item, linked_entity_fields)
+        if status and item.properties["linked_entity_type"] != UNLINKED_ENTITY_TYPE:
             if linked_entity:
                 conflict_info = (
                     "This matching %s Entity will be updated and also linked to a new PublishedFile"
@@ -165,6 +174,10 @@ class IngestFilesPlugin(HookBaseClass):
                     self.logger.info("%s entity will be created for item %s"
                                      % (item.properties["linked_entity_type"], item.name))
 
+        elif status:
+            self.logger.info("Published Files will be created %s for item %s"
+                             % (item.properties["linked_entity_type"], item.name))
+
         return status
 
     def create_published_files(self, task_settings, item):
@@ -196,9 +209,10 @@ class IngestFilesPlugin(HookBaseClass):
 
         # let's create ingest_entity_data within item properties,
         # so that we can link the version created to linked entity as well.
-        item.properties["ingest_entity_data"] = linked_entity
+        if linked_entity:
+            item.properties["ingest_entity_data"] = linked_entity
 
-        if item.properties.get("ingest_entity_data"):
+        if "ingest_entity_data" in item.properties:
             # run the actual publish file creation
             self.create_published_files(task_settings, item)
 
@@ -219,6 +233,15 @@ class IngestFilesPlugin(HookBaseClass):
                     self.logger.error("Failed to link the PublishedFile and the %s entity for %s!" %
                                       (item.properties["linked_entity_type"], item.name))
             else:
+                # undo the linked_entity creation
+                self.undo(task_settings, item)
+                self.logger.error("PublishedFile not created successfully for %s!" % item.name)
+        # configured to not create any custom linking.
+        elif item.properties["linked_entity_type"] == UNLINKED_ENTITY_TYPE:
+            # run the actual publish file creation
+            self.create_published_files(task_settings, item)
+
+            if not item.properties.get("sg_publish_data_list"):
                 # undo the linked_entity creation
                 self.undo(task_settings, item)
                 self.logger.error("PublishedFile not created successfully for %s!" % item.name)
@@ -268,28 +291,29 @@ class IngestFilesPlugin(HookBaseClass):
         :param item: Item to process
         """
 
-        linked_entity_data = item.properties.get("ingest_entity_data")
+        if "ingest_entity_data" in item.properties:
+            linked_entity_data = item.properties["ingest_entity_data"]
 
-        linked_entity_fields = ["sg_published_files"]
-        linked_entity = self._find_linked_entity(task_settings, item, linked_entity_fields)
+            linked_entity_fields = ["sg_published_files"]
+            linked_entity = self._find_linked_entity(task_settings, item, linked_entity_fields)
 
-        # only delete the entity if the entity has no published files linked to it.
-        if linked_entity_data and len(linked_entity["sg_published_files"]) == 0:
-            try:
-                self.sgtk.shotgun.delete(linked_entity_data["type"], linked_entity_data["id"])
-                # pop the ingest_entity_data too!
-                item.properties.pop("ingest_entity_data")
-            except Exception:
-                self.logger.error(
-                    "Failed to delete %s Entity for %s" % (item.properties["linked_entity_type"], item.name),
-                    extra={
-                        "action_show_more_info": {
-                            "label": "Show Error Log",
-                            "tooltip": "Show the error log",
-                            "text": traceback.format_exc()
+            # only delete the entity if the entity has no published files linked to it.
+            if linked_entity_data and linked_entity and len(linked_entity["sg_published_files"]) == 0:
+                try:
+                    self.sgtk.shotgun.delete(linked_entity_data["type"], linked_entity_data["id"])
+                    # pop the ingest_entity_data too!
+                    item.properties.pop("ingest_entity_data")
+                except Exception:
+                    self.logger.error(
+                        "Failed to delete %s Entity for %s" % (item.properties["linked_entity_type"], item.name),
+                        extra={
+                            "action_show_more_info": {
+                                "label": "Show Error Log",
+                                "tooltip": "Show the error log",
+                                "text": traceback.format_exc()
+                            }
                         }
-                    }
-                )
+                    )
 
     def _create_asset_type(self, task_settings, item):
         """Updates the sg_asset_type schema on SG to add the snapshot_type, if it doesn't already exist.
@@ -365,23 +389,24 @@ class IngestFilesPlugin(HookBaseClass):
             instances.
         :param item:  item to get the linked entity from
         """
-        try:
-            self.sgtk.shotgun.update(
-                entity_type=item.properties["ingest_entity_data"]["type"],
-                entity_id=item.properties["ingest_entity_data"]["id"],
-                data={"sg_status_list": None},
-            )
-        except Exception:
-            self.logger.error(
-                "clear_linked_entity_status_list failed for item: %s" % item.name,
-                extra={
-                    "action_show_more_info": {
-                        "label": "Show Error Log",
-                        "tooltip": "Show the error log",
-                        "text": traceback.format_exc()
+        if "ingest_entity_data" in item.properties:
+            try:
+                self.sgtk.shotgun.update(
+                    entity_type=item.properties["ingest_entity_data"]["type"],
+                    entity_id=item.properties["ingest_entity_data"]["id"],
+                    data={"sg_status_list": None},
+                )
+            except Exception:
+                self.logger.error(
+                    "clear_linked_entity_status_list failed for item: %s" % item.name,
+                    extra={
+                        "action_show_more_info": {
+                            "label": "Show Error Log",
+                            "tooltip": "Show the error log",
+                            "text": traceback.format_exc()
+                        }
                     }
-                }
-            )
+                )
 
     def _find_linked_entity(self, task_settings, item, fields=list()):
         """
@@ -395,6 +420,14 @@ class IngestFilesPlugin(HookBaseClass):
         :param item: item to find the linked entity for.
         :return: linked entity or None if not found.
         """
+
+        # add the linked_entity_type to item properties
+        item.properties["linked_entity_type"] = self._resolve_linked_entity_type(task_settings, item)
+
+        if item.properties["linked_entity_type"] == UNLINKED_ENTITY_TYPE:
+            # we don't create any entity in this case.
+            return
+
         sg_filters = [
             ['project', 'is', item.context.project],
             ['code', 'is', item.properties["publish_linked_entity_name"]]
@@ -406,12 +439,12 @@ class IngestFilesPlugin(HookBaseClass):
             elif item.context.entity["type"] == "Sequence":
                 sg_filters.append(['sg_sequence', 'is', item.context.entity])
             elif item.context.entity["type"] == "Asset":
-                sg_filters.append(['parents', 'is', item.context.entity])
+                if item.properties["linked_entity_type"] == "Asset":
+                    sg_filters.append(['parents', 'is', item.context.entity])
+                if item.properties["linked_entity_type"] == "Element":
+                    sg_filters.append(['assets', 'in', item.context.entity])
 
         fields.extend(['shots', 'code', 'id'])
-
-        # add the linked_entity_type to item properties
-        item.properties["linked_entity_type"] = self._resolve_linked_entity_type(task_settings, item)
 
         item_fields = item.properties["fields"]
 
@@ -456,6 +489,11 @@ class IngestFilesPlugin(HookBaseClass):
         :param item: item to create the linked entity for.
         :return: Linked entity for the given item.
         """
+
+        # don't create any entity when it's unlinked
+        if item.properties["linked_entity_type"] == UNLINKED_ENTITY_TYPE:
+            return
+
         try:
             linked_entity = self._find_linked_entity(task_settings, item)
         except Exception as e:
@@ -504,8 +542,13 @@ class IngestFilesPlugin(HookBaseClass):
                 data["sg_sequence"] = item.context.entity
             # link the new entity to an Asset
             elif item.context.entity["type"] == "Asset" and item.properties["linked_entity_type"] == "Asset":
-                # add the context asset entity as the parent asset
-                data["parents"] = [item.context.entity]
+                if item.properties["linked_entity_type"] == "Asset":
+                    # add the context asset entity as the parent asset
+                    data["parents"] = [item.context.entity]
+                if item.properties["linked_entity_type"] == "Element":
+                    # add the context asset entity as a plate
+                    data["elements"] = [item.context.entity]
+
 
                 # if it's a sequence based asset
                 sequence_entity = [entity for entity in item.context.additional_entities
@@ -578,6 +621,9 @@ class IngestFilesPlugin(HookBaseClass):
         :param item: item to get the publish files(sg_publish_data_list) and linked entity(ingest_entity_data)
         :return: Updated linked entity.
         """
+
+        if "ingest_entity_data" not in item.properties:
+            return
 
         sg_publish_data_list = []
 

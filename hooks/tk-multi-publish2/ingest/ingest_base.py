@@ -9,7 +9,6 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 
-import traceback
 import pprint
 
 import sgtk
@@ -70,22 +69,21 @@ class IngestBasePlugin(HookBaseClass):
             self.logger.error("Ingestion at project level is not allowed! Please Contact TDs.")
             return False
         # context check needs to run before the other validations do.
-        if not item.context.step:
+        if not item.context.task:
             # Item doesn't contain a step entity! Intimate the user to create one, if they want to ingest.
-            sg_filters = [
-                ['short_name', 'is', "vendor"]
-            ]
+            step_filters = list()
+            step_filters.append(['short_name', 'is', "vendor"])
 
             # make sure we get the correct Step!
             # this should handle whether the Step is from Sequence/Shot/Asset
-            sg_filters.append(["entity_type", "is", item.context.entity["type"]])
+            step_filters.append(["entity_type", "is", item.context.entity["type"]])
 
             fields = ['entity_type', 'code', 'id']
 
             # add a vendor step to all ingested files
             step_entity = self.sgtk.shotgun.find_one(
                 entity_type='Step',
-                filters=sg_filters,
+                filters=step_filters,
                 fields=fields
             )
 
@@ -96,7 +94,8 @@ class IngestBasePlugin(HookBaseClass):
                                             "label": "Show Filters",
                                             "tooltip": "Show the filters used to query the Step.",
                                             "text": "SG Filters: %s\n"
-                                                    "Fields: %s" % (pprint.pformat(sg_filters), pprint.pformat(fields))
+                                                    "Fields: %s" % (pprint.pformat(step_filters),
+                                                                    pprint.pformat(fields))
                                         }
                                     })
 
@@ -105,6 +104,7 @@ class IngestBasePlugin(HookBaseClass):
             task_filters = [
                 ['step', 'is', step_entity],
                 ['entity', 'is', item.context.entity],
+                ['project', 'is', item.context.project],
                 ['content', 'is', 'Vendor']
             ]
 

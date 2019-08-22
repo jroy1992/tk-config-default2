@@ -54,6 +54,8 @@ keys:
       edits:
         replace:
           char: "Character"
+          veh: "Vehicle"
+          set: "Environment"
 
     vendorDepartment:
       type: str
@@ -116,10 +118,16 @@ paths:
     ingest_sequence_asset_area_scene:       '@ingest_sequence_asset_area/{snapshot_type}/{subcontext}'
     ingest_project_asset_area_scene:        '@ingest_project_asset_area/{snapshot_type}/{subcontext}'
 
+    # ORG/5880/SHARED/SCRIPTS/nuke/avidgrades/avidgrade_v001/0068.cc
     # cdl paths
-    ingest_shot_area_cdl:                   '@ingest_shot_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
-    ingest_sequence_area_cdl:               '@ingest_sequence_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
-    ingest_project_area_cdl:                '@ingest_project_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+    ingest_shot_area_legacy_cdl:            '@ingest_shot_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+    ingest_sequence_area_legacy_cdl:        '@ingest_sequence_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+    ingest_project_area_legacy_cdl:         '@ingest_project_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+
+    # ORG/1400/SHARED/COMP/scene/nukescript_avidgrade/nuke_avidgrade/main/avidgrade_v001/0003.cc
+    ingest_shot_area_cdl:                   '@ingest_shot_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
+    ingest_sequence_area_cdl:               '@ingest_sequence_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
+    ingest_project_area_cdl:                '@ingest_project_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
 
     # deep image paths
     # TODO: Remove the _exr context_type hardcoding?
@@ -133,6 +141,10 @@ paths:
     ingest_project_area_image:              '@ingest_project_area/IMG/{vendorStep}/{name}_v{ingestVersion}.{subcontext}'
 
     # templates for parsing files
+    ingest_shot_legacy_cdl:                 '@ingest_shot_area_legacy_cdl/{name}.{cdl.ext}'
+    ingest_sequence_legacy_cdl:             '@ingest_sequence_area_legacy_cdl/{name}.{cdl.ext}'
+    ingest_project_legacy_cdl:              '@ingest_project_area_legacy_cdl/{name}.{cdl.ext}'
+
     ingest_shot_cdl:                        '@ingest_shot_area_cdl/{name}.{cdl.ext}'
     ingest_sequence_cdl:                    '@ingest_sequence_area_cdl/{name}.{cdl.ext}'
     ingest_project_cdl:                     '@ingest_project_area_cdl/{name}.{cdl.ext}'
@@ -167,20 +179,36 @@ paths:
     ingest_sequence_output_sil_scene:       '@sequence_publish_area_scene/{snapshot_type}/@ingest_sequence_output_name.{sil.ext}'
     ingest_shot_output_sil_scene:           '@shot_publish_area_scene/{snapshot_type}/@ingest_shot_output_name.{sil.ext}'
 
+    ingest_project_asset_output_sil_scene:  '@project_asset_publish_area_scene/{snapshot_type}/@ingest_project_asset_output_name.{sil.ext}'
+    ingest_sequence_asset_output_sil_scene: '@sequence_asset_publish_area_scene/{snapshot_type}/@ingest_sequence_asset_output_name.{sil.ext}'
+    ingest_shot_asset_output_sil_scene:     '@shot_asset_publish_area_scene/{snapshot_type}/@ingest_shot_asset_output_name.{sil.ext}'
+
     # SCRIPTS
     ingest_project_output_script:           '@project_publish_area_script/{snapshot_type}/@ingest_project_output_name.nk'
     ingest_sequence_output_script:          '@sequence_publish_area_script/{snapshot_type}/@ingest_sequence_output_name.nk'
     ingest_shot_output_script:              '@shot_publish_area_script/{snapshot_type}/@ingest_shot_output_name.nk'
+
+    ingest_project_asset_output_script:     '@project_asset_publish_area_script/{snapshot_type}/@ingest_project_asset_output_name.nk'
+    ingest_sequence_asset_output_script:    '@sequence_asset_publish_area_script/{snapshot_type}/@ingest_sequence_asset_output_name.nk'
+    ingest_shot_asset_output_script:        '@shot_asset_publish_area_script/{snapshot_type}/@ingest_shot_asset_output_name.nk'
 
     # RENDERS
     ingest_project_output_render:           '@project_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_project_output_name.{SEQ}.{img.ext}'
     ingest_sequence_output_render:          '@sequence_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_sequence_output_name.{SEQ}.{img.ext}'
     ingest_shot_output_render:              '@shot_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_shot_output_name.{SEQ}.{img.ext}'
 
+    ingest_project_asset_output_render:     '@project_asset_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_project_asset_output_name.{SEQ}.{img.ext}'
+    ingest_sequence_asset_output_render:    '@sequence_asset_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_sequence_asset_output_name.{SEQ}.{img.ext}'
+    ingest_shot_asset_output_render:        '@shot_asset_publish_area_image/{snapshot_type}/@image_subdirs/@ingest_shot_asset_output_name.{SEQ}.{img.ext}'
+
     # DEEP RENDERS
     ingest_project_output_deep_render:      '@project_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_project_output_name.{SEQ}.{img.ext}'
     ingest_sequence_output_deep_render:     '@sequence_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_sequence_output_name.{SEQ}.{img.ext}'
     ingest_shot_output_deep_render:         '@shot_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_shot_output_name.{SEQ}.{img.ext}'
+
+    ingest_project_asset_output_deep_render:  '@project_asset_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_project_asset_output_name.{SEQ}.{img.ext}'
+    ingest_sequence_asset_output_deep_render: '@sequence_asset_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_sequence_asset_output_name.{SEQ}.{img.ext}'
+    ingest_shot_asset_output_deep_render:     '@shot_asset_publish_area_image/{snapshot_type}/@ingest_deep_subdirs/@ingest_shot_asset_output_name.{SEQ}.{img.ext}'
 
     # TEXTURES
     ingest_project_publish_texture:         '@project_publish_area_texture/{snapshot_type}/@texture_subdirs/@ingest_project_output_name[.{UDIM}].{tex.ext}'
@@ -196,20 +224,36 @@ paths:
     sequence_proxy_image:                   '@sequence_publish_area_image/{snapshot_type}/@proxy_subdirs/@ingest_sequence_output_name.{SEQ}.{img.ext}'
     shot_proxy_image:                       '@shot_publish_area_image/{snapshot_type}/@proxy_subdirs/@ingest_shot_output_name.{SEQ}.{img.ext}'
 
+    project_asset_proxy_image:              '@project_asset_publish_area_image/{snapshot_type}/@proxy_subdirs/@ingest_project_asset_output_name.{SEQ}.{img.ext}'
+    sequence_asset_proxy_image:             '@sequence_asset_publish_area_image/{snapshot_type}/@proxy_subdirs/@ingest_sequence_asset_output_name.{SEQ}.{img.ext}'
+    shot_asset_proxy_image:                 '@shot_asset_publish_area_image/{snapshot_type}/@proxy_subdirs/@ingest_shot_asset_output_name.{SEQ}.{img.ext}'
+
     # 2K
     project_2k_image:                       '@project_publish_area_image/{snapshot_type}/@2k_subdirs/@ingest_project_output_name.{SEQ}.{img.ext}'
     sequence_2k_image:                      '@sequence_publish_area_image/{snapshot_type}/@2k_subdirs/@ingest_sequence_output_name.{SEQ}.{img.ext}'
     shot_2k_image:                          '@shot_publish_area_image/{snapshot_type}/@2k_subdirs/@ingest_shot_output_name.{SEQ}.{img.ext}'
+
+    project_asset_2k_image:                 '@project_asset_publish_area_image/{snapshot_type}/@2k_subdirs/@ingest_project_asset_output_name.{SEQ}.{img.ext}'
+    sequence_asset_2k_image:                '@sequence_asset_publish_area_image/{snapshot_type}/@2k_subdirs/@ingest_sequence_asset_output_name.{SEQ}.{img.ext}'
+    shot_asset_2k_image:                    '@shot_asset_publish_area_image/{snapshot_type}/@2k_subdirs/@ingest_shot_asset_output_name.{SEQ}.{img.ext}'
 
     # MOVIES
     ingest_project_output_movie:            '@project_publish_area_movie/{snapshot_type}/@ingest_project_output_name.mov'
     ingest_sequence_output_movie:           '@sequence_publish_area_movie/{snapshot_type}/@ingest_sequence_output_name.mov'
     ingest_shot_output_movie:               '@shot_publish_area_movie/{snapshot_type}/@ingest_shot_output_name.mov'
 
+    ingest_project_asset_output_movie:      '@project_asset_publish_area_movie/{snapshot_type}/@ingest_project_asset_output_name.mov'
+    ingest_sequence_asset_output_movie:     '@sequence_asset_publish_area_movie/{snapshot_type}/@ingest_sequence_asset_output_name.mov'
+    ingest_shot_asset_output_movie:         '@shot_asset_publish_area_movie/{snapshot_type}/@ingest_shot_asset_output_name.mov'
+
     # CACHE
     ingest_project_output_cache:            '@project_publish_area_anim/{snapshot_type}/@ingest_project_output_name.{geo.ext}'
     ingest_sequence_output_cache:           '@sequence_publish_area_anim/{snapshot_type}/@ingest_sequence_output_name.{geo.ext}'
     ingest_shot_output_cache:               '@shot_publish_area_anim/{snapshot_type}/@ingest_shot_output_name.{geo.ext}'
+
+    ingest_project_asset_output_cache:      '@project_asset_publish_area_anim/{snapshot_type}/@ingest_project_asset_output_name.{geo.ext}'
+    ingest_sequence_asset_output_cache:     '@sequence_asset_publish_area_anim/{snapshot_type}/@ingest_sequence_asset_output_name.{geo.ext}'
+    ingest_shot_asset_output_cache:         '@shot_asset_publish_area_anim/{snapshot_type}/@ingest_shot_asset_output_name.{geo.ext}'
 
     # ABC
     ingest_project_output_abc:              '@project_publish_area_anim/{snapshot_type}/v{version}/@ingest_project_output_name.abc'
@@ -234,6 +278,13 @@ paths:
     # ORG/6300/SHARED/MODEL/integ/trkgeo/plate/obj_v005/WenchBobby_trkGeo_v01.obj
     ingest_shot_integ_bundle:               '@ingest_shot_area/MODEL/integ/trkgeo/{subcontext}/obj_v{version}'
     ingest_shot_integ_bundle_obj:           '@ingest_shot_integ_bundle/{name}_v{ingestVersion}.{geo.ext}'
+
+    # FF/0465/SHARED/IMG/vendor/ictrain/vendor_paint/ff0465_paint_pl01_dn_rt_default_v004.odd/ff0465_paint_pl01_dn_rt_overlay_v004.1062.exr
+    # IMG/vendor/{{snapshot.department}}/{{snapshot.context_type}}/{{container.name}}_{{snapshot.subcontext}}_{{snapshot.version | version}}.odd
+    # Roto/Paint Vendor data
+    ingest_shot_area_paint:                 '@ingest_shot_area/IMG/vendor/{vendorDepartment}/{snapshot_type}/{ingestShot}_{subcontext}_v{ingestVersion}.odd'
+    ingest_shot_input_render_paint:         '@ingest_shot_area_paint/@ingest_shot_input_name.{SEQ}.{ingestImgExtension}'
+
 
     # Integ vendor data
     ingest_shot_area_integ:                 '@ingest_shot_area/ANIM/{vendorDepartment}/vendor/{vendorDepartment}/{snapshot_type}/{name}_{subcontext}_v{version}'
@@ -260,9 +311,13 @@ strings:
     ingest_shot_annotation_name:            '{ingestShot}_{ingestStep}_{name}_v{ingestVersion}.annotation'
     ingest_shot_kickoff_name:               '{ingestShot}_{name}_v{ingestVersion}.kickoff'
 
+    ingest_project_asset_annotation_name:   'ASSETDEV{Asset}_{ingestStep}_{node}_v{ingestVersion}.annotation'
+
     # output for re-constructing back our pipeline name.
     ingest_shot_output_annotation_name:     '{Sequence}_{Shot}_{Step}_{Step}_{name}[-{node}].v{version}'
     ingest_shot_output_kickoff_name:        '{Sequence}_{Shot}_{Step}_{snapshot_type}_{name}[-{node}].v{version}'
+
+    ingest_project_asset_output_annotation_name:    '{Step}_{AssetType}-{Asset}-{Step}[-{node}].v{version}'
 
     # strings for input asset names
     ingest_shot_asset_input_name:           '{ingestShot}_{Asset}_{name}_v{ingestVersion}'

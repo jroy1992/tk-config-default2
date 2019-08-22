@@ -120,6 +120,27 @@ class UploadNotesPlugin(HookBaseClass):
         fields = item.properties.fields
         status = True
 
+        sg_filters = [
+            ['project', 'is', item.context.project],
+            ['sg_client_note_id', 'is', item.properties.fields['sg_client_note_id']]
+        ]
+
+        # let's look for an existing notes entity.
+        result = self.sgtk.shotgun.find_one("Note", sg_filters)
+
+        if result:
+            self.logger.error(
+                "Found a Note with %d Client ID." % item.properties.fields['sg_client_note_id'],
+                extra={
+                    "action_show_in_shotgun": {
+                        "label": "Show Note",
+                        "tooltip": "Show Note in SG.",
+                        "entity": result
+                    }
+                }
+            )
+            return False
+
         entity_identifiers = task_settings.get("entity_identifiers").value
         ignored_identifiers = task_settings.get("ignored_identifiers").value
         # resolve the dicts in this list to SG entities.
@@ -386,6 +407,7 @@ class UploadNotesPlugin(HookBaseClass):
                                                           "project": item.context.project,
                                                           "note_links": note_links,
                                                           "tasks": note_tasks,
+                                                          "sg_client_note_id": item.properties.fields["sg_client_note_id"],
                                                           "sg_note_type": "Client" if "sg_note_type" not in
                                                                                       item.properties.fields else
                                                           item.properties.fields["sg_note_type"]
