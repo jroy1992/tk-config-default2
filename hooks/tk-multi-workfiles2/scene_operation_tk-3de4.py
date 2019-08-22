@@ -12,6 +12,7 @@ import os
 import tde4
 
 import sgtk
+from sgtk.platform.qt import QtGui
 
 HookClass = sgtk.get_hook_baseclass()
 
@@ -56,4 +57,39 @@ class SceneOperation(HookClass):
                                                  state, otherwise False
                                 all others     - None
         """
-        return True
+        if operation == "current_path":
+            # return the current project path
+            return tde4.getProjectPath()
+        elif operation == "open":
+            tde4.loadProject(file_path)
+        elif operation == "save":
+            project_path = tde4.getProjectPath()
+            tde4.saveProject(project_path)
+        elif operation == "save_as":
+            tde4.saveProject(file_path)
+        elif operation == "reset":
+            """
+            Reset the scene to an empty state
+            """
+            while tde4.isProjectUpToDate():
+                # changes have been made to the scene
+                res = QtGui.QMessageBox.question(None,
+                                                 "Save your scene?",
+                                                 "Your scene has unsaved changes. Save before proceeding?",
+                                                 QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel)
+
+                if res == QtGui.QMessageBox.Cancel:
+                    return False
+                elif res == QtGui.QMessageBox.No:
+                    break
+                else:
+                    project_path = tde4.getProjectPath()
+                    if not project_path:
+                        # there is no 3de python API to open a save file GUI, so just use sgtk
+                        self.parent.engine.commands["File Save..."]["callback"]()
+                    else:
+                        tde4.saveProject(project_path)
+
+            # do new file:
+            tde4.newProject()
+            return True
