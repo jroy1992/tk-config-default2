@@ -101,12 +101,20 @@ class NukePublishDDValidationPlugin(HookBaseClass):
 
     @staticmethod
     def _check_file_validity(visited_files, suspicious_paths, valid_paths, show_path):
+        """
+        Checks for unpublished and invalid paths in files collected after graph traversal
+        :param visited_files: File nodes and associated files collected during traversal
+        :param suspicious_paths: Dict to capture unpublished/invalid paths
+        :param valid_paths: Dict with all the valid paths for a particular show
+        :param show_path: Show path i.e /dd/shows/<SHOW>
+        :return: Suspicious files found among the visited files
+        """
         for file_path in visited_files:
             valid_patterns = [pattern for pattern in valid_paths.itervalues()]
-            match_valid_pattern = any([fnmatch.fnmatch(file_path, pattern) for pattern in valid_patterns])
-            if show_path in file_path and not match_valid_pattern:
+            matches_valid_pattern = any([fnmatch.fnmatch(file_path, pattern) for pattern in valid_patterns])
+            if show_path in file_path and not matches_valid_pattern:
                 suspicious_paths['unpublished'].append(file_path)
-            elif show_path not in file_path and not match_valid_pattern:
+            elif show_path not in file_path and not matches_valid_pattern:
                 suspicious_paths['invalid'].append(file_path)
         return suspicious_paths
 
