@@ -13,14 +13,10 @@ import nuke
 import sgtk
 import fnmatch
 from dd.runtime import api
-
 api.load("frangetools")
 import frangetools
 
 HookBaseClass = sgtk.get_hook_baseclass()
-
-from sgtk.profiling import CProfileRunner
-
 
 class NukePublishDDValidationPlugin(HookBaseClass):
     """
@@ -44,6 +40,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         """
         return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))
 
+
     def _framerange_to_be_published(self, item):
         """
         Since users have the option to render only a subset of frames,
@@ -65,20 +62,17 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         # Checking with root because _sync_frame_range() will ensure root is up to date with shotgun
         if missing_frames:
             self.logger.warning("Renders Mismatch! Incomplete renders on disk.")
-            nuke.message(
-                "WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Incomplete renders on disk.")
+            nuke.message("WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Incomplete renders on disk.")
         else:
             first_rendered_frame = info_by_path.get(lss_path)['frame_range'][0]
             last_rendered_frame = info_by_path.get(lss_path)['frame_range'][1]
 
             if (first_rendered_frame > root.firstFrame()) or (last_rendered_frame < root.lastFrame()):
                 self.logger.warning("Renders Mismatch! Incomplete renders on disk.")
-                nuke.message(
-                    "WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Incomplete renders on disk.")
+                nuke.message("WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Incomplete renders on disk.")
             elif (first_rendered_frame < root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
                 self.logger.warning("Renders Mismatch! Extra renders on disk.")
-                nuke.message(
-                    "WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Extra renders on disk.")
+                nuke.message("WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Extra renders on disk.")
         return True
 
     def _collect_file_nodes_in_graph(self, node, visited_files):
@@ -180,6 +174,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             return False
         return True
 
+
     def _sync_frame_range(self, item):
         """
         Checks whether frame range is in sync with shotgun.
@@ -220,6 +215,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                 nuke.message("WARNING! Frame range not synced with Shotgun.")
         return True
 
+
     def _non_sgtk_writes(self):
         """
         Checks for non SGTK write nodes present in the scene.
@@ -250,7 +246,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         node_name = item.properties['node'].name()
         all_paths = item.parent.properties['write_node_paths_dict'].values()
         if node_path in all_paths:
-            duplicate_node_name = [key for (key, value) in item.parent.properties['write_node_paths_dict'].items()
+            duplicate_path_node = [key for (key, value) in item.parent.properties['write_node_paths_dict'].items()
                                    if value == node_path]
             self.logger.error("Duplicate output path.",
                               extra={
@@ -258,7 +254,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                                       "label": "Show Info",
                                       "tooltip": "Show node(s) with identical output path",
                                       "text": "Following node(s) have same output path as {}:\n\n{}".
-                                      format(node_name, '\n'.join(duplicate_node_name))
+                                      format(node_name, '\n'.join(duplicate_path_node))
                                   }
                               }
                               )
@@ -272,7 +268,6 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             if node.knob('file'):
                 return True
 
-    @CProfileRunner(profiling_identifier="tk-nuke-validate")
     def validate(self, task_settings, item):
         """
         Validates the given item to check that it is ok to publish. Returns a
