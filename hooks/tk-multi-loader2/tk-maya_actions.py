@@ -457,7 +457,7 @@ class CustomMayaActions(HookBaseClass):
 
         stripped_path = 'soldier_a|lo|m_faceA_lo_geo|m_faceA_lo_geoShape'
         """
-        return "|".join([path_part.split(":")[1] for path_part in node_path.split("|") if ":" in path_part])
+        return "|".join([path_part.split(":")[-1] for path_part in node_path.split("|") if ":" in path_part])
 
     def _get_relevant_objects_from_ref_node(self, src_mtl_mapping, ref_node):
 
