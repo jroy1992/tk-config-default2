@@ -448,14 +448,26 @@ class CustomMayaActions(HookBaseClass):
             # this is a single reference just use it as it is
             self._assign_shaders_to_objects(src_mtl_mapping, ref_node_or_list)
 
+    @staticmethod
+    def _get_stripped_path(node_path):
+        """
+        node_path = '|LOOKDEV|soldier_a_model_Character_soldier_a_model:soldier_a|
+        soldier_a_model_Character_soldier_a_model:lo|soldier_a_model_Character_soldier_a_model:m_faceA_lo_geo|
+        soldier_a_model_Character_soldier_a_model:m_faceA_lo_geoShape'
+
+        stripped_path = 'soldier_a|lo|m_faceA_lo_geo|m_faceA_lo_geoShape'
+        """
+        return "|".join([path_part.split(":")[1] for path_part in node_path.split("|") if ":" in path_part])
+
     def _get_relevant_objects_from_ref_node(self, src_mtl_mapping, ref_node):
 
-        child_nodes = cmds.referenceQuery(ref_node, nodes=True)
+        # dagPath=True so we get unique names even if the hierarchy has same names.
+        child_nodes = cmds.referenceQuery(ref_node, nodes=True, dagPath=True)
 
         relevant_nodes = list()
         # we need the object that matches objects from src_mtl_mapping
         for child in child_nodes:
-            ns_stripped_object_name = pm.PyNode(child).stripNamespace()
+            ns_stripped_object_name = self._get_stripped_path(child)
 
             if ns_stripped_object_name in src_mtl_mapping:
                 relevant_nodes.append(child)
@@ -467,15 +479,15 @@ class CustomMayaActions(HookBaseClass):
     def _get_mtl_mapping(self, object_name, strip_mesh_namespace=True):
         src_mtl_mapping = dict()
 
-        ns_stripped_object_name = pm.PyNode(object_name).stripNamespace()
+        ns_stripped_object_name = self._get_stripped_path(object_name)
 
         src_mtl_mapping[ns_stripped_object_name] = dict()
 
-        # meshes contained inside the given object
-        asset_meshes = cmds.listRelatives(object_name, ad=1, type=["mesh"])
+        # meshes contained inside the given object, need to return full path for uniqueness
+        asset_meshes = cmds.listRelatives(object_name, ad=1, type=["mesh"], f=1)
         # this is the mapping of ns_stripped_mesh_name <-> shaders
         mesh_mtl_mapping = {
-            pm.PyNode(asset_mesh).stripNamespace() if strip_mesh_namespace else asset_mesh: cmds.listConnections(
+            self._get_stripped_path(asset_mesh) if strip_mesh_namespace else asset_mesh: cmds.listConnections(
                 asset_mesh,
                 et=True,
                 t='shadingEngine')
@@ -494,17 +506,17 @@ class CustomMayaActions(HookBaseClass):
 
         for relevant_object in relevant_objects:
 
-            ns_stripped_object_name = pm.PyNode(relevant_object).stripNamespace()
+            ns_stripped_object_name = self._get_stripped_path(relevant_object)
 
             relevant_shaders = src_mtl_mapping[ns_stripped_object_name]
 
             # preserve the mesh full names since we need to assign the shader to these
             # current_assignments = self._get_mtl_mapping(relevant_object, strip_mesh_namespace=False).values()[0]
 
-            # meshes contained inside the given object
-            relevant_meshes = cmds.listRelatives(relevant_object, ad=1, type=["mesh"])
+            # meshes contained inside the given object, need to return full path for uniqueness
+            relevant_meshes = cmds.listRelatives(relevant_object, ad=1, type=["mesh"], f=1)
             # this is the mapping of ns_stripped_mesh_name <-> shaders
-            mesh_identifier_mapping = {pm.PyNode(relevant_mesh).stripNamespace(): relevant_mesh for relevant_mesh in
+            mesh_identifier_mapping = {self._get_stripped_path(relevant_mesh): relevant_mesh for relevant_mesh in
                                        relevant_meshes}
 
             new_assignments = {relevant_mesh: relevant_shaders[identifier] for identifier, relevant_mesh in
