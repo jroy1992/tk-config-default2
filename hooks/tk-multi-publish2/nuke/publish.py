@@ -18,11 +18,11 @@ import frangetools
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
+
 class NukePublishDDValidationPlugin(HookBaseClass):
     """
     Inherits from NukePublishFilesPlugin
     """
-
     def __init__(self, parent, **kwargs):
         """
         Construction
@@ -62,17 +62,17 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         # Checking with root because _sync_frame_range() will ensure root is up to date with shotgun
         if missing_frames:
             self.logger.warning("Renders Mismatch! Incomplete renders on disk.")
-            nuke.message("WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Incomplete renders on disk.")
+            nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Incomplete renders on disk.")
         else:
             first_rendered_frame = info_by_path.get(lss_path)['frame_range'][0]
             last_rendered_frame = info_by_path.get(lss_path)['frame_range'][1]
 
             if (first_rendered_frame > root.firstFrame()) or (last_rendered_frame < root.lastFrame()):
                 self.logger.warning("Renders Mismatch! Incomplete renders on disk.")
-                nuke.message("WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Incomplete renders on disk.")
+                nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Incomplete renders on disk.")
             elif (first_rendered_frame < root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
                 self.logger.warning("Renders Mismatch! Extra renders on disk.")
-                nuke.message("WARNING!\n" + item.properties['node'].name() + "\nRenders Mismatch! Extra renders on disk.")
+                nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Extra renders on disk.")
         return True
 
     def _collect_file_nodes_in_graph(self, node, visited_files):
@@ -241,7 +241,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             return False
         return True
 
-    def _check_write_node_path(self, item):
+    def _write_node_path_duplicacy(self, item):
         node_path = item.properties['node']['cached_path'].value()
         node_name = item.properties['node'].name()
         all_paths = item.parent.properties['write_node_paths_dict'].values()
@@ -292,7 +292,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         if item.properties.get("node"):
             status = self._read_and_camera_file_paths(item) and status
             status = self._framerange_to_be_published(item) and status
-            status = self._check_write_node_path(item) and status
+            status = self._write_node_path_duplicacy(item) and status
 
         if not status:
             return status
