@@ -16,7 +16,7 @@ includes:
 
 ################################################################################
 
-settings.tk-multi-setframerange:
+settings.tk-multi-setframerange: &default_setframerange_settings
   location: '@apps.tk-multi-setframerange.location'
   sg_in_frame_field:  'sg_head_in'
   sg_out_frame_field: 'sg_tail_out'
@@ -24,3 +24,7 @@ settings.tk-multi-setframerange:
   default_sg_frame_values:
     default_sg_in_frame_value: '@settings.tk-multi-setframerange.default_sg_in_frame_value'
     default_sg_out_frame_value: '@settings.tk-multi-setframerange.default_sg_out_frame_value'
+
+settings.tk-multi-setframerange.3de:
+  <<: *default_setframerange_settings
+  hook_frame_operation: "{config}/tk-multi-setframerange/frame_operations_{engine_name}.py"
