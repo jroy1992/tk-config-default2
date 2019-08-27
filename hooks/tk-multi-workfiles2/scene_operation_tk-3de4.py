@@ -61,6 +61,7 @@ class SceneOperation(HookClass):
             # return the current project path
             return tde4.getProjectPath()
         elif operation == "open":
+            self._set_preferences(context)
             tde4.loadProject(file_path)
         elif operation == "save":
             project_path = tde4.getProjectPath()
@@ -92,4 +93,25 @@ class SceneOperation(HookClass):
 
             # do new file:
             tde4.newProject()
+
+            if parent_action == "new_file":
+                self._set_preferences(context)
             return True
+
+    def _set_preferences(self, context):
+        fields = context.as_template_fields()
+        project_area_path = self._get_template_path("{engine_name}_{env_name}_work_project_area", fields)
+        tde4.setPreferenceValue("PROJECT_DIR", project_area_path)
+
+        export_area_path = self._get_template_path("{engine_name}_{env_name}_work_export_area", fields)
+        tde4.setPreferenceValue("OBJ_DIR", export_area_path)
+
+        publish_area_path = self._get_template_path("{env_name}_publish_area", fields)
+        tde4.setPreferenceValue("IMAGES_DIR", os.path.join(publish_area_path, "IMG"))
+
+    def _get_template_path(self, template_expression, fields):
+        templates = self.parent.sgtk.templates
+        template_name = self.parent.resolve_setting_expression(template_expression)
+        template = templates.get(template_name)
+        template_value = template.apply_fields(fields)
+        return template_value
