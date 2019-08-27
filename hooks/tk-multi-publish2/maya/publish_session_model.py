@@ -9,9 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import copy
-import os
 import maya.cmds as cmds
-import maya.mel as mel
 import sgtk
 from sgtk.platform.qt import QtGui
 from sgtk.util import filesystem
