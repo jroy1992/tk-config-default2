@@ -163,18 +163,11 @@ class TDE4Actions(HookBaseClass):
         # by default, use display window
         tde4.setCameraImportEXRDisplayWindowFlag(camera_id, True)
 
-        # TODO: sync frame range with files on disk
-        engine = self.parent.engine
-        try:
-            frame_range_app = engine.apps["tk-multi-setframerange"]
-        except KeyError as ke:
-            error_message = "Unable to find {} in {} at this time. " \
-                            "Not setting frame range automatically.".format(ke, engine.name)
-            QtGui.QMessageBox.warning(None, "Unable to get frame range", error_message)
-        else:
-            in_field, out_field = frame_range_app.get_frame_range_from_shotgun()
-            tde4.setCameraSequenceAttr(camera_id, in_field, out_field, 1)
-            tde4.setCameraFrameOffset(camera_id, in_field)
+        # set frame range
+        in_field, out_field = self.parent.utils.find_sequence_range(self.sgtk, path)
+        tde4.setCameraSequenceAttr(camera_id, in_field, out_field, 1)
+        tde4.setCameraFrameOffset(camera_id, in_field)
+        # TODO: set fps
 
     def _import_obj(self, path, sg_publish_data):
         if os.path.exists(path):
