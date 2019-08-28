@@ -12,11 +12,10 @@
 Hook that loads defines all the available actions, broken down by publish type. 
 """
 import os
-import re
-import glob
-import sys
+import tde4
 
 import sgtk
+from sgtk.platform.qt import QtGui
 
 
 HookBaseClass = sgtk.get_hook_baseclass()
@@ -70,6 +69,24 @@ class TDE4Actions(HookBaseClass):
         
         action_instances = []
 
+        if "import_img_to_cam" in actions:
+            action_instances.append({
+                "name": "import_img_to_cam",
+                "params": None,
+                "caption": "Import Image as Camera Footage",
+                "description": "Imports image sequence into currently selected camera, "
+                               "or new camera, if none is selected."
+            })
+
+        if "import_obj" in actions:
+            action_instances.append({
+                "name": "import_obj",
+                "params": None,
+                "caption": "Import OBJ file to 3D Model",
+                "description": "Imports obj file into currently selected point group, "
+                               "or new point group, if none is selected."
+            })
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -118,6 +135,59 @@ class TDE4Actions(HookBaseClass):
         app.log_debug("Execute action called for action %s. "
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
 
+        path = self.get_publish_path(sg_publish_data)
+
+        if name == "import_img_to_cam":
+            self._import_img_seq_to_cam(path, sg_publish_data)
+
+        if name == "import_obj":
+            self._import_obj(path, sg_publish_data)
+
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
+
+    def _import_img_seq_to_cam(self, path, sg_publish_data):
+        camera_id = None
+        selected_cameras = tde4.getCameraList(True)
+
+        if len(selected_cameras) == 0:
+            camera_id = tde4.createCamera("SEQUENCE")
+        elif len(selected_cameras) == 1:
+            camera_id = selected_cameras[0]
+        else:
+            raise Exception("Multiple cameras selected.")
+
+        tde4.setCameraPath(camera_id, path)
+
+        # by default, use display window
+        tde4.setCameraImportEXRDisplayWindowFlag(camera_id, True)
+
+        # sync frame range
+        engine = self.parent.engine
+        try:
+            frame_range_app = engine.apps["tk-multi-setframerange"]
+        except KeyError as ke:
+            error_message = "Unable to find {} in {} at this time. " \
+                            "Not setting frame range automatically.".format(ke, engine.name)
+            QtGui.QMessageBox.warning(None, "Unable to get frame range", error_message)
+        else:
+            in_field, out_field = frame_range_app.get_frame_range_from_shotgun()
+            tde4.setCameraSequenceAttr(camera_id, in_field, out_field, 1)
+            tde4.setCameraFrameOffset(camera_id, in_field)
+
+    def _import_obj(self, path, sg_publish_data):
+        if os.path.exists(path):
+            point_group_id = tde4.getCurrentGroup()
+            if not point_group_id:
+                point_group_id = tde4.createPGroup("OBJECT")
+            model_id = tde4.create3DModel(point_group_id, 10000)
+            imported = tde4.importOBJ3DModel(point_group_id, model_id, path)
+            if not imported:
+                raise Exception("Unable to import OBJ from {}. "
+                                "Something went wrong in 3dequalizer.".format(path))
+        else:
+            # TODO: either obj sequence or something wrong
+            pass
+
+    # TODO: alembic import
