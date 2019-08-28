@@ -50,6 +50,7 @@ settings.tk-multi-loader2.3dequalizer:
     Image: [import_img_to_cam]
     Rendered Image: [import_img_to_cam]
 #    Movie: [read_node]
+    Model File: [import_obj]
   actions_hook: '{config}/tk-multi-loader2/{engine_name}_actions.py'
   entities: *loader2_entities
   publish_filters: [["sg_status_list", "is_not", null]]

@@ -163,7 +163,7 @@ class TDE4Actions(HookBaseClass):
         # by default, use display window
         tde4.setCameraImportEXRDisplayWindowFlag(camera_id, True)
 
-        # sync frame range
+        # TODO: sync frame range with files on disk
         engine = self.parent.engine
         try:
             frame_range_app = engine.apps["tk-multi-setframerange"]
@@ -178,14 +178,24 @@ class TDE4Actions(HookBaseClass):
 
     def _import_obj(self, path, sg_publish_data):
         if os.path.exists(path):
-            point_group_id = tde4.getCurrentGroup()
+            point_group_id = tde4.getCurrentPGroup()
             if not point_group_id:
                 point_group_id = tde4.createPGroup("OBJECT")
             model_id = tde4.create3DModel(point_group_id, 10000)
             imported = tde4.importOBJ3DModel(point_group_id, model_id, path)
+
             if not imported:
                 raise Exception("Unable to import OBJ from {}. "
                                 "Something went wrong in 3dequalizer.".format(path))
+            else:
+                # set model properties
+                model_name, _ = os.path.splitext(os.path.basename(path))
+                tde4.set3DModelName(point_group_id, model_id, model_name)
+                tde4.set3DModelReferenceFlag(point_group_id, model_id, True)
+                tde4.set3DModelSurveyFlag(point_group_id, model_id, True)
+                # set3DModelRenderingFlags(<pgroup_id>, <model_id>, <show_points>, <show_lines>, <show_polygons>)
+                tde4.set3DModelRenderingFlags(point_group_id, model_id, False, True, False)
+
         else:
             # TODO: either obj sequence or something wrong
             pass
