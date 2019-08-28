@@ -52,6 +52,15 @@ paths:
     tk-3de4_project_asset_nuke_export:      '@tk-3de4_project_asset_work_export_area/@project_asset_version_name.nk'
     tk-3de4_sequence_asset_nuke_export:     '@tk-3de4_sequence_asset_work_export_area/@sequence_asset_version_name.nk'
     tk-3de4_shot_asset_nuke_export:         '@tk-3de4_shot_asset_work_export_area/@shot_asset_version_name.nk'
+    
+    # SNAPSHOTS
+    tk-3de4_project_work_snapshot:          '@tk-3de4_project_work_project_area/snapshots/@project_version_name.{timestamp}.3de'
+    tk-3de4_sequence_work_snapshot:         '@tk-3de4_sequence_work_project_area/snapshots/@sequence_version_name.{timestamp}.3de'
+    tk-3de4_shot_work_snapshot:             '@tk-3de4_shot_work_project_area/snapshots/@shot_version_name.{timestamp}.3de'
+
+    tk-3de4_project_asset_work_snapshot:    '@tk-3de4_project_asset_work_project_area/snapshots/@project_asset_version_name.{timestamp}.3de'
+    tk-3de4_sequence_asset_work_snapshot:   '@tk-3de4_sequence_asset_work_project_area/snapshots/@sequence_asset_version_name.{timestamp}.3de'
+    tk-3de4_shot_asset_work_snapshot:       '@tk-3de4_shot_asset_work_project_area/snapshots/@shot_asset_version_name.{timestamp}.3de'
 
 aliases:
 
