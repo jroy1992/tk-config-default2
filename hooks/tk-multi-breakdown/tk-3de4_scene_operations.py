@@ -49,7 +49,18 @@ class BreakdownSceneOperations(HookBaseClass):
         # let's look at the camera nodes
         for camera_id in tde4.getCameraList():
             path = tde4.getCameraPath(camera_id)
-            reads.append({"node": camera_id, "type": "camera", "path": path})
+            name = tde4.getCameraName(camera_id)
+            reads.append({"node": name, "type": "camera", "path": path})
+
+        # also at 3D models in all point groups:
+        for pgroup_id in tde4.getPGroupList():
+            for model_id in tde4.get3DModelList(pgroup_id):
+                path = tde4.get3DModelFilepath(pgroup_id, model_id)
+                name = tde4.get3DModelName(pgroup_id, model_id)
+                # internal 3D objects (eg. cube, sphere) will not have a path
+                if path:
+                    # there is no find_model_by_name as of 3de r6.b2
+                    reads.append({"node": (name, pgroup_id, model_id), "type": "model", "path": path})
 
         return reads
 
@@ -73,4 +84,10 @@ class BreakdownSceneOperations(HookBaseClass):
 
             if node_type == "camera":
                 engine.log_debug("Footage for camera %s: Updating to version %s" % (node_id, new_path))
-                tde4.setCameraPath(node_id, new_path)
+                camera_id = tde4.findCameraByName(node_id)
+                tde4.setCameraPath(camera_id, new_path)
+
+            elif node_type == "model":
+                engine.log_debug("OBJ file for model %s: Updating to version %s" % (node_id, new_path))
+                name, pgroup_id, model_id = node_id
+                tde4.importOBJ3DModel(pgroup_id, model_id, new_path)
