@@ -109,6 +109,7 @@ settings.tk-multi-loader2.maya:
 # nuke
 settings.tk-multi-loader2.nuke:
   action_mappings:
+    3DE Lens Export: [script_import]
     Alembic Cache: [read_node]
     Image: [read_node]
     Model File: [read_node]
