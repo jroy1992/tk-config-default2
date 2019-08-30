@@ -324,7 +324,7 @@ paths:
     sequence_asset_publish_maya_scene:      '@sequence_asset_publish_area_scene/@sequence_asset_version_name.{maya.ext}'
     shot_asset_publish_maya_scene:          '@shot_asset_publish_area_scene/@shot_asset_version_name.{maya.ext}'
 
-    # Silhouette SCENES
+    # SILHOUETTE SCENES
     project_publish_sil_scene:             '@project_publish_area_scene/@project_version_name.{sil.ext}'
     sequence_publish_sil_scene:            '@sequence_publish_area_scene/@sequence_version_name.{sil.ext}'
     shot_publish_sil_scene:                '@shot_publish_area_scene/@shot_version_name.{sil.ext}'
@@ -443,13 +443,31 @@ paths:
     shot_asset_publish_texture:             '@shot_asset_publish_area_texture/@texture_subdirs/@shot_asset_version_name[.{UDIM}].{tex.ext}'
 
     # 3DEQUALIZER FILES
-    project_publish_3de_file:               '@project_publish_area_3de/@project_version_name.3de'
-    sequence_publish_3de_file:              '@sequence_publish_area_3de/@sequence_version_name.3de'
-    shot_publish_3de_file:                  '@shot_publish_area_3de/@shot_version_name.3de'
+    project_publish_3de_file:               '@project_publish_area_3de/project/@project_version_name.3de'
+    sequence_publish_3de_file:              '@sequence_publish_area_3de/project/@sequence_version_name.3de'
+    shot_publish_3de_file:                  '@shot_publish_area_3de/project/@shot_version_name.3de'
 
-    project_asset_publish_3de_file:         '@project_asset_publish_area_3de/@project_version_name.3de'
-    sequence_asset_publish_3de_file:        '@sequence_asset_publish_area_3de/@sequence_version_name.3de'
-    shot_asset_publish_3de_file:            '@shot_asset_publish_area_3de/@shot_version_name.3de'
+    project_asset_publish_3de_file:         '@project_asset_publish_area_3de/project/@project_version_name.3de'
+    sequence_asset_publish_3de_file:        '@sequence_asset_publish_area_3de/project/@sequence_version_name.3de'
+    shot_asset_publish_3de_file:            '@shot_asset_publish_area_3de/project/@shot_version_name.3de'
+
+    # 3DEQUALIZER MEL EXPORT
+    project_publish_mel_file:               '@project_publish_area_3de/mel/@project_version_name.mel'
+    sequence_publish_mel_file:              '@sequence_publish_area_3de/mel/@sequence_version_name.mel'
+    shot_publish_mel_file:                  '@shot_publish_area_3de/mel/@shot_version_name.mel'
+
+    project_asset_publish_mel_file:         '@project_asset_publish_area_3de/mel/@project_version_name.mel'
+    sequence_asset_publish_mel_file:        '@sequence_asset_publish_area_3de/mel/@sequence_version_name.mel'
+    shot_asset_publish_mel_file:            '@shot_asset_publish_area_3de/mel/@shot_version_name.mel'
+
+    # 3DEQUALIZER LENS EXPORT
+    project_publish_nuke_lens:              '@project_publish_area_3de/lens/@project_version_name.nk'
+    sequence_publish_nuke_lens:             '@sequence_publish_area_3de/lens/@sequence_version_name.nk'
+    shot_publish_nuke_lens:                 '@shot_publish_area_3de/lens/@shot_version_name.nk'
+
+    project_asset_publish_nuke_lens:        '@project_asset_publish_area_3de/lens/@project_version_name.nk'
+    sequence_asset_publish_nuke_lens:       '@sequence_asset_publish_area_3de/lens/@sequence_version_name.nk'
+    shot_asset_publish_nuke_lens:           '@shot_asset_publish_area_3de/lens/@shot_version_name.nk'
 
     # REVIEW SUBMISSION
     reviewsubmission_burnin_nuke_file:      '@project_publish_area/etc/reviewsubmit_presets/burnin.nk'
@@ -457,9 +475,9 @@ paths:
     reviewsubmission_render_script_path:    '@project_publish_area/etc/reviewsubmit_presets/nuke_batch_render_movie.py'
 
     # COLOR PROCESSING
-    colorprocessfiles_burnin_nuke_file:      '@project_publish_area/etc/reviewsubmit_presets/color_process_files.nk'
-    colorprocessfiles_slate_logo_file:       '@project_publish_area/etc/reviewsubmit_presets/color_process_files_logo.png'
-    colorprocessfiles_render_script_path:    '@project_publish_area/etc/reviewsubmit_presets/nuke_batch_color_process_files.py'
+    colorprocessfiles_burnin_nuke_file:     '@project_publish_area/etc/reviewsubmit_presets/color_process_files.nk'
+    colorprocessfiles_slate_logo_file:      '@project_publish_area/etc/reviewsubmit_presets/color_process_files_logo.png'
+    colorprocessfiles_render_script_path:   '@project_publish_area/etc/reviewsubmit_presets/nuke_batch_color_process_files.py'
 
     # CDL PUBLISHING
     # TODO: we only support cc publishing currently

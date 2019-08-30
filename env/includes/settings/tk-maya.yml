@@ -14,16 +14,16 @@
 includes:
 - ../app_locations.yml
 - ../engine_locations.yml
+- ./apps/tk-multi-breakdown.yml
 - ./apps/tk-multi-loader2.yml
 - ./apps/tk-multi-publish2.yml
 - ./apps/tk-multi-reviewsubmission.yml
 - ./apps/tk-multi-screeningroom.yml
+- ./apps/tk-multi-setframerange.yml
 - ./apps/tk-multi-shotgunpanel.yml
 - ./apps/tk-multi-snapshot.yml
-- ./apps/tk-multi-workfiles2.yml
-- ./apps/tk-multi-breakdown.yml
-- ./apps/tk-multi-setframerange.yml
 - ./apps/tk-multi-timelogger.yml
+- ./apps/tk-multi-workfiles2.yml
 
 ################################################################################
 
