@@ -458,7 +458,7 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
             task_name = item.context.task['name']
             if task_name.split("_")[-1] == "mm":
                 status = self._sync_frame_range_with_shotgun(item)
-            else: # this is a cam task
+            elif item.context.entity["type"] == "Shot": # this is a cam task
                 all_dag_nodes = cmds.ls(dag=True, sn=True)
                 groups = [g for g in all_dag_nodes if self._is_group(g)]
 
