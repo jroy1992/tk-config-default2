@@ -160,11 +160,14 @@ class TDE4Actions(HookBaseClass):
 
         # replace SEQ key with # format
         path_template = self.sgtk.template_from_path(path)
-        path_fields = path_template.get_fields(path)
-        seq_field = path_fields.get('SEQ')
-        if seq_field:
-            path_fields['SEQ'] = 'FORMAT: #'
-            path = path_template.apply_fields(path_fields)
+        if path_template:
+            seq_keys = [key.name for key in path_template.keys.values()
+                        if isinstance(key, sgtk.templatekey.SequenceKey)]
+            if seq_keys:
+                path_fields = path_template.get_fields(path)
+                for key_name in seq_keys:
+                    path_fields[key_name] = 'FORMAT: #'
+                path = path_template.apply_fields(path_fields)
 
         tde4.setCameraPath(camera_id, path)
 
