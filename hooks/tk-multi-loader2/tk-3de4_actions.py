@@ -158,6 +158,17 @@ class TDE4Actions(HookBaseClass):
         else:
             raise Exception("Multiple cameras selected.")
 
+        # replace SEQ key with # format
+        path_template = self.sgtk.template_from_path(path)
+        if path_template:
+            seq_keys = [key.name for key in path_template.keys.values()
+                        if isinstance(key, sgtk.templatekey.SequenceKey)]
+            if seq_keys:
+                path_fields = path_template.get_fields(path)
+                for key_name in seq_keys:
+                    path_fields[key_name] = 'FORMAT: #'
+                path = path_template.apply_fields(path_fields)
+
         tde4.setCameraPath(camera_id, path)
 
         # by default, use display window
@@ -167,6 +178,13 @@ class TDE4Actions(HookBaseClass):
         in_field, out_field = self.parent.utils.find_sequence_range(self.sgtk, path)
         tde4.setCameraSequenceAttr(camera_id, in_field, out_field, 1)
         tde4.setCameraFrameOffset(camera_id, in_field)
+
+        no_of_frames = out_field - in_field + 1
+        # set calculation range
+        tde4.setCameraCalculationRange(camera_id, 1, no_of_frames)
+        # set playback range
+        tde4.setCameraPlaybackRange(camera_id, 1, no_of_frames)
+
         # TODO: set fps
 
     def _import_obj(self, path, sg_publish_data):
