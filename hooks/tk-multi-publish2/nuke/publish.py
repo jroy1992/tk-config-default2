@@ -11,7 +11,7 @@
 import os
 import nuke
 import sgtk
-import itertools
+import fnmatch
 from dd.runtime import api
 api.load("frangetools")
 import frangetools
@@ -29,8 +29,6 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         """
         # call base init
         super(NukePublishDDValidationPlugin, self).__init__(parent, **kwargs)
-        self.visited_dict = {}
-
 
     def _build_dict(self, seq, key):
         """
@@ -77,46 +75,48 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                 nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Extra renders on disk.")
         return True
 
-
-    @staticmethod
-    def _check_for_knob(node, knob):
-        try:
-            node[knob]
-        except NameError:
-            return False
-        else:
-            return True
-
-
-    def _collect_nodes_in_graph(self, node, file_paths, valid_paths, show_path):
+    def _collect_file_nodes_in_graph(self, node, visited_files):
         """
-        TODO: Write a docstring
+        Traverses the graph for the write node being validated and collects all the
+        nodes with file knobs and their respective file values
+
+        :param node: The node being visited in the graph
+        :param visited_files: Dictionary of nodes and associated files
+        :return: Dictionary of all the file nodes in the graph and associated files
         """
         if self.visited_dict[node] == 0:
-            # check for file parameter in the node if its neither a dot nor disabled
             # get the file path if exists
-            # validate the file path
-            if (self._check_for_knob(node, 'disable')) and (node['disable'].value() == 0):
-                if self._check_for_knob(node, 'file'):
-                    node_file_path = node['file'].value()
-                    if node_file_path:
-                        sg_data = sgtk.util.find_publish(self.parent.sgtk, [node_file_path])
-                        # if the file is in the show location but not at SHARED or on shotgun, unpublished
-                        # if the file is not in show location as well, invalid
-                        if (show_path in node_file_path) and not sg_data and not (any(path in node_file_path for path in valid_paths.itervalues())):
-                            file_paths['unpublished'].append(node)
-                        elif show_path not in node_file_path and not (any(path in node_file_path for path in valid_paths.itervalues())):
-                            file_paths['invalid'].append(node)
-
+            if self._contains_active_file_knob(node):
+                node_file_path = node['file'].value()
+                if node_file_path:
+                    visited_files.setdefault(node_file_path, []).append(node.name())
             # set visited to 1 for the node so as not to revisit
             self.visited_dict[node] = 1
             dep = node.dependencies()
             if dep:
                 for item in dep:
-                    self._collect_nodes_in_graph(item, file_paths, valid_paths, show_path)
+                    self._collect_file_nodes_in_graph(item, visited_files)
 
-        return file_paths
+        return visited_files
 
+    @staticmethod
+    def _check_file_validity(visited_files, suspicious_paths, valid_paths, show_path):
+        """
+        Checks for unpublished and invalid paths in files collected after graph traversal
+        :param visited_files: File nodes and associated files collected during traversal
+        :param suspicious_paths: Dict to capture unpublished/invalid paths
+        :param valid_paths: Dict with all the valid paths for a particular show
+        :param show_path: Show path i.e /dd/shows/<SHOW>
+        :return: Suspicious files found among the visited files
+        """
+        for file_path in visited_files:
+            valid_patterns = [pattern for pattern in valid_paths.itervalues()]
+            matches_valid_pattern = any([fnmatch.fnmatch(file_path, pattern) for pattern in valid_patterns])
+            if show_path in file_path and not matches_valid_pattern:
+                suspicious_paths['unpublished'].append(file_path)
+            elif show_path not in file_path and not matches_valid_pattern:
+                suspicious_paths['invalid'].append(file_path)
+        return suspicious_paths
 
     def _read_and_camera_file_paths(self, item):
         """
@@ -128,60 +128,58 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         :param item: Item to process
         :return: True if paths are published or valid false otherwise
         """
-        context = item.context
-        fields = context.as_template_fields()
+        self.visited_dict = item.parent.properties['visited_dict']
 
-        show = os.path.join(os.environ['DD_SHOWS_ROOT'], os.environ['DD_SHOW'])
+        show_path = os.path.join(os.environ['DD_SHOWS_ROOT'], os.environ['DD_SHOW'])
         valid_paths = {
-            'dd_library': os.path.join(os.environ['DD_ROOT'], 'library'),           # dd library path
-            'show_pub': os.path.join(show, 'SHARED'),                               # show published location
-            }
-        if 'Sequence' in fields:
-            valid_paths['seq'] = os.path.join(show, fields['Sequence'], "SHARED")             # seq published location
-        if 'Shot' in fields:
-            valid_paths['shot'] = os.path.join(show, fields['Sequence'], fields['Shot'], "SHARED")  # shot published location
+            'dd_library': os.path.join(os.environ['DD_ROOT'], 'library', '**'),  # dd library path
+            'show': show_path,
+            'show_pub': os.path.join(show_path, '**', 'SHARED', '*'),  # show published glob
+        }
 
         # Collect all the nodes associated with a write node
         # For all the read, readgeo and camera nodes present in the write node graph, check for 'file' knob.
         # If its populated, get the file path.
-        file_paths = {
+        suspicious_paths = {
             'unpublished': [],
             'invalid': [],
         }
+        visited_files = {}
+        self._collect_file_nodes_in_graph(item.properties['node'], visited_files)
+        self._check_file_validity(visited_files, suspicious_paths, valid_paths, show_path)
+        item.parent.properties['visited_dict'] = self.visited_dict
 
-        self._collect_nodes_in_graph(item.properties['node'], file_paths, valid_paths, show)
-
-        if file_paths['invalid']:
-            paths = ""
-            for item in file_paths['invalid']:
-                paths += "\n" + item.name() + ": " + item['file'].value()
-            self.logger.error("Invalid paths! Try loading from Shotgun menu -> Load.",
-                              extra={
-                                  "action_show_more_info": {
-                                      "label": "Show Info",
-                                      "tooltip": "Show invalid path(s)",
-                                      "text": "Paths not in {}:\n{}".format(valid_paths, paths)
-                                  }
-                              }
-                              )
-            return False
-
-        if file_paths['unpublished']:
+        if suspicious_paths['unpublished']:
             unpublished = ""
-            for path in file_paths['unpublished']:
-                unpublished += "\n" + path.name() + ":  " + path['file'].value()
+            for path in suspicious_paths['unpublished']:
+                unpublished += "\n\n{}: {}".format(visited_files[path], path)
             self.logger.warning(
                 "Unpublished files found.",
                 extra={
                     "action_show_more_info": {
                         "label": "Show Info",
                         "tooltip": "Show unpublished files",
-                        "text": "Unpublished files.{}".format(unpublished)
+                        "text": "Unpublished files.\n{}".format(unpublished)
                     }
                 }
             )
-            nuke.message("WARNING!\n{} node".format(item.properties[
-                'node'].name()) + "\nUnpublished files found.{}".format(unpublished))
+            nuke.message("WARNING!\n{} node".format(item.properties['node'].name())
+                         + "\nUnpublished files found.{}".format(unpublished))
+
+        if suspicious_paths['invalid']:
+            paths = ""
+            for item in suspicious_paths['invalid']:
+                paths += "\n\n{}: {}".format(visited_files[item], item)
+            self.logger.error("Invalid paths! Try loading from Shotgun menu -> Load.",
+                              extra={
+                                  "action_show_more_info": {
+                                      "label": "Show Info",
+                                      "tooltip": "Show invalid path(s)",
+                                      "text": "Paths not in {}: {}".format(valid_paths.values(), paths)
+                                  }
+                              }
+                              )
+            return False
         return True
 
 
@@ -251,6 +249,32 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             return False
         return True
 
+    def _write_node_path_duplicacy(self, item):
+        node_path = item.properties['node']['cached_path'].value()
+        node_name = item.properties['node'].name()
+        all_paths = item.parent.properties['write_node_paths_dict'].values()
+        if node_path in all_paths:
+            duplicate_path_node = [key for (key, value) in item.parent.properties['write_node_paths_dict'].items()
+                                   if value == node_path]
+            self.logger.error("Duplicate output path.",
+                              extra={
+                                  "action_show_more_info": {
+                                      "label": "Show Info",
+                                      "tooltip": "Show node(s) with identical output path",
+                                      "text": "Following node(s) have same output path as {}:\n\n{}".
+                                      format(node_name, '\n'.join(duplicate_path_node))
+                                  }
+                              }
+                              )
+            return False
+        item.parent.properties['write_node_paths_dict'] = {node_name: node_path}
+        return True
+
+    @staticmethod
+    def _contains_active_file_knob(node):
+        if (node.knob('disable')) and (node['disable'].value() == 0):
+            if node.knob('file'):
+                return True
 
     def validate(self, task_settings, item):
         """
@@ -268,16 +292,15 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         if item.type == 'nuke.session':
             status = self._non_sgtk_writes() and status
             status = self._sync_frame_range(item) and status
+            # Properties to be used by child write nodes
+            item.properties['visited_dict'] = {node: 0 for node in nuke.allNodes()}
+            item.properties['write_node_paths_dict'] = dict()
 
         # Segregating the checks, specifically for write nodes
         if item.properties.get("node"):
-            # Initialize the visited dict
-            if not self.visited_dict:
-                allnodes = nuke.allNodes()
-                self.visited_dict = {node: 0 for node in allnodes}
-
             status = self._read_and_camera_file_paths(item) and status
             status = self._framerange_to_be_published(item) and status
+            status = self._write_node_path_duplicacy(item) and status
 
         if not status:
             return status
