@@ -33,6 +33,9 @@ DEFAULT_CAMERAS = ['persp',
                    'front',
                    'side']
 
+CAM_TASK_SUFFIX = "cam"
+UNDIST_TASK_SUFFIX = "undist"
+
 
 class MayaPublishDDIntegValidationPlugin(HookBaseClass):
     """
@@ -405,7 +408,7 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         context = item.context
         task_name = context.task['name']
 
-        undist_task_name = task_name.replace("cam", "undist")
+        undist_task_name = task_name.replace(CAM_TASK_SUFFIX, UNDIST_TASK_SUFFIX)
         undist_task = self.sgtk.shotgun.find_one("Task", [["content", "is", undist_task_name],
                                                           ["entity", "is", context.entity]])
         if undist_task:
@@ -455,23 +458,25 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         
         # Checks for the scene file
         if item.type == "maya.session":
-            task_name = item.context.task['name']
-            if task_name.split("_")[-1] == "mm":
-                status = self._sync_frame_range_with_shotgun(item)
-            elif item.context.entity["type"] == "Shot": # this is a cam task
-                all_dag_nodes = cmds.ls(dag=True, sn=True)
-                groups = [g for g in all_dag_nodes if self._is_group(g)]
+            if item.context.entity["type"] == "Shot":
+                task_name = item.context.task['name']
+                task_name_suffix = task_name.split("_")[-1]
+                if task_name_suffix == CAM_TASK_SUFFIX:
+                    all_dag_nodes = cmds.ls(dag=True, sn=True)
+                    groups = [g for g in all_dag_nodes if self._is_group(g)]
 
-                nodes_status = self._node_naming(groups) and \
-                               self._check_hierarchy(groups) and \
-                               self._track_geo_child_naming() and \
-                               self._track_geo_locked_channels() and \
-                               self._extra_nodes_outside_track_geo() and \
-                               self._sync_frame_range_with_shotgun(item)
-                cam_status = self._camera_naming() and self._connected_image_plane()
-                undist_status = self._check_undist_status(item)
+                    nodes_status = self._node_naming(groups) and \
+                                   self._check_hierarchy(groups) and \
+                                   self._track_geo_child_naming() and \
+                                   self._track_geo_locked_channels() and \
+                                   self._extra_nodes_outside_track_geo() and \
+                                   self._sync_frame_range_with_shotgun(item)
+                    cam_status = self._camera_naming() and self._connected_image_plane()
+                    undist_status = self._check_undist_status(item)
 
-                status = nodes_status and cam_status and undist_status and status
+                    status = nodes_status and cam_status and undist_status and status
+                elif task_name_suffix != UNDIST_TASK_SUFFIX: # this is a matchmove task
+                    status = self._sync_frame_range_with_shotgun(item)
 
         # Checks for the scene file, i.e if the item is not a sequence or a cache file
         if item.properties.get('is_sequence', False):
