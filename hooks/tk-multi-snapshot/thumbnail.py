@@ -11,13 +11,12 @@
 import os
 import tempfile
 import uuid
-import re
 
-import tank
-from tank import Hook
+import sgtk
 
+HookClass = sgtk.get_hook_baseclass()
 
-class ThumbnailHook(Hook):
+class ThumbnailHook(HookClass):
     """
     Hook that can be used to provide a pre-defined thumbnail
     for the snapshot
@@ -41,7 +40,7 @@ class ThumbnailHook(Hook):
         if engine_name == "tk-3de4":
             return self._extract_3de4_thumbnail()
 
-        return super(ThumbnailHook, self).execute(kwargs)
+        return super(ThumbnailHook, self).execute(**kwargs)
 
     def _extract_3de4_thumbnail(self):
         import tde4
