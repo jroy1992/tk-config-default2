@@ -17,6 +17,9 @@ import tde4
 import sgtk
 from sgtk.platform.qt import QtGui
 
+from dd.runtime import api
+api.load("preferences")
+import preferences
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -148,7 +151,6 @@ class TDE4Actions(HookBaseClass):
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
 
     def _import_img_seq_to_cam(self, path, sg_publish_data):
-        camera_id = None
         selected_cameras = tde4.getCameraList(True)
 
         if len(selected_cameras) == 0:
@@ -158,34 +160,15 @@ class TDE4Actions(HookBaseClass):
         else:
             raise Exception("Multiple cameras selected.")
 
-        # replace SEQ key with # format
-        path_template = self.sgtk.template_from_path(path)
-        if path_template:
-            seq_keys = [key.name for key in path_template.keys.values()
-                        if isinstance(key, sgtk.templatekey.SequenceKey)]
-            if seq_keys:
-                path_fields = path_template.get_fields(path)
-                for key_name in seq_keys:
-                    path_fields[key_name] = 'FORMAT: #'
-                path = path_template.apply_fields(path_fields)
-
-        tde4.setCameraPath(camera_id, path)
+        formatted_path = self._get_formatted_seq_path(path)
+        tde4.setCameraPath(camera_id, formatted_path)
 
         # by default, use display window
         tde4.setCameraImportEXRDisplayWindowFlag(camera_id, True)
 
-        # set frame range
-        in_field, out_field = self.parent.utils.find_sequence_range(self.sgtk, path)
-        tde4.setCameraSequenceAttr(camera_id, in_field, out_field, 1)
-        tde4.setCameraFrameOffset(camera_id, in_field)
-
-        no_of_frames = out_field - in_field + 1
-        # set calculation range
-        tde4.setCameraCalculationRange(camera_id, 1, no_of_frames)
-        # set playback range
-        tde4.setCameraPlaybackRange(camera_id, 1, no_of_frames)
-
-        # TODO: set fps
+        self._set_camera_frame_range(camera_id, path)
+        self._set_camera_fps(camera_id)
+        self._set_camera_lens_filmback(camera_id)
 
     def _import_obj(self, path, sg_publish_data):
         if os.path.exists(path):
@@ -212,3 +195,83 @@ class TDE4Actions(HookBaseClass):
             pass
 
     # TODO: alembic import
+
+    ##############################################################################################################
+    # more helper methods to helper methods
+
+    def _set_camera_frame_range(self, camera_id, path):
+        # set frame range
+        in_field, out_field = self.parent.utils.find_sequence_range(self.sgtk, path)
+        tde4.setCameraSequenceAttr(camera_id, in_field, out_field, 1)
+        tde4.setCameraFrameOffset(camera_id, in_field)
+
+        no_of_frames = out_field - in_field + 1
+        # set calculation range
+        tde4.setCameraCalculationRange(camera_id, 1, no_of_frames)
+        # set playback range
+        tde4.setCameraPlaybackRange(camera_id, 1, no_of_frames)
+
+    def _set_camera_fps(self, camera_id):
+        # get fps from show_preferences file
+        fields = self.parent.engine.context.as_template_fields()
+        show_prefs = preferences.Preferences(pref_file_name="show_preferences.yaml",
+                                             role=fields.get("Step"),
+                                             seq_override=fields.get("Sequence"),
+                                             shot_override=fields.get("Shot"))
+        try:
+            fps = show_prefs["show_settings"]["fps"]
+        except KeyError as ke:
+            warning_message = "Unable to find {} in show preferences. " \
+                              "Not setting fps.".format(ke)
+            self._warn_with_pop_up("FPS not set", warning_message)
+
+        else:
+            tde4.setCameraFPS(camera_id, fps)
+
+    def _set_camera_lens_filmback(self, camera_id):
+        # get filmback from camera_preferences file
+        fields = self.parent.engine.context.as_template_fields()
+        cam_preferences = preferences.Preferences(pref_file_name='camera_preferences.yaml',
+                                                  role=fields.get("Step"),
+                                                  seq_override=fields.get("Sequence"),
+                                                  shot_override=fields.get("Shot"))
+        try:
+            primary_cam = cam_preferences['camera_type']
+            # setLensFBackHeight() expects cm
+            filmback_height = cam_preferences[primary_cam + "_def"]["vertical_aperture"] / 10
+        except KeyError as ke:
+            warning_message = "Unable to load camera preferences (filmback)." \
+                              "\nKeyError: {}".format(ke)
+            self._warn_with_pop_up("Filmback not set", warning_message)
+        else:
+            lens_id = tde4.getCameraLens(camera_id)
+            tde4.setLensFBackHeight(lens_id, filmback_height)
+
+    def _get_formatted_seq_path(self, path):
+        # replace SEQ key with # format
+        path_template = self.sgtk.template_from_path(path)
+        if path_template:
+            seq_keys = [key.name for key in path_template.keys.values()
+                        if isinstance(key, sgtk.templatekey.SequenceKey)]
+            if seq_keys:
+                path_fields = path_template.get_fields(path)
+                for key_name in seq_keys:
+                    path_fields[key_name] = 'FORMAT: #'
+                formatted_path = path_template.apply_fields(path_fields)
+            else:
+                warning_message = "Path {} fits template {} which has no SequenceKey. " \
+                                  "Not formatting it with #.".format(path, path_template)
+                self._warn_with_pop_up("Image path used as is", warning_message)
+                formatted_path = path
+        else:
+            warning_message = "Path {} does not fit any template. " \
+                              "Not formatting it with #.".format(path)
+            self._warn_with_pop_up("Image path used as is", warning_message)
+            formatted_path = path
+
+        return formatted_path
+
+    def _warn_with_pop_up(self, title, message):
+        self.parent.logger.warning(message)
+        QtGui.QMessageBox.warning(QtGui.QApplication.activeWindow(), title, message)
+
