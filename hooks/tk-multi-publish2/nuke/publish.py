@@ -34,17 +34,21 @@ class DisplayUnpublishedFiles(QtWidgets.QWidget):
         self.progress_note = QtWidgets.QLabel()
         self.report_unpublished = QtWidgets.QLabel(self.unpublished)
         self.mov_label = QtWidgets.QLabel()
+        self.mov_layout = QtWidgets.QHBoxLayout()
         self.message_label = QtWidgets.QLabel(self.message)
         self.rewire_nodes_btn = QtWidgets.QPushButton("Replace user files with published versions...")
 
     def create_ui(self):
         self.d = QtWidgets.QDialog()
-        main_layout = QtWidgets.QVBoxLayout()
-        self.d.setLayout(main_layout)
+        self.main_layout = QtWidgets.QVBoxLayout()
+        self.d.setLayout(self.main_layout)
+        self.d.setWindowTitle(self.message)
 
         space_left = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         size = QtCore.QSize(256, 256)
 
+        # We introduce the usage of gifs to grab attention in this UI, via which we expect artists' interactions
+        # to continue to auto fix unpublished work paths when required
         gifs = glob.glob(os.path.join(self.gif_path, 'choice*.gif'))
         gif = random.choice(gifs)
         mov = QtGui.QMovie(gif)
@@ -53,31 +57,27 @@ class DisplayUnpublishedFiles(QtWidgets.QWidget):
         mov.start()
         space_right = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
 
-        mov_layout = QtWidgets.QHBoxLayout()
-        mov_layout.addItem(space_left)
-        mov_layout.addWidget(self.mov_label)
-        mov_layout.addItem(space_right)
-        main_layout.addLayout(mov_layout)
+        self.mov_layout.addItem(space_left)
+        self.mov_layout.addWidget(self.mov_label)
+        self.mov_layout.addItem(space_right)
+        self.main_layout.addLayout(self.mov_layout)
 
-        separator = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        main_layout.addWidget(separator)
-
-        self.message_label.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(self.message_label)
+        message_font = QtGui.QFont()
+        message_font.setBold(True)
+        self.message_label.setFont(message_font)
+        self.main_layout.addWidget(self.message_label)
         self.report_unpublished = QtWidgets.QLabel(self.unpublished)
-        main_layout.addWidget(self.report_unpublished)
+        self.main_layout.addWidget(self.report_unpublished)
 
         btn_layout = QtWidgets.QHBoxLayout()
-        separator_v = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        main_layout.addWidget(separator_v)
-        main_layout.addWidget(self.progress_note)
+        self.main_layout.addWidget(self.progress_note)
         spacer_1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         spacer_2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         btn_layout.addItem(spacer_1)
         btn_layout.addItem(spacer_2)
         btn_layout.addWidget(self.rewire_nodes_btn)
-        main_layout.addLayout(btn_layout)
-        self.d.setLayout(main_layout)
+        self.main_layout.addLayout(btn_layout)
+        self.d.setLayout(self.main_layout)
 
     def display_ui(self):
         self.d.exec_()
@@ -279,18 +279,21 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             display_files.report_unpublished.clear()
             display_files.report_unpublished.setText(failure_report)
             message = "The above versions have not been published." \
-                      "\nPlease use a published version from Shotgun Loader. "
+                      "\nPlease get these versions published if you wish to use these. "
             self._update_progress_note(display_files.progress_note, message, color='maroon')
+            display_files.mov_label.setParent(None)
+            display_files.main_layout.removeItem(display_files.mov_layout)
         else:
             display_files.report_unpublished.clear()
             display_files.message_label.clear()
             display_files.message_label.setText("Success!\nAll user files replaced with published versions")
-            gif = os.path.join(display_files.gif_path, 'Approved.gif')
+            gif = os.path.join(display_files.gif_path, 'approved.gif')
             mov = QtGui.QMovie(gif)
             display_files.mov_label.setMovie(mov)
             mov.start()
             display_files.progress_note.clear()
             display_files.progress_note.setStyleSheet("")
+            display_files.rewire_nodes_btn.setEnabled(False)
 
     @staticmethod
     def _update_progress_note(progress_note, message, color='white'):
@@ -342,8 +345,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             unpublished = ""
             for path in suspicious_paths['unpublished']:
                 unpublished += "\n\n{}: {}".format(visited_files[path], path)
-            message = "CHECK!\n{}".format(item.properties['node'].name()) \
-                      + "\nUnpublished files found"
+            message = "Unpublished files found for {}".format(item.properties['node'].name())
 
             user_file_error = task_settings[USER_FILE_SETTING_NAME].value
             if user_file_error:
@@ -362,7 +364,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                     failed_replace = suspicious_paths['unpublished']
                 if failed_replace:
                     logger_method = self.logger.error
-                    status = True
+                    status = False
             else:
                 nuke.message(message+'\n'+unpublished)
                 logger_method = self.logger.warning
