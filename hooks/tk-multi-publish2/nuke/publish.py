@@ -9,6 +9,8 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
+import glob
+import random
 import nuke
 import sgtk
 import fnmatch
@@ -16,7 +18,69 @@ from dd.runtime import api
 api.load("frangetools")
 import frangetools
 
+api.load('qt_py')
+from Qt import QtWidgets, QtGui, QtCore
+
 HookBaseClass = sgtk.get_hook_baseclass()
+
+USER_FILE_SETTING_NAME = "Error On User File"
+
+
+class DisplayUnpublishedFiles(QtWidgets.QWidget):
+    def __init__(self, message, unpublished, gif_path):
+        self.message = message
+        self.unpublished = unpublished
+        self.gif_path = gif_path
+        self.progress_note = QtWidgets.QLabel()
+        self.report_unpublished = QtWidgets.QLabel(self.unpublished)
+        self.mov_label = QtWidgets.QLabel()
+        self.message_label = QtWidgets.QLabel(self.message)
+        self.rewire_nodes_btn = QtWidgets.QPushButton("Replace user files with published versions...")
+
+    def create_ui(self):
+        self.d = QtWidgets.QDialog()
+        main_layout = QtWidgets.QVBoxLayout()
+        self.d.setLayout(main_layout)
+
+        space_left = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        size = QtCore.QSize(256, 256)
+
+        gifs = glob.glob(os.path.join(self.gif_path, 'choice*.gif'))
+        gif = random.choice(gifs)
+        mov = QtGui.QMovie(gif)
+        mov.setScaledSize(size)
+        self.mov_label.setMovie(mov)
+        mov.start()
+        space_right = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+
+        mov_layout = QtWidgets.QHBoxLayout()
+        mov_layout.addItem(space_left)
+        mov_layout.addWidget(self.mov_label)
+        mov_layout.addItem(space_right)
+        main_layout.addLayout(mov_layout)
+
+        separator = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        main_layout.addWidget(separator)
+
+        self.message_label.setAlignment(QtCore.Qt.AlignCenter)
+        main_layout.addWidget(self.message_label)
+        self.report_unpublished = QtWidgets.QLabel(self.unpublished)
+        main_layout.addWidget(self.report_unpublished)
+
+        btn_layout = QtWidgets.QHBoxLayout()
+        separator_v = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        main_layout.addWidget(separator_v)
+        main_layout.addWidget(self.progress_note)
+        spacer_1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacer_2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        btn_layout.addItem(spacer_1)
+        btn_layout.addItem(spacer_2)
+        btn_layout.addWidget(self.rewire_nodes_btn)
+        main_layout.addLayout(btn_layout)
+        self.d.setLayout(main_layout)
+
+    def display_ui(self):
+        self.d.exec_()
 
 
 class NukePublishDDValidationPlugin(HookBaseClass):
@@ -29,6 +93,41 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         """
         # call base init
         super(NukePublishDDValidationPlugin, self).__init__(parent, **kwargs)
+        self._breakdown_app = self.parent.engine.apps.get('tk-multi-breakdown')
+
+    @property
+    def settings_schema(self):
+        """
+        Dictionary defining the settings that this plugin expects to receive
+        through the settings parameter in the accept, validate, publish and
+        finalize methods.
+
+        A dictionary on the following form::
+
+            {
+                "Settings Name": {
+                    "type": "settings_type",
+                    "default_value": "default_value",
+                    "description": "One line description of the setting"
+            }
+
+        The type string should be one of the data types that toolkit accepts
+        as part of its environment configuration.
+        """
+
+        schema = super(NukePublishDDValidationPlugin, self).settings_schema
+
+        validation_schema = {
+            USER_FILE_SETTING_NAME: {
+                "type": "bool",
+                "default_value": True,
+                "description": "Setting to Error the validation that checks for user paths in the nuke script."
+            }
+        }
+
+        schema.update(validation_schema)
+
+        return schema
 
     def _build_dict(self, seq, key):
         """
@@ -89,7 +188,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             if self._contains_active_file_knob(node):
                 node_file_path = node['file'].value()
                 if node_file_path:
-                    visited_files.setdefault(node_file_path, []).append(node.name())
+                    visited_files.setdefault(node_file_path, []).append(nuke.Node.fullName(node))
             # set visited to 1 for the node so as not to revisit
             self.visited_dict[node] = 1
             dep = node.dependencies()
@@ -118,7 +217,95 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                 suspicious_paths['invalid'].append(file_path)
         return suspicious_paths
 
-    def _read_and_camera_file_paths(self, item):
+    def _get_published_counterparts(self, unpublished_files):
+        """
+        Query shotgun and get published counterparts of the unpublished files
+
+        :param unpublished_files: Unpublished files in the nuke script
+        :return: Queried sg data for files which have published versions
+        """
+        filters = [["project.Project.name", "is", os.environ['DD_SHOW']], ['sg_path_to_source', 'in', unpublished_files]]
+        fields = ['path', 'entity', 'task'] + self._breakdown_app.get_setting('additional_publish_fields')
+        sg_data = self.parent.engine.shotgun.find('PublishedFile', filters, fields)
+        sg_data = {entity['sg_path_to_source']: entity for entity in sg_data}
+        return sg_data
+
+    def _rewire_script_and_report(self, suspicious_paths, visited_files, sg_data, display_files):
+        """
+        Replace nodes with unpublished file paths and update to have sgtk metadata
+
+        :param suspicious_paths: Dict with unpublished and invalid paths
+        :param visited_files: File nodes and associated files collected during traversal
+        :param sg_data: Shotgun data for files which have published versions
+        :param display_files: DisplayUnpublishedFiles instance
+        """
+        self._update_progress_note(display_files.progress_note, "Replacement initiated...")
+        items = []
+        for key, value in sg_data.iteritems():
+            nodes = visited_files[key]
+            for node in nodes:
+                display_files.progress_note.clear()
+                self._update_progress_note(display_files.progress_note,
+                                           ("Attempting file replacement on node: {}".format(node)))
+                node_data = dict()
+                node_data["node"] = node
+                node_data["type"] = nuke.toNode(node).Class()
+                node_data["path"] = value["path"]["local_path"]
+                node_data["sg_data"] = value
+                items.append(node_data)
+        if items:
+            self._breakdown_app.execute_hook_method('hook_scene_operations', 'update', items=items)
+        self._report_failed_replacements(sg_data, suspicious_paths, visited_files, display_files)
+
+    def _report_failed_replacements(self, sg_data, suspicious_paths, visited_files, display_files):
+        """
+        Report any files on which replace attempt failed
+
+        :param sg_data: Shotgun data for files which have published versions
+        :param suspicious_paths: Dict with unpublished and invalid paths
+        :param visited_files:File nodes and associated files collected during traversal
+        :param display_files: DisplayUnpublishedFiles instance
+        """
+        failure_report = ""
+        if sg_data:
+            failed_replace = list(set(suspicious_paths['unpublished']) - set(sg_data.keys()))
+        else:
+            failed_replace = suspicious_paths['unpublished']
+
+        for path in failed_replace:
+            failure_report += "\n\n{}: {}".format(visited_files[path], path)
+
+        if failed_replace:
+            display_files.report_unpublished.clear()
+            display_files.report_unpublished.setText(failure_report)
+            message = "The above versions have not been published." \
+                      "\nPlease use a published version from Shotgun Loader. "
+            self._update_progress_note(display_files.progress_note, message, color='maroon')
+        else:
+            display_files.report_unpublished.clear()
+            display_files.message_label.clear()
+            display_files.message_label.setText("Success!\nAll user files replaced with published versions")
+            gif = os.path.join(display_files.gif_path, 'Approved.gif')
+            mov = QtGui.QMovie(gif)
+            display_files.mov_label.setMovie(mov)
+            mov.start()
+            display_files.progress_note.clear()
+            display_files.progress_note.setStyleSheet("")
+
+    @staticmethod
+    def _update_progress_note(progress_note, message, color='white'):
+        """
+        Update the note which what is going on (eg: file on which node is being replaced)
+
+        :param progress_note: Qt label showing the node wise update
+        :param message: Message to be reflected on the note
+        :param color: Note color (eg: red for error, green for success, white otherwise)
+        """
+        progress_note.clear()
+        progress_note.setStyleSheet("background-color: {}; border: 1px solid black;".format(color))
+        progress_note.setText(message)
+
+    def _read_and_camera_file_paths(self, task_settings, item):
         """
         Checks if the files loaded are published or from valid locations i.e
         /dd/shows/<show>/SHARED, dd/shows/<show>/<seq>/SHARED, dd/shows/<show>/<seq>/<shot>/SHARED
@@ -128,6 +315,8 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         :param item: Item to process
         :return: True if paths are published or valid false otherwise
         """
+        status = True
+        logger_method = None
         self.visited_dict = item.parent.properties['visited_dict']
 
         show_path = os.path.join(os.environ['DD_SHOWS_ROOT'], os.environ['DD_SHOW'])
@@ -153,18 +342,43 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             unpublished = ""
             for path in suspicious_paths['unpublished']:
                 unpublished += "\n\n{}: {}".format(visited_files[path], path)
-            self.logger.warning(
-                "Unpublished files found.",
-                extra={
-                    "action_show_more_info": {
-                        "label": "Show Info",
-                        "tooltip": "Show unpublished files",
-                        "text": "Unpublished files.\n{}".format(unpublished)
+            message = "CHECK!\n{}".format(item.properties['node'].name()) \
+                      + "\nUnpublished files found"
+
+            user_file_error = task_settings[USER_FILE_SETTING_NAME].value
+            if user_file_error:
+                sg_data = self._get_published_counterparts(suspicious_paths['unpublished'])
+                gifs_path = self.parent.expand_path("{config}/resources")
+                display_files = DisplayUnpublishedFiles(message, unpublished, gifs_path)
+                display_files.create_ui()
+                display_files.rewire_nodes_btn.clicked.connect(lambda: self._rewire_script_and_report(suspicious_paths,
+                                                                                                      visited_files,
+                                                                                                      sg_data,
+                                                                                                      display_files))
+                display_files.display_ui()
+                if sg_data:
+                    failed_replace = list(set(suspicious_paths['unpublished']) - set(sg_data.keys()))
+                else:
+                    failed_replace = suspicious_paths['unpublished']
+                if failed_replace:
+                    logger_method = self.logger.error
+                    status = True
+            else:
+                nuke.message(message+'\n'+unpublished)
+                logger_method = self.logger.warning
+                status = not user_file_error
+
+            if logger_method:
+                logger_method(
+                    "Unpublished files found.",
+                    extra={
+                        "action_show_more_info": {
+                            "label": "Show Info",
+                            "tooltip": "Show unpublished files",
+                            "text": "Unpublished files.\n{}".format(unpublished)
+                        }
                     }
-                }
-            )
-            nuke.message("WARNING!\n{} node".format(item.properties['node'].name())
-                         + "\nUnpublished files found.{}".format(unpublished))
+                )
 
         if suspicious_paths['invalid']:
             paths = ""
@@ -179,8 +393,8 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                                   }
                               }
                               )
-            return False
-        return True
+            status = False
+        return status
 
 
     def _sync_frame_range(self, item):
@@ -293,12 +507,12 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             status = self._non_sgtk_writes() and status
             status = self._sync_frame_range(item) and status
             # Properties to be used by child write nodes
-            item.properties['visited_dict'] = {node: 0 for node in nuke.allNodes()}
+            item.properties['visited_dict'] = {node: 0 for node in nuke.allNodes(recurseGroups=True)}
             item.properties['write_node_paths_dict'] = dict()
 
         # Segregating the checks, specifically for write nodes
         if item.properties.get("node"):
-            status = self._read_and_camera_file_paths(item) and status
+            status = self._read_and_camera_file_paths(task_settings, item) and status
             status = self._framerange_to_be_published(item) and status
             status = self._write_node_path_duplicacy(item) and status
 
