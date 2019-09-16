@@ -277,8 +277,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             self._report_successful_replacements(sg_data, visited_files, display_files)
         self._report_failed_replacements(sg_data, suspicious_paths, visited_files, display_files)
 
-    @staticmethod
-    def _report_successful_replacements(sg_data, visited_files, display_files):
+    def _report_successful_replacements(self, sg_data, visited_files, display_files):
         """
         Report any files on which replace attempt succeeded
 
@@ -291,6 +290,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         success_report = ""
         for path in sg_data:
             success_report += "{}: {}\n".format(visited_files[path], sg_data[path]['path']['local_path'])
+        self.logger.debug("Successful Replacements: {}".format(success_report))
         display_files.report_replaced.clear()
         display_files.report_replaced.show()
         display_files.report_replaced.setText(success_report)
@@ -305,13 +305,14 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         :param display_files: DisplayUnpublishedFiles instance
         """
         failure_report = ""
+        self.logger.debug("Paths to be replaced: {}".format('\n'.join(suspicious_paths['unpublished'])))
         if sg_data:
             failed_replace = list(set(suspicious_paths['unpublished']) - set(sg_data.keys()))
         else:
             failed_replace = suspicious_paths['unpublished']
-
         for path in failed_replace:
             failure_report += "{}: {}\n".format(visited_files[path], path)
+        self.logger.debug("Failed Replacements: {}".format(failure_report))
 
         display_files.report_unpublished.clear()
         if failed_replace:
@@ -324,7 +325,6 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             display_files.mov_label.hide()
             display_files.mov_layout.setParent(None)
             display_files.main_dialog.adjustSize()
-            self.logger.debug("")
         else:
             display_files.message_label.clear()
             display_files.message_label.setText("Success!\nAll user files replaced with published versions")
