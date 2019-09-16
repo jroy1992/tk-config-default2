@@ -29,20 +29,23 @@ USER_FILE_SETTING_NAME = "Error On User File"
 class DisplayUnpublishedFiles(QtWidgets.QWidget):
     def __init__(self, message, unpublished, gif_path):
         self.message = message
+        self.message_label = QtWidgets.QLabel(self.message)
         self.unpublished = unpublished
+        self.report_unpublished = QtWidgets.QTextEdit()
+        self.success_label = QtWidgets.QLabel()
+        self.report_replaced = QtWidgets.QLabel()
         self.gif_path = gif_path
         self.progress_note = QtWidgets.QLabel()
-        self.report_unpublished = QtWidgets.QLabel(self.unpublished)
         self.mov_label = QtWidgets.QLabel()
         self.mov_layout = QtWidgets.QHBoxLayout()
-        self.message_label = QtWidgets.QLabel(self.message)
         self.rewire_nodes_btn = QtWidgets.QPushButton("Replace user files with published versions...")
 
     def create_ui(self):
-        self.d = QtWidgets.QDialog()
-        self.main_layout = QtWidgets.QVBoxLayout()
-        self.d.setLayout(self.main_layout)
-        self.d.setWindowTitle(self.message)
+        self.main_dialog = QtWidgets.QDialog()
+        self.main_dialog.setMinimumSize(1000, 400)
+        main_layout = QtWidgets.QVBoxLayout()
+        self.main_dialog.setLayout(main_layout)
+        self.main_dialog.setWindowTitle(self.message)
 
         space_left = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         size = QtCore.QSize(256, 256)
@@ -60,27 +63,43 @@ class DisplayUnpublishedFiles(QtWidgets.QWidget):
         self.mov_layout.addItem(space_left)
         self.mov_layout.addWidget(self.mov_label)
         self.mov_layout.addItem(space_right)
-        self.main_layout.addLayout(self.mov_layout)
+        main_layout.addLayout(self.mov_layout)
 
         message_font = QtGui.QFont()
         message_font.setBold(True)
         self.message_label.setFont(message_font)
-        self.main_layout.addWidget(self.message_label)
-        self.report_unpublished = QtWidgets.QLabel(self.unpublished)
-        self.main_layout.addWidget(self.report_unpublished)
+        main_layout.addWidget(self.message_label)
+        self.report_unpublished.setPlainText(self.unpublished)
+        self.report_unpublished.setReadOnly(True)
+        self.report_unpublished.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
+        main_layout.addWidget(self.report_unpublished)
 
-        btn_layout = QtWidgets.QHBoxLayout()
-        self.main_layout.addWidget(self.progress_note)
+        self.progress_note.setFont(message_font)
+        self.progress_note.setStyle(QtWidgets.QStyleFactory.create('Plastique'))
+        main_layout.addWidget(self.progress_note)
+        space = QtWidgets.QLabel()
+        main_layout.addWidget(space)
+
+        self.success_label.setFont(message_font)
+        main_layout.addWidget(self.success_label)
+        self.success_label.hide()
+        self.report_replaced.setStyle(QtWidgets.QStyleFactory.create('Plastique'))
+        self.report_replaced.setStyleSheet("color: #288f62")
+        main_layout.addWidget(self.report_replaced)
+        self.report_replaced.hide()
+
         spacer_1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         spacer_2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        btn_layout = QtWidgets.QHBoxLayout()
         btn_layout.addItem(spacer_1)
         btn_layout.addItem(spacer_2)
         btn_layout.addWidget(self.rewire_nodes_btn)
-        self.main_layout.addLayout(btn_layout)
-        self.d.setLayout(self.main_layout)
+        main_layout.addLayout(btn_layout)
+        self.main_dialog.setLayout(main_layout)
+        self.main_dialog.adjustSize()
 
     def display_ui(self):
-        self.d.exec_()
+        self.main_dialog.exec_()
 
 
 class NukePublishDDValidationPlugin(HookBaseClass):
@@ -255,7 +274,26 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                 items.append(node_data)
         if items:
             self._breakdown_app.execute_hook_method('hook_scene_operations', 'update', items=items)
+            self._report_successful_replacements(sg_data, visited_files, display_files)
         self._report_failed_replacements(sg_data, suspicious_paths, visited_files, display_files)
+
+    @staticmethod
+    def _report_successful_replacements(sg_data, visited_files, display_files):
+        """
+        Report any files on which replace attempt succeeded
+
+        :param sg_data: Shotgun data for files which have published versions
+        :param visited_files: File nodes and associated files collected during traversal
+        :param display_files: DisplayUnpublishedFiles instance
+        """
+        display_files.success_label.show()
+        display_files.success_label.setText("Files on below nodes were successfully replaced:")
+        success_report = ""
+        for path in sg_data:
+            success_report += "{}: {}\n".format(visited_files[path], sg_data[path]['path']['local_path'])
+        display_files.report_replaced.clear()
+        display_files.report_replaced.show()
+        display_files.report_replaced.setText(success_report)
 
     def _report_failed_replacements(self, sg_data, suspicious_paths, visited_files, display_files):
         """
@@ -273,27 +311,33 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             failed_replace = suspicious_paths['unpublished']
 
         for path in failed_replace:
-            failure_report += "\n\n{}: {}".format(visited_files[path], path)
+            failure_report += "{}: {}\n".format(visited_files[path], path)
 
+        display_files.report_unpublished.clear()
         if failed_replace:
-            display_files.report_unpublished.clear()
-            display_files.report_unpublished.setText(failure_report)
+            color = "#e30202"
+            display_files.report_unpublished.setPlainText(failure_report)
+            display_files.report_unpublished.setStyleSheet("color: {}".format(color))
             message = "The above versions have not been published." \
-                      "\nPlease get these versions published if you wish to use these. "
-            self._update_progress_note(display_files.progress_note, message, color='maroon')
-            display_files.mov_label.setParent(None)
-            display_files.main_layout.removeItem(display_files.mov_layout)
+                      "\nPlease get these versions published if you wish to use them."
+            self._update_progress_note(display_files.progress_note, message, color=color)
+            display_files.mov_label.hide()
+            display_files.mov_layout.setParent(None)
+            display_files.main_dialog.adjustSize()
+            self.logger.debug("")
         else:
-            display_files.report_unpublished.clear()
             display_files.message_label.clear()
             display_files.message_label.setText("Success!\nAll user files replaced with published versions")
             gif = os.path.join(display_files.gif_path, 'approved.gif')
             mov = QtGui.QMovie(gif)
+            size = QtCore.QSize(256, 200)
+            mov.setScaledSize(size)
             display_files.mov_label.setMovie(mov)
             mov.start()
-            display_files.progress_note.clear()
-            display_files.progress_note.setStyleSheet("")
-            display_files.rewire_nodes_btn.setEnabled(False)
+            display_files.progress_note.hide()
+            display_files.report_unpublished.hide()
+            display_files.main_dialog.adjustSize()
+        display_files.rewire_nodes_btn.setEnabled(False)
 
     @staticmethod
     def _update_progress_note(progress_note, message, color='white'):
@@ -305,7 +349,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         :param color: Note color (eg: red for error, green for success, white otherwise)
         """
         progress_note.clear()
-        progress_note.setStyleSheet("background-color: {}; border: 1px solid black;".format(color))
+        progress_note.setStyleSheet("color: {};".format(color))
         progress_note.setText(message)
 
     def _read_and_camera_file_paths(self, task_settings, item):
@@ -344,8 +388,8 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         if suspicious_paths['unpublished']:
             unpublished = ""
             for path in suspicious_paths['unpublished']:
-                unpublished += "\n\n{}: {}".format(visited_files[path], path)
-            message = "Unpublished files found for {}".format(item.properties['node'].name())
+                unpublished += "{}: {}\n".format(visited_files[path], path)
+            message = "Unpublished files found for {}:".format(item.properties['node'].name())
 
             user_file_error = task_settings[USER_FILE_SETTING_NAME].value
             if user_file_error:
