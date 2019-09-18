@@ -25,6 +25,8 @@ includes:
 - ./apps/tk-houdini-alembicnode.yml
 - ./apps/tk-houdini-geometrynode.yml
 - ./apps/tk-houdini-mantranode.yml
+- ./apps/tk-multi-setframerange.yml
+- ./apps/tk-multi-timelogger.yml
 
 ################################################################################
 
@@ -37,6 +39,7 @@ settings.tk-houdini:
     tk-multi-screeningroom: "@settings.tk-multi-screeningroom.rv"
     tk-multi-shotgunpanel: "@settings.tk-multi-shotgunpanel"
     tk-multi-workfiles2: "@settings.tk-multi-workfiles2.houdini"
+    tk-multi-timelogger: "@settings.tk-multi-timelogger"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   run_at_startup:
@@ -59,11 +62,14 @@ settings.tk-houdini.asset:
     tk-houdini-alembicnode: "@settings.tk-houdini-alembicnode"
     tk-houdini-geometrynode: "@settings.tk-houdini-geometrynode"
     tk-houdini-mantranode: "@settings.tk-houdini-mantranode"
+    tk-multi-setframerange: "@settings.tk-multi-setframerange"
+    tk-multi-timelogger: "@settings.tk-multi-timelogger"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   - {app_instance: tk-multi-snapshot, name: Snapshot...}
   - {app_instance: tk-multi-workfiles2, name: File Save...}
   - {app_instance: tk-multi-publish2, name: Publish...}
+  - {app_instance: tk-multi-timelogger, name: Time Logger...}
   run_at_startup:
   - {app_instance: tk-multi-shotgunpanel, name: 'Shotgun Panel...'}
   location: "@engines.tk-houdini.location"
@@ -85,11 +91,13 @@ settings.tk-houdini.shot:
     tk-houdini-alembicnode: "@settings.tk-houdini-alembicnode"
     tk-houdini-geometrynode: "@settings.tk-houdini-geometrynode"
     tk-houdini-mantranode: "@settings.tk-houdini-mantranode"
+    tk-multi-timelogger: "@settings.tk-multi-timelogger"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   - {app_instance: tk-multi-snapshot, name: Snapshot...}
   - {app_instance: tk-multi-workfiles2, name: File Save...}
   - {app_instance: tk-multi-publish2, name: Publish...}
+  - {app_instance: tk-multi-timelogger, name: Time Logger...}
   run_at_startup:
   - {app_instance: tk-multi-shotgunpanel, name: 'Shotgun Panel...'}
   location: "@engines.tk-houdini.location"

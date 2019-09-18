@@ -15,11 +15,14 @@ Hook that loads defines all the available actions, broken down by publish type.
 import os
 import re
 import glob
+import yaml
 # sgtk
 import sgtk
+from sgtk.platform.qt import QtGui
 from sgtk import TankError
 # mari
 import mari
+
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -91,6 +94,18 @@ class CustomMariActions(HookBaseClass):
                                      "caption": "Add to Image Manager",
                                      "description": "This will add the image to project's image manager."})
 
+        if 'ref_camera_import' in actions and 'ref_camera_import' not in existing_action_names:
+            action_instances.append({"name": "ref_camera_import",
+                                     "params": None,
+                                     "caption": "Import Reference Camera",
+                                     "description": "This will import camera as a projector."})
+        if 'swap_geometry' in actions:
+            action_instances.append({"name": "swap_geometry",
+                                     "params": None,
+                                     "caption": "Swap Current Geometry",
+                                     "description": "This will swap the current geometry with a "
+                                                    "Shotgun published geometry."})
+
         return action_instances
 
     def execute_action(self, name, params, sg_publish_data):
@@ -119,107 +134,30 @@ class CustomMariActions(HookBaseClass):
             self._create_layer_with_image(path, sg_publish_data)
         elif name == "add_to_image_manager":
             self._add_to_image_manager(path, sg_publish_data)
+        elif name == "ref_camera_import":
+            self._import_ref_camera(path, sg_publish_data)
+        elif name == "swap_geometry":
+            geo = mari.geo.current()
+            self._swap_geometry(geo, sg_publish_data)
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
 
-    @staticmethod
-    def _sequence_range_from_path(path):
-        """
-        Parses the file name in an attempt to determine the first and last
-        frame number of a sequence. This assumes some sort of common convention
-        for the file names, where the frame number is an integer at the end of
-        the basename, just ahead of the file extension, such as
-        file.0001.jpg, or file_001.jpg. We also check for input file names with
-        abstracted frame number tokens, such as file.####.jpg, or file.%04d.jpg.
+    def _swap_geometry(self, geo, sg_publish_data):
+        mari_engine = self.parent.engine
 
-        :param str path: The file path to parse.
+        version_list = geo.versionNames()
+        if len(version_list) > 1:
+            # warn that we are removing all of them
+            message = "The geo '{}' has multiple versions attached with it:\n{}\n" \
+                      "Are you sure you want to proceed?".format(geo.name(), version_list)
+            response = QtGui.QMessageBox.question(None, "Removing multiple geo versions!", message,
+                                                  QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+            if response == QtGui.QMessageBox.No:
+                return
 
-        :returns: None if no range could be determined, otherwise (min, max)
-        :rtype: tuple or None
-        """
-        # This pattern will match the following at the end of a string and
-        # retain the frame number or frame token as group(1) in the resulting
-        # match object:
-        #
-        # 0001
-        # ####
-        # %04d
-        #
-        # The number of digits or hashes does not matter; we match as many as
-        # exist.
-        frame_pattern = re.compile(r"([0-9#]+|[%]0\dd)$")
-        root, ext = os.path.splitext(path)
-        match = re.search(frame_pattern, root)
+        mari_engine.swap_geometry(geo, sg_publish_data, options=None)
 
-        # If we did not match, we don't know how to parse the file name, or there
-        # is no frame number to extract.
-        if not match:
-            return None
-
-        # We need to get all files that match the pattern from disk so that we
-        # can determine what the min and max frame number is.
-        glob_path = "%s%s" % (
-            re.sub(frame_pattern, "*", root),
-            ext,
-        )
-        files = glob.glob(glob_path)
-
-        # Our pattern from above matches against the file root, so we need
-        # to chop off the extension at the end.
-        file_roots = [os.path.splitext(f)[0] for f in files]
-
-        # We know that the search will result in a match at this point, otherwise
-        # the glob wouldn't have found the file. We can search and pull group 1
-        # to get the integer frame number from the file root name.
-        frames = [int(re.search(frame_pattern, f).group(1)) for f in file_roots]
-        return min(frames), max(frames)
-
-    def _find_sequence_range(self, path):
-        """
-        Helper method attempting to extract sequence information.
-
-        Using the toolkit template system, the path will be probed to
-        check if it is a sequence, and if so, frame information is
-        attempted to be extracted.
-
-        :param path: Path to file on disk.
-        :returns: None if no range could be determined, otherwise (min, max)
-        """
-        # find a template that matches the path:
-        template = None
-        try:
-            template = self.parent.sgtk.template_from_path(path)
-        except TankError:
-            pass
-
-        if not template:
-            # If we don't have a template to take advantage of, then
-            # we are forced to do some rough parsing ourself to try
-            # to determine the frame range.
-            return self._sequence_range_from_path(path)
-
-        # get the fields and find all matching files:
-        fields = template.get_fields(path)
-        if not "SEQ" in fields:
-            # Ticket #655: older paths match wrong templates,
-            # so fall back on path parsing
-            return self._sequence_range_from_path(path)
-
-        files = self.parent.sgtk.paths_from_template(template, fields, ["SEQ", "eye"])
-
-        # find frame numbers from these files:
-        frames = []
-        for file in files:
-            fields = template.get_fields(file)
-            frame = fields.get("SEQ")
-            if frame != None:
-                frames.append(frame)
-        if not frames:
-            return None
-
-        # return the range
-        return min(frames), max(frames)
 
     def _create_layer_with_image(self, path, sg_publish_data):
         """
@@ -227,8 +165,6 @@ class CustomMariActions(HookBaseClass):
 
         :param sg_publish_data:     Shotgun data dictionary with all the standard publish fields.
         """
-        mari_engine = self.parent.engine
-
         layer_name = "%s-%s.v%d" % (sg_publish_data.get("entity").get("name"),
                                     sg_publish_data.get("name"),
                                     sg_publish_data.get("version_number"))
@@ -255,11 +191,9 @@ class CustomMariActions(HookBaseClass):
         """
         mari_engine = self.parent.engine
 
-        frame_range = self._find_sequence_range(path)
+        frame_range = self.parent.utils.find_sequence_range(self.sgtk, path)
 
         if frame_range:
-            frame_number = frame_range[0]
-
             FRAME_PATTERN_REGEX = re.compile(r"([0-9#]+|[%]0\dd)$")
             root, ext = os.path.splitext(path)
             frame_pattern_match = re.search(FRAME_PATTERN_REGEX, root)
@@ -269,12 +203,21 @@ class CustomMariActions(HookBaseClass):
             frame_spec_pattern_match = re.search(FRAME_SPEC_REGEX, frame_pattern)
             padding = int(frame_spec_pattern_match.groups()[0])
 
-            path = path.replace(str(frame_pattern), str(frame_number).zfill(padding))
-            # TODO: #1275 change this later to give a pop-up and ask for frame number, for now picking the first frame.
+            min_frame, max_frame = frame_range
+            if min_frame == max_frame:
+                frame_number = min_frame
+            else:
+                # ask user for frame number
+                frame_number, response = QtGui.QInputDialog.getInt(
+                    None, "Frame Number", "Enter the frame number ({}-{}) "
+                                          "that you want to load: ".format(min_frame, max_frame),
+                    minValue=min_frame, maxValue=max_frame
+                )
+                if not response:
+                    self.parent.logger.warning("User pressed Cancel. Not loading image.")
+                    return
 
-            # layer_name = "%s.v%s.%d" % (sg_publish_data.get("name"),
-            #                             sg_publish_data.get("version_number"),
-            #                             frame_number)
+            path = path.replace(str(frame_pattern), str(frame_number).zfill(padding))
 
             # add the image to image manager
             mari.images.open(path)
@@ -282,8 +225,82 @@ class CustomMariActions(HookBaseClass):
         else:
             self.parent.log_warning("There are no frames in %s image!" % path)
 
+    def _import_ref_camera(self, path, sg_publish_data):
+        template = None
+        data_loaded = None
+        error_msg = ''
+        missing_cam = []
+        missing_img_path = []
+        ref_image_missing = []
 
+        try:
+            template = self.parent.sgtk.template_from_path(path)
+        except sgtk.TankError:
+            pass
+        if not template:
+            return None
 
+        # get the fields
+        fields = template.get_fields(path)
 
+        # get metadata template
+        metadata_template_exp = "{env_name}_publish_metadata"
+        metadata_template_name = self.parent.resolve_setting_expression(metadata_template_exp)
+        metadata_template = self.parent.sgtk.templates.get(metadata_template_name)
 
+        if not metadata_template:
+            self.parent.logger.warning("Unable to find metadata template: {}".format(metadata_template_name))
+            return None
 
+        try:
+            metadata_path = metadata_template.apply_fields(fields)
+        except sgtk.TankError:
+            self.parent.logger.warning("Unable to apply fields: {}"
+                                       "\nto metadata template: {}".format(fields, metadata_template_name))
+            return None
+
+        try:
+            with open(metadata_path, 'r') as stream:
+                data_loaded = yaml.load(stream)
+        except:
+            self.warning_dialogue('WARNING', 'Unable to load metadata file')
+
+        if data_loaded:
+            # Checking for object in Metadata file and removing if object exists in the scene
+            for cam, img in data_loaded.iteritems():
+                if mari.projectors.find(cam):
+                    mari.projectors.remove(cam)
+            # Loading Projectors(camera)
+            projectors = mari.projectors.load(path)
+            for cam in projectors:
+                cam_name = cam.name()
+                camera = data_loaded.get(cam_name, None)
+                if camera:
+                    ref_image_attribute = camera.get('ref_image', None)
+                    if ref_image_attribute:
+                        image_path = ref_image_attribute.get('file_path', None)
+                        if image_path and os.path.exists(image_path):
+                            cam.setImportPath(image_path)
+                            cam.project()
+                        else:
+                            missing_img_path.append(cam_name)
+                    else:
+                        ref_image_missing.append(cam_name)
+
+                else:
+                    missing_cam.append(cam_name)
+        else:
+            self.warning_dialogue('WARNING', 'Metadata file is empty')
+
+        if ref_image_missing:
+            error_msg += 'Reference image not found in metadata for camera - {}\n'.format(str(ref_image_missing))
+        if missing_cam:
+            error_msg += 'Camera not found in metadata - {}\n'.format(str(missing_cam))
+
+        if missing_img_path:
+            error_msg += 'Image path for camera does not exist - {}\n'.format(str(missing_img_path))
+        if error_msg:
+            self.warning_dialogue('Object Missing', error_msg)
+
+    def warning_dialogue(self, title, msg):
+        QtGui.QMessageBox.warning(None, title, msg)

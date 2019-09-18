@@ -25,6 +25,7 @@ includes:
 - ./apps/tk-nuke-quickdailies.yml
 - ./apps/tk-nuke-writenode.yml
 - ./apps/tk-hiero-export.yml
+- ./apps/tk-multi-timelogger.yml
 
 ################################################################################
 
@@ -37,10 +38,12 @@ settings.tk-nukestudio:
     tk-multi-screeningroom: "@settings.tk-multi-screeningroom.rv"
     tk-multi-shotgunpanel: "@settings.tk-multi-shotgunpanel"
     tk-multi-workfiles2: "@settings.tk-multi-workfiles2.nukestudio"
+    tk-multi-timelogger: "@settings.tk-multi-timelogger"
   bin_context_menu:
   - {app_instance: tk-multi-workfiles2, keep_in_menu: false, name: 'File Save...', requires_selection: true}
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: 'File Open...'}
+  - {app_instance: tk-multi-timelogger, name: Time Logger...}
   run_at_startup:
   - {app_instance: tk-multi-shotgunpanel, name: 'Shotgun Panel...'}
   location: '@engines.tk-nuke.location'
@@ -63,6 +66,7 @@ settings.tk-nukestudio.shot:
     tk-hiero-export: "@settings.tk-hiero-export"
     tk-hiero-openinshotgun:
       location: "@apps.tk-hiero-openinshotgun.location"
+    tk-multi-timelogger: "@settings.tk-multi-timelogger"
   bin_context_menu:
   - {app_instance: tk-multi-workfiles2, keep_in_menu: false, name: 'File Save...', requires_selection: true}
   - {app_instance: tk-multi-snapshot, keep_in_menu: false, name: 'Snapshot...', requires_selection: true}

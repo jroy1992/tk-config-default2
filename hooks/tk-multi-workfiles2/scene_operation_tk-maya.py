@@ -13,6 +13,7 @@ import maya.cmds as cmds
 import maya.mel as mel
 
 import sgtk
+from sgtk import TankError
 from sgtk.platform.qt import QtGui
 
 HookClass = sgtk.get_hook_baseclass()
@@ -130,6 +131,9 @@ class SceneOperation(HookClass):
 
             # do new file:
             cmds.file(newFile=True, force=True)
+            if parent_action == "new_file":
+                self.sync_frame_range()
+                self.parent.engine.commands["File Save..."]["callback"]()
             return True
 
     def set_show_preferences(self, file_path, context):
@@ -286,9 +290,10 @@ class SceneOperation(HookClass):
         self.set_enum_attr("defaultRenderGlobals.periodInExt", "Period in Extension", lock=True)
 
         # set overrides from preferences, if any exist
-        enum_overrides = prefs.get("sgtk_render_settings", {}).get("default", {}).get("enum_attr", {})
-        other_overrides = prefs.get("sgtk_render_settings", {}).get("default", {}).get("other", {})
-        self.apply_overrides("defaultRenderGlobals", enum_overrides, other_overrides)
+        for e_item in ["defaultRenderGlobals", "defaultResolution"]:
+            enum_overrides = prefs.get("sgtk_render_settings", {}).get(e_item, {}).get("enum_attr", {})
+            other_overrides = prefs.get("sgtk_render_settings", {}).get(e_item, {}).get("other", {})
+            self.apply_overrides(e_item, enum_overrides, other_overrides)
 
     def set_vray_render_settings(self, fields, placeholder_render_path, frame_sq_key, prefs):
         """
@@ -371,7 +376,8 @@ class SceneOperation(HookClass):
                                          attribute_type="string", lock=True)
                 if ext == "exr":
                     # if not exr, assume other settings are specified as overrides
-                    self.set_enum_attr("{}.exrCompression".format(node), "zips", lock=True)
+                    exr_compression = enum_overrides.get('exrCompression', 'dwaa')
+                    self.set_enum_attr("{}.exrCompression".format(node), exr_compression, lock=True)
             else:
                 self.unlock_and_set_attr("{}.prefix".format(node),
                                          prefix.replace(LAYER_PLACEHOLDER, "<RenderLayer>Deep"),
@@ -452,3 +458,29 @@ class SceneOperation(HookClass):
         prefix = prefix.replace("." + frame_sq_key.default, "")
 
         return prefix, ext
+
+    def sync_frame_range(self):
+        engine = self.parent.engine
+        if engine.context.entity is None:
+            # tk-multi-setframerange needs a context entity to work
+            warning_message = "Your current context does not have an entity " \
+                              "(e.g. a current Shot, current Asset etc). \nNot syncing frame range."
+            self.parent.logger.warning(warning_message)
+            QtGui.QMessageBox.warning(None, "Context has no entity", warning_message)
+            return
+
+        try:
+            # get app
+            frame_range_app = engine.apps["tk-multi-setframerange"]
+        except KeyError as ke:
+            error_message = "Unable to find {} in {} at this time. " \
+                            "Not syncing frame range automatically.".format(ke, engine.name)
+            # assume it is sequence/asset entity and do not give a pop-up warning
+            self.parent.logger.warning(error_message)
+        else:
+            try:
+                frame_range_app.run_app()
+            except TankError as te:
+                warning_message = "{}. Not syncing frame range.".format(te)
+                self.parent.logger.warning(warning_message)
+                QtGui.QMessageBox.warning(None, "Entity has no in/out frame", warning_message)

@@ -81,23 +81,6 @@ class ColorProcessFilesPlugin(HookBaseClass):
 
         return schema
 
-    @property
-    def description(self):
-        """
-        Verbose, multi-line description of what the plugin does. This can
-        contain simple html for formatting.
-        """
-
-        return """
-        Ingests the file to the location specified by the publish_path_template for this item and
-        creates a <b>PublishedFile</b> entity in Shotgun, which will include a
-        reference to the file's published path on disk.
-
-        After the <b>PublishedFile</b> is created successfully, a <b>Plate/Asset</b> entity is also created.
-        The <b>PublishedFile</b> is then linked to it's corresponding <b>Plate/Asset</b> entity for other users to use.
-        Once the ingestion is complete these files can be accessed using the Loader window within each DCC.
-        """
-
     def accept(self, task_settings, item):
         """
         Method called by the publisher to determine if an item is of any
@@ -402,6 +385,7 @@ class ColorProcessFilesPlugin(HookBaseClass):
 
             # delete the rendered files
             self.undo(task_settings, item)
+            raise TankError(error_message)
         else:
             # register publishes
             for processed_path in item.properties.pre_processed_paths:
@@ -431,8 +415,8 @@ class ColorProcessFilesPlugin(HookBaseClass):
                                  }
                              }
                              )
-            for processed_path in pre_processed_paths:
-                publisher.util.delete_files(processed_path, item)
+            for path in pre_processed_paths:
+                self.delete_files(task_settings, item, path)
 
         sg_publish_data_list = item.properties.get("sg_publish_data_list")
 

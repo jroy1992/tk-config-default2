@@ -10,9 +10,11 @@
 
 import os
 import maya.cmds as cmds
-import maya.mel as mel
+
 import sgtk
+from sgtk import TankError
 from sgtk.platform.qt import QtGui
+from sgtk.platform.settings import resolve_setting_expression
 
 from dd.runtime import api
 api.load('frangetools')
@@ -30,6 +32,9 @@ DEFAULT_CAMERAS = ['persp',
                    'top',
                    'front',
                    'side']
+
+CAM_TASK_SUFFIX = "cam"
+UNDIST_TASK_SUFFIX = "undist"
 
 
 class MayaPublishDDIntegValidationPlugin(HookBaseClass):
@@ -88,9 +93,14 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
             playback_end = pm.playbackOptions(q=True, maxTime=True)
             collected_playblast_firstframe = info_by_path.get(lss_path)['frame_range'][0]
             collected_playblast_lastframe = info_by_path.get(lss_path)['frame_range'][1]
-            if (collected_playblast_firstframe != playback_start) or (collected_playblast_lastframe != playback_end):
+            if (collected_playblast_firstframe > playback_start) or (collected_playblast_lastframe < playback_end):
                 self.logger.error("Incomplete playblast! All the frames are not in the playblast.")
                 return False
+            elif (collected_playblast_firstframe < playback_start) or (collected_playblast_lastframe > playback_end):
+                self.logger.warning("Playblast exceeds Shotgun frame range.")
+                QtGui.QMessageBox.warning(None, "PLayblast frame range mismatch!",
+                                          "WARNING! Playblast exceeds Shotgun frame range.")
+                return True
         return True
 
 
@@ -357,6 +367,80 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         else:
             return True
 
+    def _find_latest_nuke_workfile_version(self, fields):
+        engine = self.parent.engine
+
+        workfiles_app = self.parent.engine.apps.get("tk-multi-workfiles2")
+        if not workfiles_app:
+            # this should never happen?
+            self.logger.error("tk-multi-workfiles2 is not configured for this environment!")
+            return 0
+
+        # copied from tk-multi-workfiles2.file_save_form._generate_path()
+        # TODO: expose this somehow? used in multiple places
+        work_template_setting = workfiles_app.settings.get('template_work')
+        work_template_name = resolve_setting_expression(work_template_setting.raw_value,
+                                                        "tk-nuke", engine.env.name)
+        work_template = self.sgtk.templates[work_template_name]
+
+        publish_template_setting = workfiles_app.settings.get('template_publish')
+        publish_template_name = resolve_setting_expression(publish_template_setting.raw_value,
+                                                           "tk-nuke", engine.env.name)
+        publish_template = self.sgtk.templates[publish_template_name]
+
+        file_item_module = workfiles_app.import_module('tk_multi_workfiles.file_item')
+        file_finder_module = workfiles_app.import_module('tk_multi_workfiles.file_finder')
+
+        file_key = file_item_module.FileItem.build_file_key(fields, work_template)
+        try:
+            finder = file_finder_module.FileFinder()
+            files = finder.find_files(work_template,
+                                      publish_template,
+                                      self.parent.context,
+                                      file_key) or []
+        except TankError, e:
+            raise TankError("Failed to find files for this work area: %s" % e)
+        file_versions = [f.version for f in files]
+        max_version = max(file_versions or [0])
+        return max_version
+
+    def _check_undist_status(self, item):
+        context = item.context
+        task_name = context.task['name']
+
+        undist_task_name = task_name.replace(CAM_TASK_SUFFIX, UNDIST_TASK_SUFFIX)
+        undist_task = self.sgtk.shotgun.find_one("Task", [["content", "is", undist_task_name],
+                                                          ["entity", "is", context.entity]])
+        if undist_task:
+            # find latest published version
+            latest_pub_version = 0
+            order = [{'field_name': 'version_number', 'direction': 'desc'}]
+            pub_files = self.sgtk.shotgun.find("PublishedFile", [["task", "is", undist_task]],
+                                               fields=["version_number"],
+                                               order=order, limit=1)
+            if pub_files:
+                latest_pub_version = pub_files[0]["version_number"]
+
+            fields = context.as_template_fields()
+            fields["name"] = undist_task_name
+            latest_work_version = self._find_latest_nuke_workfile_version(fields)
+
+            if latest_work_version > latest_pub_version:
+                self.logger.warning("Task {}: latest published version is {}, but version {} "
+                                    "found in workspace".format(undist_task_name, latest_pub_version,
+                                                                latest_work_version))
+                QtGui.QMessageBox.warning(None, "Task {} unpublished!".format(undist_task_name),
+                                          "For task {}, you seem to have unpublished version `{}` " \
+                                          "in your workspace.\nPlease publish this if needed. " \
+                                          "Latest published version is `{}`.".format(
+                                              undist_task_name, latest_work_version,
+                                              latest_pub_version)
+                                          )
+        else:
+            self.logger.warning("No task {} found linked to entity {}. "
+                                "Not checking for unpublished files!".format(undist_task_name, context.entity))
+        return True
+
 
     def validate(self, task_settings, item):
         """
@@ -374,21 +458,25 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         
         # Checks for the scene file
         if item.type == "maya.session":
-            task_name = item.context.task['name']
-            if task_name.split("_")[-1] == "mm":
-                status = self._sync_frame_range_with_shotgun(item)
-            else:
-                all_dag_nodes = cmds.ls(dag=True, sn=True)
-                groups = [g for g in all_dag_nodes if self._is_group(g)]
+            if item.context.entity["type"] == "Shot":
+                task_name = item.context.task['name']
+                task_name_suffix = task_name.split("_")[-1]
+                if task_name_suffix == CAM_TASK_SUFFIX:
+                    all_dag_nodes = cmds.ls(dag=True, sn=True)
+                    groups = [g for g in all_dag_nodes if self._is_group(g)]
 
-                nodes = self._node_naming(groups) and \
-                        self._check_hierarchy(groups) and \
-                        self._track_geo_child_naming() and \
-                        self._track_geo_locked_channels()and \
-                        self._extra_nodes_outside_track_geo() and \
-                        self._sync_frame_range_with_shotgun(item)
-                cam = self._camera_naming() and self._connected_image_plane()
-                status = nodes and cam and status
+                    nodes_status = self._node_naming(groups) and \
+                                   self._check_hierarchy(groups) and \
+                                   self._track_geo_child_naming() and \
+                                   self._track_geo_locked_channels() and \
+                                   self._extra_nodes_outside_track_geo() and \
+                                   self._sync_frame_range_with_shotgun(item)
+                    cam_status = self._camera_naming() and self._connected_image_plane()
+                    undist_status = self._check_undist_status(item)
+
+                    status = nodes_status and cam_status and undist_status and status
+                elif task_name_suffix != UNDIST_TASK_SUFFIX: # this is a matchmove task
+                    status = self._sync_frame_range_with_shotgun(item)
 
         # Checks for the scene file, i.e if the item is not a sequence or a cache file
         if item.properties.get('is_sequence', False):

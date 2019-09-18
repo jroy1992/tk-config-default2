@@ -184,3 +184,9 @@ apps.tk-nuke-writenode.location:
   name: tk-nuke-writenode
   type: manual
   version: v1.x.x
+
+# timelogger
+apps.tk-multi-timelogger.location:
+  name: tk-multi-timelogger
+  type: manual
+  version: v0.x.x

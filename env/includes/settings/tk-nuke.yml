@@ -14,16 +14,18 @@
 includes:
 - ../app_locations.yml
 - ../engine_locations.yml
+- ./apps/tk-multi-breakdown.yml
 - ./apps/tk-multi-loader2.yml
 - ./apps/tk-multi-publish2.yml
 - ./apps/tk-multi-reviewsubmission.yml
 - ./apps/tk-multi-screeningroom.yml
+- ./apps/tk-multi-setframerange.yml
 - ./apps/tk-multi-shotgunpanel.yml
 - ./apps/tk-multi-snapshot.yml
+- ./apps/tk-multi-timelogger.yml
 - ./apps/tk-multi-workfiles2.yml
 - ./apps/tk-nuke-quickdailies.yml
 - ./apps/tk-nuke-writenode.yml
-- ./apps/tk-multi-breakdown.yml
 
 ################################################################################
 
@@ -36,8 +38,10 @@ settings.tk-nuke:
     tk-multi-screeningroom: "@settings.tk-multi-screeningroom.rv"
     tk-multi-shotgunpanel: "@settings.tk-multi-shotgunpanel"
     tk-multi-workfiles2: "@settings.tk-multi-workfiles2.nuke"
+    tk-multi-timelogger: "@settings.tk-multi-timelogger"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
+  - {app_instance: tk-multi-timelogger, name: Time Logger...}
   run_at_startup:
   - {app_instance: tk-multi-shotgunpanel, name: 'Shotgun Panel...'}
   location: "@engines.tk-nuke.location"
@@ -47,8 +51,7 @@ settings.tk-nuke.asset:
   apps:
     tk-multi-about:
       location: "@apps.tk-multi-about.location"
-    tk-multi-breakdown:
-      location: "@apps.tk-multi-breakdown.location"
+    tk-multi-breakdown: "@settings.tk-multi-breakdown.config"
     tk-multi-loader2: "@settings.tk-multi-loader2.nuke"
     tk-multi-publish2: "@settings.tk-multi-publish2.nuke"
     tk-multi-reviewsubmission: "@settings.tk-multi-reviewsubmission"
@@ -58,11 +61,14 @@ settings.tk-nuke.asset:
     tk-multi-workfiles2: "@settings.tk-multi-workfiles2.nuke.task"
     tk-nuke-quickdailies: "@settings.tk-nuke-quickdailies"
     tk-nuke-writenode: "@settings.tk-nuke-writenode"
+    tk-multi-setframerange: "@settings.tk-multi-setframerange"
+    tk-multi-timelogger: "@settings.tk-multi-timelogger"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   - {app_instance: tk-multi-snapshot, name: Snapshot...}
   - {app_instance: tk-multi-workfiles2, name: File Save...}
   - {app_instance: tk-multi-publish2, name: Publish...}
+  - {app_instance: tk-multi-timelogger, name: Time Logger...}
   run_at_startup:
   - {app_instance: tk-multi-shotgunpanel, name: 'Shotgun Panel...'}
   location: "@engines.tk-nuke.location"
@@ -72,8 +78,7 @@ settings.tk-nuke.shot:
   apps:
     tk-multi-about:
       location: "@apps.tk-multi-about.location"
-    tk-multi-breakdown:
-      location: "@apps.tk-multi-breakdown.location"
+    tk-multi-breakdown: "@settings.tk-multi-breakdown.config"
     tk-multi-setframerange: "@settings.tk-multi-setframerange"
     tk-multi-loader2: "@settings.tk-multi-loader2.nuke"
     tk-multi-publish2: "@settings.tk-multi-publish2.nuke"
@@ -84,11 +89,13 @@ settings.tk-nuke.shot:
     tk-multi-workfiles2: "@settings.tk-multi-workfiles2.nuke.task"
     tk-nuke-quickdailies: "@settings.tk-nuke-quickdailies"
     tk-nuke-writenode: "@settings.tk-nuke-writenode"
+    tk-multi-timelogger: "@settings.tk-multi-timelogger"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   - {app_instance: tk-multi-snapshot, name: Snapshot...}
   - {app_instance: tk-multi-workfiles2, name: File Save...}
   - {app_instance: tk-multi-publish2, name: Publish...}
+  - {app_instance: tk-multi-timelogger, name: Time Logger...}
   run_at_startup:
   - {app_instance: tk-multi-shotgunpanel, name: 'Shotgun Panel...'}
   timeline_context_menu:

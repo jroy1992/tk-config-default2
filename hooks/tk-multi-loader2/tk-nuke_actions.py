@@ -287,7 +287,7 @@ class CustomNukeActions(HookBaseClass):
         read_node["file"].fromUserText(path)
 
         # find the sequence range if it has one:
-        seq_range = self._find_sequence_range(path)
+        seq_range = self.parent.utils.find_sequence_range(self.sgtk, path)
 
         # to fetch the nuke prefs from pipeline
         step = self._find_pipe_step(path, sg_publish_data)
@@ -369,7 +369,7 @@ class CustomNukeActions(HookBaseClass):
         read_node["file"].fromUserText(path)
 
         # find the sequence range if it has one:
-        seq_range = self._find_sequence_range(path)
+        seq_range = self.parent.utils.find_sequence_range(self.sgtk, path)
 
         # to fetch the nuke prefs from pipeline
         step = self._find_pipe_step(path, sg_publish_data)
@@ -465,52 +465,6 @@ class CustomNukeActions(HookBaseClass):
                 else:
                     return None
 
-    def _find_sequence_range(self, path):
-        """
-        Helper method attempting to extract sequence information.
-        
-        Using the toolkit template system, the path will be probed to 
-        check if it is a sequence, and if so, frame information is
-        attempted to be extracted.
-        
-        :param path: Path to file on disk.
-        :returns: None if no range could be determined, otherwise (min, max)
-        """
-        # find a template that matches the path:
-        template = None
-        try:
-            template = self.parent.sgtk.template_from_path(path)
-        except sgtk.TankError:
-            pass
-
-        if not template:
-            # If we don't have a template to take advantage of, then
-            # we are forced to do some rough parsing ourself to try
-            # to determine the frame range.
-            return self._sequence_range_from_path(path)
-
-        # get the fields and find all matching files:
-        fields = template.get_fields(path)
-        if not "SEQ" in fields:
-            # Ticket #655: older paths match wrong templates,
-            # so fall back on path parsing
-            return self._sequence_range_from_path(path)
-        
-        files = self.parent.sgtk.paths_from_template(template, fields, ["SEQ", "eye"])
-        
-        # find frame numbers from these files:
-        frames = []
-        for file in files:
-            fields = template.get_fields(file)
-            frame = fields.get("SEQ")
-            if frame != None:
-                frames.append(frame)
-        if not frames:
-            return None
-
-        # return the range
-        return (min(frames), max(frames))
-
     def _add_node_metadata(self, node,  path, sg_publish_data):
         """
         Bakes the additional metadata on the read node creating a SGTK tab on the node.
@@ -537,25 +491,27 @@ class CustomNukeActions(HookBaseClass):
             knob_name = knob_name.replace("_", " ")
             knob_name = knob_name.title()
 
-            knob_value = sg_publish_data[publish_field]
+            try:
+                knob_value = sg_publish_data[publish_field]
+                if isinstance(knob_value, str):
+                    new_knob = nuke.String_Knob(publish_field, knob_name)
+                elif isinstance(knob_value, int):
+                    new_knob = nuke.Int_Knob(publish_field, knob_name)
+                elif knob_value is None:
+                    # instead of creating a knob with an incorrect type
+                    # don't create a knob in this case since there is no value
+                    self.parent.logger.info("Ignoring creation of {} knob since the value is {}".format(publish_field,
+                                                                                                        knob_value))
+                else:
+                    self.parent.logger.warning("Unable to create {} knob for type {}".format(publish_field,
+                                                                                             type(knob_value)))
 
-            if isinstance(knob_value, str):
-                new_knob = nuke.String_Knob(publish_field, knob_name)
-            elif isinstance(knob_value, int):
-                new_knob = nuke.Int_Knob(publish_field, knob_name)
-            elif knob_value is None:
-                # instead of creating a knob with an incorrect type
-                # don't create a knob in this case since there is no value
-                self.parent.logger.info("Ignoring creation of {} knob since the value is {}".format(publish_field,
-                                                                                                    knob_value))
-            else:
-                self.parent.logger.warning("Unable to create {} knob for type {}".format(publish_field,
-                                                                                         type(knob_value)))
+                if new_knob:
+                    # make the knob read only
+                    new_knob.setFlag(nuke.READ_ONLY)
+                    new_knob.setValue(knob_value)
 
-            if new_knob:
-                # make the knob read only
-                new_knob.setFlag(nuke.READ_ONLY)
-                new_knob.setValue(knob_value)
-
-                node.addKnob(new_knob)
+                    node.addKnob(new_knob)
+            except KeyError:
+                self.parent.logger.warning("%s not found in PublishedFile. Please check the SG Schema." % publish_field)
 

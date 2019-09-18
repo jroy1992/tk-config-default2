@@ -46,7 +46,16 @@ paths:
     tk-mari_project_asset_work_render:      '@tk-mari_project_asset_work_area/images/{Step}/@image_subdirs/@project_asset_version_name.{SEQ}.{img.ext}'
     tk-mari_sequence_asset_work_render:     '@tk-mari_sequence_asset_work_area/images/{Step}/@image_subdirs/@sequence_asset_version_name.{SEQ}.{img.ext}'
     tk-mari_shot_asset_work_render:         '@tk-mari_shot_asset_work_area/images/{Step}/@image_subdirs/@shot_asset_version_name.{SEQ}.{img.ext}'
+    
+    # PLAYBLASTS
+    tk-mari_project_work_playblast:         '@tk-mari_project_work_area/images/{Step}/@playblast_subdirs/@project_version_name.{SEQ}.jpg'
+    tk-mari_sequence_work_playblast:        '@tk-mari_sequence_work_area/images/{Step}/@playblast_subdirs/@sequence_version_name.{SEQ}.jpg'
+    tk-mari_shot_work_playblast:            '@tk-mari_shot_work_area/images/{Step}/@playblast_subdirs/@shot_version_name.{SEQ}.jpg'
 
+    tk-mari_project_asset_work_playblast:   '@tk-mari_project_asset_work_area/images/{Step}/@playblast_subdirs/@project_asset_version_name.{SEQ}.jpg'
+    tk-mari_sequence_asset_work_playblast:  '@tk-mari_sequence_asset_work_area/images/{Step}/@playblast_subdirs/@sequence_asset_version_name.{SEQ}.jpg'
+    tk-mari_shot_asset_work_playblast:      '@tk-mari_shot_asset_work_area/images/{Step}/@playblast_subdirs/@shot_asset_version_name.{SEQ}.jpg'
+    
     # MOVIES
     tk-mari_project_work_movie:             '@tk-mari_project_work_area/movies/@project_version_name.mov'
     tk-mari_sequence_work_movie:            '@tk-mari_sequence_work_area/movies/@sequence_version_name.mov'
@@ -77,27 +86,25 @@ aliases:
     tk-mari_sequence_asset_publish_file:    'sequence_asset_publish_mari_session'
     tk-mari_shot_asset_publish_file:        'shot_asset_publish_mari_session'
 
-
-strings:
-
     # SHOT PROJECT NAME
-    tk-mari_project_project_name:           '{Step}_{mari.project_name}'
-    tk-mari_sequence_project_name:          '{Sequence}_{Step}_{mari.project_name}'
-    tk-mari_shot_project_name:              '{Sequence}_{Shot}_{Step}_{mari.project_name}'
+    tk-mari_project_project_name:           'project_publish_name'
+    tk-mari_sequence_project_name:          'sequence_publish_name'
+    tk-mari_shot_project_name:              'shot_publish_name'
 
     # ASSET PROJECT NAME
-    tk-mari_project_asset_project_name:     '{Step}_{AssetType}-{Asset}-{mari.project_name}'
-    tk-mari_sequence_asset_project_name:    '{Sequence}_{Step}_{AssetType}-{Asset}-{mari.project_name}'
-    tk-mari_shot_asset_project_name:        '{Sequence}_{Shot}_{Step}_{AssetType}-{Asset}-{mari.project_name}'
+    tk-mari_project_asset_project_name:     'project_asset_publish_name'
+    tk-mari_sequence_asset_project_name:    'sequence_asset_publish_name'
+    tk-mari_shot_asset_project_name:        'shot_asset_publish_name'
 
+strings:
     # SHOT ASSET TEXTURE NAME
-    tk-mari_project_texture_name:           '@tk-mari_project_project_name@channel_name'
-    tk-mari_sequence_texture_name:          '@tk-mari_sequence_project_name@channel_name'
-    tk-mari_shot_texture_name:              '@tk-mari_shot_project_name@channel_name'
+    tk-mari_project_texture_name:           '@project_publish_name@channel_name'
+    tk-mari_sequence_texture_name:          '@sequence_publish_name@channel_name'
+    tk-mari_shot_texture_name:              '@shot_publish_name@channel_name'
 
     # ASSET TEXTURE NAME
-    tk-mari_project_asset_texture_name:     '@tk-mari_project_asset_project_name@channel_name'
-    tk-mari_sequence_asset_texture_name:    '@tk-mari_sequence_asset_project_name@channel_name'
-    tk-mari_shot_asset_texture_name:        '@tk-mari_shot_asset_project_name@channel_name'
+    tk-mari_project_asset_texture_name:     '@project_asset_publish_name@channel_name'
+    tk-mari_sequence_asset_texture_name:    '@sequence_asset_publish_name@channel_name'
+    tk-mari_shot_asset_texture_name:        '@shot_asset_publish_name@channel_name'
 
-    channel_name:                           '[-{node}]-{channel}[-{layer}]'
+    channel_name:                           '-{channel}[-{layer}]'

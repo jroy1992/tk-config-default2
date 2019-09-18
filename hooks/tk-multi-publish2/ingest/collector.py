@@ -13,6 +13,10 @@ import datetime
 import traceback
 import pprint
 import re
+import urllib
+
+from functools import reduce
+import operator
 
 import sgtk
 import tank
@@ -23,25 +27,48 @@ HookBaseClass = sgtk.get_hook_baseclass()
 # This is a dictionary of fields in snapshot from manifest and it's corresponding field on the item.
 DEFAULT_MANIFEST_SG_MAPPINGS = {
     "file": {
-        "id": "sg_snapshot_id",
-        "notes": "description",
-        "user": "snapshot_user",
-        "name": "manifest_name",
-        "version": "snapshot_version",
+        "snapshots": {
+            "id": "sg_snapshot_id",
+            "user": "snapshot_user",
+            "name": "manifest_name",
+            "version": "snapshot_version",
+        },
     },
     "note": {
-        "notes": "description",
-        "name": "snapshot_name",
-        "user": "snapshot_user",
-        "version": "snapshot_version",
-        "body": "content",
+        "notes": {
+            "notes": "description",
+            "name": "snapshot_name",
+            "body": "content",
+            "id": "sg_client_note_id",
+        },
+        "snapshots": {
+            "id": "sg_snapshot_id",
+            "user": "snapshot_user",
+            "name": "manifest_name",
+            "version": "snapshot_version",
+        },
+        "versions": {
+            "id": "sg_client_version_id",
+            "name": "version_name",
+        },
     },
 }
 
 # This is a dictionary of note_type values to item type.
 DEFAULT_NOTE_TYPES_MAPPINGS = {
+    None: "kickoff",
     "kickoff": "kickoff",
     "role supervisor": "annotation",
+    "dailies": "annotation",
+}
+
+# Default snapshot_type
+DEFAULT_SNAPSHOT_TYPE = "ingest"
+
+# This is a dictionary of note_type values to their access keys in the fields dict.
+DEFAULT_NOTE_TYPES_ACCESS_FALLBACKS = {
+    "kickoff": [["original_name"], ["sg_version", "name"]],
+    "annotation": [["original_name"], ["sg_version", "name"]]
 }
 
 
@@ -79,7 +106,7 @@ class IngestCollectorPlugin(HookBaseClass):
             "type": "str",
             "description": "Specifies the default snapshot type to be used for an ingested item.",
             "allows_empty": True,
-            "default_value": "ingest",
+            "default_value": DEFAULT_SNAPSHOT_TYPE,
         }
         items_schema["default_fields"] = {
             "type": dict,
@@ -95,7 +122,10 @@ class IngestCollectorPlugin(HookBaseClass):
             "values": {
                 "type": "dict",
                 "values": {
-                    "type": "str",
+                    "type": "dict",
+                    "values": {
+                        "type": "str",
+                    },
                 },
             },
             "default_value": DEFAULT_MANIFEST_SG_MAPPINGS,
@@ -109,7 +139,22 @@ class IngestCollectorPlugin(HookBaseClass):
             },
             "default_value": DEFAULT_NOTE_TYPES_MAPPINGS,
             "allows_empty": True,
-            "description": "Mapping of keys in Manifest to SG template keys."
+            "description": "dictionary of note_type values to their item type."
+        }
+        schema["Note Type Access Fallbacks"] = {
+            "type": "dict",
+            "values": {
+                "type": "list",
+                "values": {
+                    "type": "list",
+                    "values": {
+                        "type": "str",
+                    },
+                },
+            },
+            "default_value": DEFAULT_NOTE_TYPES_ACCESS_FALLBACKS,
+            "allows_empty": True,
+            "description": "Dictionary of note_type values to a list of access keys in the fields dict."
         }
         schema["Ignore Extensions"] = {
             "type": "list",
@@ -183,16 +228,17 @@ class IngestCollectorPlugin(HookBaseClass):
             ignored_filename = settings["Ignore Filename"].value
 
             file_components = publisher.util.get_file_path_components(path)
-            file_ignored = False
+            extension_ignored = False
+            filename_ignored = False
 
             if file_components["extension"] in ignored_extensions:
-                file_ignored = True
+                extension_ignored = True
 
             if ignored_filename:
-                file_ignored = any(re.match(ignored_string, file_components["filename"])
-                                   for ignored_string in ignored_filename)
+                filename_ignored = any(re.match(ignored_string, file_components["filename"])
+                                       for ignored_string in ignored_filename)
 
-            if file_ignored:
+            if extension_ignored or filename_ignored:
 
                 if is_sequence:
                     # include an indicator that this is an image sequence and the known
@@ -237,6 +283,7 @@ class IngestCollectorPlugin(HookBaseClass):
         publisher = self.parent
 
         note_type_mappings = settings["Note Type Mappings"].value
+        note_type_acess_fallbacks = settings["Note Type Access Fallbacks"].value
 
         raw_item_settings = settings["Item Types"].raw_value
 
@@ -255,43 +302,57 @@ class IngestCollectorPlugin(HookBaseClass):
             )
             return
 
-        path = fields["sg_version"]["name"] + ".%s" % note_type_mappings[manifest_note_type]
-        display_name = path + ".notes"
+        note_type = note_type_mappings[manifest_note_type]
 
-        item_type = "notes.entity.%s" % note_type_mappings[manifest_note_type]
-
-        relevant_item_settings = raw_item_settings[item_type]
-        raw_template_name = relevant_item_settings.get("work_path_template")
-        envs = self.parent.sgtk.pipeline_configuration.get_environments()
-
-        # type_display = relevant_item_settings.get("type_display", "File")
-        # work_path_template = None
-        # icon_path = relevant_item_settings.get("icon", "{self}/hooks/icons/file.png")
         work_path_template = None
 
-        template_names_per_env = [
-            sgtk.platform.resolve_setting_expression(raw_template_name, self.parent.engine.instance_name, env_name) for
-            env_name in envs]
+        for note_type_acess_keys in note_type_acess_fallbacks[note_type]:
+            path = reduce(operator.getitem, note_type_acess_keys, fields) + ".%s" % note_type
+            display_name = path + ".notes"
 
-        templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
-                             template_names_per_env if self.parent.get_template_by_name(template_name)]
-        for template in templates_per_env:
-            if template.validate(path):
-                # we have a match!
-                work_path_template = template.name
+            item_type = "notes.entity.%s" % note_type
 
-        if work_path_template:
-            # calculate the context and give to the item
-            context = self._get_item_context_from_path(work_path_template, path, parent_item)
+            relevant_item_settings = raw_item_settings[item_type]
+            raw_template_name = relevant_item_settings.get("work_path_template")
+            envs = self.parent.sgtk.pipeline_configuration.get_environments()
 
-            file_item = self._add_file_item(settings, parent_item, path, item_name=display_name,
-                                            item_type=item_type, context=context)
+            template_names_per_env = [
+                sgtk.platform.resolve_setting_expression(raw_template_name,
+                                                         self.parent.engine.instance_name,
+                                                         env_name) for env_name in envs
+            ]
 
-            return file_item
-        else:
-            self.logger.warning("No matching template found for %s with raw template %s" % (path,
-                                                                                            raw_template_name))
-            return
+            templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
+                                 template_names_per_env if self.parent.get_template_by_name(template_name)]
+            for template in templates_per_env:
+                try:
+                    template.get_fields(path)
+                    # we have a match!
+                    work_path_template = template.name
+                except:
+                    # it errored out
+                    continue
+
+            if work_path_template:
+                # calculate the context and give to the item
+                context = self._get_item_context_from_path(work_path_template, path, parent_item)
+
+                file_item = self._add_file_item(settings, parent_item, path, item_name=display_name,
+                                                item_type=item_type, context=context)
+
+                # we found the template match in one of the fallbacks, break-out
+                return file_item
+            else:
+                self.logger.warning("No matching template found for %s with raw template %s" % (path,
+                                                                                                raw_template_name),
+                                    extra={
+                                        "action_show_more_info": {
+                                            "label": "Show Fields",
+                                            "tooltip": "Show the fields used.",
+                                            "text": note_type_acess_keys
+                                        }
+                                    })
+                return
 
     def process_file(self, settings, parent_item, path):
         """
@@ -325,40 +386,99 @@ class IngestCollectorPlugin(HookBaseClass):
                 if item:
                     file_items.append(item)
 
-        # make sure we have snapshot_type field in all the items!
-        # this is to make sure that on publish we retain this field to figure out asset creation is needed or not.
-        for file_item in file_items:
-            fields = file_item.properties["fields"]
-
-            item_info = self._get_item_type_info(settings, file_item.type)
-
-            if "snapshot_type" not in fields:
-                fields["snapshot_type"] = item_info["default_snapshot_type"]
-                # CDL files should always be published as Asset entity with nuke_avidgrade asset_type
-                # this is to match organic, and also for Avid grade lookup on shotgun
-                # this logic has been moved to _get_item_type_info by defining default_snapshot_type for each item type
-                # if file_item.type == "file.cdl":
-                #     fields["snapshot_type"] = "nuke_avidgrade"
-
-                self.logger.info(
-                    "Injected snapshot_type field for item: %s" % file_item.name,
-                    extra={
-                        "action_show_more_info": {
-                            "label": "Show Info",
-                            "tooltip": "Show more info",
-                            "text": "Updated fields:\n%s" %
-                                    (pprint.pformat(file_item.properties["fields"]))
-                        }
-                    }
-                )
-
-            # check for default fields those and add those fields if not already present on item.
-            if "default_fields" in item_info:
-                for key, value in item_info["default_fields"].iteritems():
-                    if key not in fields:
-                        fields[key] = value
-
         return file_items
+
+    def _get_item_type_info(self, settings, item_type):
+        """
+        Return the dictionary corresponding to this item's 'Item Types' settings.
+
+        :param dict settings: Configured settings for this collector
+        :param item_type: The type of Item to identify info for
+
+        :return: A dictionary of information about the item to create::
+
+            # item_type = "file.image.sequence"
+
+            {
+                "extensions": ["jpeg", "jpg", "png"],
+                "type_display": "Rendered Image Sequence",
+                "icon_path": "/path/to/some/icons/folder/image_sequence.png",
+                "work_path_template": "some_template_name"
+            }
+        """
+        item_info = super(IngestCollectorPlugin, self)._get_item_type_info(settings, item_type)
+
+        item_info.setdefault("default_snapshot_type", DEFAULT_SNAPSHOT_TYPE)
+        item_info.setdefault("default_fields", dict())
+
+        # everything should now be populated, so return the dictionary
+        return item_info
+
+    def _resolve_item_fields(self, settings, item):
+        """
+        Populates the item's defaults that are to be stored on an ingested item.
+        make sure we have snapshot_type field in the item!
+        this is to make sure that on publish we retain this field to figure out asset creation is needed or not.
+
+        :param dict settings: Configured settings for this collector
+        :param item: Item to create/verify the defaults on
+        """
+
+        fields = super(IngestCollectorPlugin, self)._resolve_item_fields(settings, item)
+
+        # make sure we don't pick a default name from the task, else everything will end up as "vendor"
+        # this only happens in case of custom ingestion, since we let the user choose a vendor task
+        # instead of automatically resolving to a "Vendor" Step.
+        if item.context.task:
+            name_field = item.context.task["name"]
+            if fields["name"] == urllib.quote(name_field.replace(" ", "_").lower(), safe=''):
+                fields.pop("name")
+
+        item_info = self._get_item_type_info(settings, item.type)
+
+        # restore the fields from the manifest file, even though we currently don't allow users to change context
+        # when ingesting using the manifest file.
+        if "manifest_file_fields" in item.properties:
+            self.logger.info(
+                "Re-creating manifest file fields for: %s" % item.name,
+                extra={
+                    "action_show_more_info": {
+                        "label": "Show Info",
+                        "tooltip": "Show more info",
+                        "text": "Manifest fields:\n%s" %
+                                (pprint.pformat(item.properties.manifest_file_fields))
+                    }
+                }
+            )
+            fields.update(item.properties.manifest_file_fields)
+
+        if "snapshot_type" not in fields:
+            fields["snapshot_type"] = item_info["default_snapshot_type"]
+            # CDL files should always be published as Asset entity with nuke_avidgrade asset_type
+            # this is to match organic, and also for Avid grade lookup on shotgun
+            # this logic has been moved to _get_item_type_info by defining default_snapshot_type for each item type
+            # if file_item.type == "file.cdl":
+            #     fields["snapshot_type"] = "nuke_avidgrade"
+
+            self.logger.info(
+                "Injected snapshot_type field for item: %s" % item.name,
+                extra={
+                    "action_show_more_info": {
+                        "label": "Show Info",
+                        "tooltip": "Show more info",
+                        "text": "Updated fields:\n%s" %
+                                (pprint.pformat(fields))
+                    }
+                }
+            )
+
+        # create the defaults on the item, if we didn't already get them from the manifest.
+        if "default_fields" in item_info:
+            for key, value in item_info["default_fields"].iteritems():
+                if key not in fields:
+                    fields[key] = value
+
+        return fields
 
     def _process_manifest_file(self, settings, path):
         """
@@ -390,13 +510,18 @@ class IngestCollectorPlugin(HookBaseClass):
         processed_snapshots = list()
         manifest_mappings = settings["Manifest SG Mappings"].value
 
-        file_item_manifest_mappings = manifest_mappings["file"]
+        # since we only process snapshots in this manifest.
+        file_item_manifest_mappings = manifest_mappings["file"]["snapshots"]
+
+        # this is a bit more special since it has three different sources being processed.
+        # notes, snapshots, versions. Each can have overlapping fields.
         note_item_manifest_mappings = manifest_mappings["note"]
         # yaml file stays at the base of the package
         base_dir = os.path.dirname(path)
 
         snapshots = list()
         notes = list()
+        versions = list()
         notes_index = 0
 
         with open(path, 'r') as f:
@@ -405,6 +530,8 @@ class IngestCollectorPlugin(HookBaseClass):
                 snapshots = contents["snapshots"]
                 if "notes" in contents:
                     notes = contents["notes"]
+                if "versions" in contents:
+                    versions = contents["versions"]
             except Exception:
                 self.logger.error(
                     "Failed to read the manifest file %s" % path,
@@ -456,15 +583,32 @@ class IngestCollectorPlugin(HookBaseClass):
 
             data = dict()
             snapshot_data = dict()
-            data["fields"] = {note_item_manifest_mappings[k] if k in note_item_manifest_mappings else k: v
+            version_data = dict()
+
+            note_manifest_mappings = note_item_manifest_mappings["notes"]
+            data["fields"] = {note_manifest_mappings[k] if k in note_manifest_mappings else k: v
                               for k, v in note.iteritems()}
 
-            # every note item has a corresponding snapshot associated with it
-            if notes_index >= len(snapshots):
+            # every note item has a corresponding snapshot and version associated with it
+            if notes_index >= len(snapshots) or notes_index >= len(versions):
                 break
 
             note_snapshot = snapshots[notes_index]
-            snapshot_data["fields"] = {file_item_manifest_mappings[k] if k in file_item_manifest_mappings else k: v
+            note_version = versions[notes_index]
+
+            # pop the notes from version_data they are already stored
+            note_version.pop("notes")
+
+            version_manifest_mappings = note_item_manifest_mappings["versions"]
+            version_data["fields"] = {version_manifest_mappings[k] if k in version_manifest_mappings else k: v
+                                      for k, v in note_version.iteritems()}
+
+            # update the item fields with version_data fields
+            data["fields"].update(version_data["fields"])
+
+            # snapshot fields get priority over version fields
+            snapshot_manifest_mappings = note_item_manifest_mappings["snapshots"]
+            snapshot_data["fields"] = {snapshot_manifest_mappings[k] if k in snapshot_manifest_mappings else k: v
                                        for k, v in note_snapshot.iteritems()}
 
             # pop the files from snapshot_data they are not useful
@@ -549,6 +693,47 @@ class IngestCollectorPlugin(HookBaseClass):
         for entity in processed_entities:
             for hook_type, item_data in entity.iteritems():
                 files = item_data["files"]
+                # notes can be ingested without attachments as well.
+                if not files and hook_type == "note":
+                    # fields and items setup
+                    fields = item_data["fields"].copy()
+                    new_items = list()
+                    # create a note item
+                    item = self._add_note_item(settings, parent_item, fields=fields)
+                    if item:
+                        if "snapshot_name" in fields:
+                            item.description = fields["snapshot_name"]
+
+                        new_items.append(item)
+
+                    for new_item in new_items:
+                        # create a new property that stores the fields contained in manifest file for this item.
+                        new_item.properties.manifest_file_fields = fields
+
+                        item_fields = new_item.properties["fields"]
+                        item_fields.update(fields)
+
+                        if not new_item.description:
+                            # adding a default description to item
+                            new_item.description = "Created by shotgun_ingest on %s" % str(datetime.date.today())
+
+                        self.logger.info(
+                            "Updated fields from snapshot for item: %s" % new_item.name,
+                            extra={
+                                "action_show_more_info": {
+                                    "label": "Show Info",
+                                    "tooltip": "Show more info",
+                                    "text": "Updated fields:\n%s" %
+                                            (pprint.pformat(new_item.properties["fields"]))
+                                }
+                            }
+                        )
+
+                        # we can't let the user change the context of the file being ingested using manifest files
+                        new_item.context_change_allowed = False
+                    # put the new items back in collector
+                    file_items.extend(new_items)
+
                 for p_file, tags in files.iteritems():
                     # fields and items setup
                     fields = item_data["fields"].copy()
@@ -579,6 +764,9 @@ class IngestCollectorPlugin(HookBaseClass):
 
                     # inject the new fields into the item
                     for new_item in new_items:
+                        # create a new property that stores the fields contained in manifest file for this item.
+                        new_item.properties.manifest_file_fields = fields
+
                         item_fields = new_item.properties["fields"]
                         item_fields.update(fields)
 
@@ -610,46 +798,100 @@ class IngestCollectorPlugin(HookBaseClass):
         """Updates the context of the item from the work_path_template/template, if needed.
 
         :param work_path_template: The work_path template name
-        :param item: item to build the context for
         :param parent_item: parent item instance
         :param default_entities: a list of default entities to use during the creation of the
         :class:`sgtk.Context` if not found in the path
         """
         publisher = self.parent
 
-        sg_filters = [
-            ['short_name', 'is', "vendor"]
-        ]
-
-        # TODO-- this is not needed right now, since our keys only depend on short_name key of the Step
-        # make sure we get the correct Step!
-        # if base_context.entity:
-        #     # this should handle whether the Step is from Sequence/Shot/Asset
-        #     sg_filters.append(["entity_type", "is", base_context.entity["type"]])
-        # elif base_context.project:
-        #     # this should handle pro
-        #     sg_filters.append(["entity_type", "is", base_context.project["type"]])
-
-        fields = ['entity_type', 'code', 'id']
-
-        # add a vendor step to all ingested files
-        step_entity = self.sgtk.shotgun.find_one(
-            entity_type='Step',
-            filters=sg_filters,
-            fields=fields
-        )
-
-        default_entities = [step_entity]
-
         work_tmpl = publisher.get_template_by_name(work_path_template)
         if work_tmpl and isinstance(work_tmpl, tank.template.TemplateString):
             # use file name if we got TemplateString
             path = os.path.basename(path)
 
-        return super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
+        context = super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
+                                                                                 path,
+                                                                                 parent_item,
+                                                                                 default_entities)
+        if context.entity:
+            # if the context already has a valid step use that.
+            # we extract the step from the work_path_template, in case of notes.
+            if not context.step:
+                step_filters = list()
+                step_filters.append(['short_name', 'is', "vendor"])
+
+                # make sure we get the correct Step!
+                # this should handle whether the Step is from Sequence/Shot/Asset
+                step_filters.append(["entity_type", "is", context.entity["type"]])
+
+                fields = ['entity_type', 'code', 'id', 'name']
+
+                # add a vendor step to all ingested files
+                step_entity = self.sgtk.shotgun.find_one(
+                    entity_type='Step',
+                    filters=step_filters,
+                    fields=fields
+                )
+            else:
+                step_entity = context.step
+
+            if step_entity:
+                default_entities = [step_entity]
+                # FIXME: step entity in context has "name" and entity queried from shotgun has "code"
+                content = step_entity["name"] if step_entity.get("name") else step_entity["code"]
+
+                task_filters = [
+                    ['step', 'is', step_entity],
+                    ['entity', 'is', context.entity],
+                    ['project', 'is', context.project],
+                    ['content', 'is', content]
+                ]
+
+                task_fields = ['content', 'entity_type', 'id']
+
+                task_entity = self.sgtk.shotgun.find_one(
+                    entity_type='Task',
+                    filters=task_filters,
+                    fields=task_fields
+                )
+
+                # create the task:
+                if not task_entity:
+
+                    data = {
+                        "step": step_entity,
+                        "project": context.project,
+                        "entity": context.entity,
+                        "content": content
+                    }
+
+                    task_entity = self.sgtk.shotgun.create("Task", data, return_fields=task_fields)
+                    if not task_entity:
+                        self.logger.error("Failed to create Ingestion Task.",
+                                          extra={
+                                              "action_show_more_info": {
+                                                  "label": "Show Data",
+                                                  "tooltip": "Show the error log",
+                                                  "text": "Data: %s\nPath: %s" % (pprint.pformat(data),
+                                                                                  path)
+                                              }
+                                          })
+
+                if task_entity:
+                    # try to clear the status of the task entity.
+                    try:
+                        self.sgtk.shotgun.update("Task", task_entity["id"], {"sg_status_list": None})
+                    except:
+                        pass
+
+                    default_entities.append(task_entity)
+
+                context = super(IngestCollectorPlugin, self)._get_item_context_from_path(work_path_template,
                                                                               path,
                                                                               parent_item,
                                                                               default_entities)
+
+        return context
 
     def _get_work_path_template_from_settings(self, settings, item_type, path):
         """
