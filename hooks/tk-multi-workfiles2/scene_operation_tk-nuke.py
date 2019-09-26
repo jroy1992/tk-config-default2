@@ -78,6 +78,7 @@ class SceneOperation(HookClass):
         # conditional could be broken up between hiero_enabled and
         # studio_enabled cases that call through to Nuke Studio and Hiero
         # specific methods.
+
         engine = self.parent.engine
         if hasattr(engine, "hiero_enabled") and (engine.hiero_enabled or engine.studio_enabled):
             return self._scene_operation_hiero_nukestudio(
@@ -158,7 +159,9 @@ class SceneOperation(HookClass):
                 self.set_environment_variables(fields)
                 self.set_ocio_context(fields)
 
-            return True
+        # call the task status updates
+        return super(SceneOperation, self).execute(operation, file_path, context, parent_action, file_version,
+                                                   read_only, **kwargs)
 
     def sync_frame_range(self):
         engine = self.parent.engine
@@ -371,6 +374,10 @@ class SceneOperation(HookClass):
         elif operation == "prepare_new":
             # add a new project to hiero
             hiero.core.newProject()
+
+        # call the task status updates
+        return super(SceneOperation, self).execute(operation, file_path, context, parent_action, file_version, read_only,
+                                            **kwargs)
 
 
 def _update_save_menu_items(project):

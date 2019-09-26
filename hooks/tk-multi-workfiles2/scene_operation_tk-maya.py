@@ -134,7 +134,10 @@ class SceneOperation(HookClass):
             if parent_action == "new_file":
                 self.sync_frame_range()
                 self.parent.engine.commands["File Save..."]["callback"]()
-            return True
+
+        # call the task status updates
+        return super(SceneOperation, self).execute(operation, file_path, context, parent_action, file_version,
+                                                   read_only, **kwargs)
 
     def set_show_preferences(self, file_path, context):
         fields = context.as_template_fields()
