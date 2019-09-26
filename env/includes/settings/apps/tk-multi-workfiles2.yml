@@ -65,6 +65,8 @@ settings.tk-multi-workfiles2: &default_workfiles2_settings
   template_work:
   version_compare_ignore_fields: []
   location: "@apps.tk-multi-workfiles2.location"
+  task_status_updates:
+    "ip": ["rev", "kbk", "rdy"]
 
 # task
 settings.tk-multi-workfiles2.task: &default_workfiles2_task_settings
@@ -87,44 +89,46 @@ settings.tk-multi-workfiles2.task: &default_workfiles2_task_settings
   template_work_area: '{engine_name}_{env_name}_work_area'
   template_work: '{engine_name}_{env_name}_work_file'
   location: "@apps.tk-multi-workfiles2.location"
+  task_status_updates:
+    "ip": ["rev", "kbk", "rdy"]
 
 # 3dequalizer task
 settings.tk-multi-workfiles2.3dequalizer.task:
   <<: *default_workfiles2_task_settings
   launch_at_startup: false
-  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
 settings.tk-multi-workfiles2.3dequalizer:
   <<: *default_workfiles2_settings
   launch_at_startup: false
-  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
 # houdini task
 settings.tk-multi-workfiles2.houdini.task:
   <<: *default_workfiles2_task_settings
-  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
 settings.tk-multi-workfiles2.houdini:
   <<: *default_workfiles2_settings
-  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
 # maya task
 settings.tk-multi-workfiles2.maya.task:
   <<: *default_workfiles2_task_settings
-  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
 settings.tk-multi-workfiles2.maya:
   <<: *default_workfiles2_settings
-  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
 # nuke
 settings.tk-multi-workfiles2.nuke.task:
   <<: *default_workfiles2_task_settings
-  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
 settings.tk-multi-workfiles2.nuke:
   <<: *default_workfiles2_settings
-  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
 
 # nukestudio
 settings.tk-multi-workfiles2.entities.nukestudio:

@@ -1,10 +1,6 @@
 
-import os
-import nuke
-
 import sgtk
 
-from sgtk import TankError
 from sgtk.platform.qt import QtGui
 
 HookClass = sgtk.get_hook_baseclass()
