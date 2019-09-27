@@ -285,10 +285,14 @@ paths:
     ingest_shot_area_paint:                 '@ingest_shot_area/IMG/vendor/{vendorDepartment}/{snapshot_type}/{ingestShot}_{subcontext}_v{ingestVersion}.odd'
     ingest_shot_input_render_paint:         '@ingest_shot_area_paint/@ingest_shot_input_name.{SEQ}.{ingestImgExtension}'
 
+    # vendor_cam
+
+    # ANIM/integ/vendor/{{snapshot.department}}/{{snapshot.context_type}}/{{container.name}}_{{snapshot.subcontext}}_{{snapshot.version | version}}
 
     # Integ vendor data
     ingest_shot_area_integ:                 '@ingest_shot_area/ANIM/{vendorDepartment}/vendor/{vendorDepartment}/{snapshot_type}/{name}_{subcontext}_v{version}'
     ingest_shot_input_scene_integ:          '@ingest_shot_area_integ/@ingest_shot_input_name.{maya.ext}'
+    ingest_shot_input_cache_integ:          '@ingest_shot_area_integ/@ingest_shot_input_name.{geo.ext}'
     ingest_shot_input_abc_integ:            '@ingest_shot_area_integ/@ingest_shot_input_name.abc'
 
     ingest_shot_area_mm:                    '@ingest_shot_area/ANIM/{vendorAssetType}/{name}/{snapshot_type}/{subcontext}/{vendorDepartment}'

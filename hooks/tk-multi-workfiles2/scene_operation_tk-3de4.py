@@ -98,7 +98,10 @@ class SceneOperation(HookClass):
 
             if parent_action == "new_file":
                 self._set_preferences(context)
-            return True
+
+        # call the task status updates
+        return super(SceneOperation, self).execute(operation, file_path, context, parent_action, file_version,
+                                                   read_only, **kwargs)
 
     def _set_preferences(self, context):
         fields = context.as_template_fields()
