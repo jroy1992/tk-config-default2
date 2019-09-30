@@ -23,10 +23,11 @@ includes:
 - ./includes/settings/tk-nukestudio.yml
 - ./includes/settings/tk-shell.yml
 - ./includes/settings/tk-shotgun.yml
+- ./includes/settings/tk-silhouette.yml
 - '{preferences}/sgtk_config_environments.yaml'
 
 ################################################################################
-# configuration for all engines to load in a shot task context
+# configuration for all engines to load in a project task context
 
 engines:
   tk-3de4: "@settings.tk-3de4.shot"
@@ -37,3 +38,4 @@ engines:
   tk-nukestudio: "@settings.tk-nukestudio.shot"
   tk-shell: "@settings.tk-shell"
   tk-shotgun: "@settings.tk-shotgun.task"
+  tk-silhouette: "@settings.tk-silhouette.task"
