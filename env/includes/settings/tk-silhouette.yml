@@ -1,0 +1,48 @@
+# Copyright (c) 2017 Shotgun Software Inc.
+#
+# CONFIDENTIAL AND PROPRIETARY
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
+# Source Code License included in this distribution package. See LICENSE.
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
+# not expressly granted therein are reserved by Shotgun Software Inc.
+#
+
+################################################################################
+
+includes:
+- ../app_locations.yml
+- ../engine_locations.yml
+- ./apps/tk-multi-breakdown.yml
+- ./apps/tk-multi-loader2.yml
+- ./apps/tk-multi-publish2.yml
+- ./apps/tk-multi-reviewsubmission.yml
+- ./apps/tk-multi-screeningroom.yml
+- ./apps/tk-multi-shotgunpanel.yml
+- ./apps/tk-multi-snapshot.yml
+- ./apps/tk-multi-workfiles2.yml
+
+################################################################################
+
+# generic
+settings.tk-silhouette:
+  apps:
+    tk-multi-about:
+      location: "@apps.tk-multi-about.location"
+    tk-multi-loader2: '@settings.tk-multi-loader2.silhouette'
+    tk-multi-screeningroom: "@settings.tk-multi-screeningroom.rv"
+    tk-multi-workfiles2: "@settings.tk-multi-workfiles2.silhouette"
+  location: "@engines.tk-silhouette.location"
+
+# shot task
+settings.tk-silhouette.task:
+  apps:
+    tk-multi-about:
+      location: "@apps.tk-multi-about.location"
+    tk-multi-loader2: "@settings.tk-multi-loader2.silhouette"
+    tk-multi-publish2: "@settings.tk-multi-publish2.silhouette"
+    tk-multi-screeningroom: "@settings.tk-multi-screeningroom.rv"
+    tk-multi-snapshot: "@settings.tk-multi-snapshot.config_only"
+    tk-multi-workfiles2: "@settings.tk-multi-workfiles2.silhouette.task"
+  location: "@engines.tk-silhouette.location"
