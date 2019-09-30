@@ -60,3 +60,9 @@ engines.tk-shotgun.location:
   type: manual
   name: tk-shotgun
   version: v0.x.x
+
+# Silhouette
+engines.tk-silhouette.location:
+    type: manual
+    name: tk-silhouette
+    version: v0.x.x
