@@ -152,3 +152,14 @@ settings.tk-multi-workfiles2.nukestudio:
   file_extensions: ['hrox']
   entities: '@settings.tk-multi-workfiles2.entities.nukestudio'
   my_tasks_extra_display_fields: []
+
+# silhouette task
+settings.tk-multi-workfiles2.silhouette.task:
+  <<: *default_workfiles2_task_settings
+  launch_at_startup: false
+  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
+
+settings.tk-multi-workfiles2.silhouette:
+  <<: *default_workfiles2_settings
+  launch_at_startup: false
+  hook_scene_operation: '{config}/tk-multi-workfiles2/scene_operation_{engine_name}.py'
