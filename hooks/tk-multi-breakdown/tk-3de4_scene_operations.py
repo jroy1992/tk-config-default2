@@ -20,7 +20,7 @@ class BreakdownSceneOperations(HookBaseClass):
     """
     Breakdown operations for 3dequalizer.
 
-    This implementation handles detection of 3de camera footage.
+    This implementation handles detection of 3de camera footage and obj models.
     """
 
     def scan_scene(self):

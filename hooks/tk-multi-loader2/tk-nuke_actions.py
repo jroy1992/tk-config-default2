@@ -90,13 +90,13 @@ class CustomNukeActions(HookBaseClass):
             action_instances.append( {"name": "clip_img_mov",
                                       "params": None,
                                       "caption": "Import as Movie Clip",
-                                      "description": "Add the image sequence as movie clip into the departament bin."})
+                                      "description": "Add the image sequence as movie clip into the department bin."})
 
         if "clip_img_seq" in actions:
             action_instances.append( {"name": "clip_img_seq",
                                       "params": None,
                                       "caption": "Import as Sequence Clip",
-                                      "description": "Add the image sequence as sequence clip into the departament bin."})
+                                      "description": "Add the image sequence as sequence clip into the department bin."})
 
         if "clip_import_bin" in actions:
             action_instances.append({"name": "clip_import_bin",
