@@ -60,6 +60,10 @@ settings.tk-multi-publish2.nukestudio.publish_projects: '@settings.tk-multi-publ
 settings.tk-multi-publish2.nukestudio.create_version:   '@settings.tk-multi-publish2.basic.create_version:{self}/nuke/create_version.py'
 settings.tk-multi-publish2.nukestudio.upload_version:   '@settings.tk-multi-publish2.basic.upload_version'
 
+settings.tk-multi-publish2.sil.collector:             '@settings.tk-multi-publish2.basic.collector:{config}/tk-multi-publish2/silhouette/collector.py'
+settings.tk-multi-publish2.sil.publish_files:         '@settings.tk-multi-publish2.basic.publish_files'
+settings.tk-multi-publish2.sil.publish_session:       '@settings.tk-multi-publish2.basic.publish_session:{config}/tk-multi-publish2/silhouette/publish_session.py'
+
 settings.tk-multi-publish2.3de.collector:             '@settings.tk-multi-publish2.basic.collector:{config}/tk-multi-publish2/3de/collector.py'
 settings.tk-multi-publish2.3de.publish_files:         '@settings.tk-multi-publish2.basic.publish_files'
 settings.tk-multi-publish2.3de.publish_session:       '@settings.tk-multi-publish2.basic.publish_session:{config}/tk-multi-publish2/3de/publish_session.py'
@@ -121,6 +125,14 @@ settings.tk-multi-publish2.nukestudio:
   collector_settings: '@settings.tk-multi-publish2.nukestudio.collector.settings'
   path_info: '@settings.tk-multi-publish2.path_info'
   publish_plugins: '@settings.tk-multi-publish2.nukestudio.publish_plugins'
+  location: '@apps.tk-multi-publish2.location'
+
+# Silhouette
+settings.tk-multi-publish2.silhouette:
+  collector: '@settings.tk-multi-publish2.sil.collector'
+  collector_settings: '@settings.tk-multi-publish2.sil.collector.settings'
+  path_info: '@settings.tk-multi-publish2.path_info'
+  publish_plugins: '@settings.tk-multi-publish2.sil.publish_plugins'
   location: '@apps.tk-multi-publish2.location'
 
 # Ingest
