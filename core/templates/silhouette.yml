@@ -36,13 +36,13 @@ paths:
     tk-silhouette_shot_asset_work_file:         '@tk-silhouette_shot_asset_work_project_area/@shot_asset_version_name.sfx/@shot_asset_version_name.sfx'
     
     # SNAPSHOTS
-    tk-silhouette_project_work_snapshot:        '@tk-silhouette_project_work_project_area/snapshots/@project_version_name.{timestamp}/project.sfx'
-    tk-silhouette_sequence_work_snapshot:       '@tk-silhouette_sequence_work_project_area/snapshots/@sequence_version_name.{timestamp}/project.sfx'
-    tk-silhouette_shot_work_snapshot:           '@tk-silhouette_shot_work_project_area/snapshots/@shot_version_name.{timestamp}/project.sfx'
+    tk-silhouette_project_work_snapshot:        '@tk-silhouette_project_work_project_area/snapshots/@project_version_name.{timestamp}/@project_version_name.sfx/@project_version_name.sfx'
+    tk-silhouette_sequence_work_snapshot:       '@tk-silhouette_sequence_work_project_area/snapshots/@sequence_version_name.{timestamp}/@sequence_version_name.sfx/@sequence_version_name.sfx'
+    tk-silhouette_shot_work_snapshot:           '@tk-silhouette_shot_work_project_area/snapshots/@shot_version_name.{timestamp}/@shot_version_name.sfx/@shot_version_name.sfx'
 
-    tk-silhouette_project_asset_work_snapshot:  '@tk-silhouette_project_asset_work_project_area/snapshots/@project_asset_version_name.{timestamp}/project.sfx'
-    tk-silhouette_sequence_asset_work_snapshot: '@tk-silhouette_sequence_asset_work_project_area/snapshots/@sequence_asset_version_name.{timestamp}/project.sfx'
-    tk-silhouette_shot_asset_work_snapshot:     '@tk-silhouette_shot_asset_work_project_area/snapshots/@shot_asset_version_name.{timestamp}/project.sfx'
+    tk-silhouette_project_asset_work_snapshot:  '@tk-silhouette_project_asset_work_project_area/snapshots/@project_asset_version_name.{timestamp}/@project_asset_version_name.sfx/@project_asset_version_name.sfx'
+    tk-silhouette_sequence_asset_work_snapshot: '@tk-silhouette_sequence_asset_work_project_area/snapshots/@sequence_asset_version_name.{timestamp}/@sequence_asset_version_name.sfx/@sequence_asset_version_name.sfx'
+    tk-silhouette_shot_asset_work_snapshot:     '@tk-silhouette_shot_asset_work_project_area/snapshots/@shot_asset_version_name.{timestamp}/@shot_asset_version_name.sfx/@shot_asset_version_name.sfx'
     
     # NUKE EXPORTS
     tk-silhouette_project_nuke_export:          '@tk-silhouette_project_work_export_area/@geom_subdirs/@project_version_name.nk'
