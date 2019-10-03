@@ -71,7 +71,7 @@ settings.tk-nukestudio.shot:
   - {app_instance: tk-multi-workfiles2, keep_in_menu: false, name: 'File Save...', requires_selection: true}
   - {app_instance: tk-multi-snapshot, keep_in_menu: false, name: 'Snapshot...', requires_selection: true}
   - {app_instance: tk-multi-snapshot, keep_in_menu: false, name: 'Snapshot History...', requires_selection: true}
-  - {app_instance: tk-multi-publish2, keep_in_menu: false, name: 'Publish...', requires_selection: true}
+  - {app_instance: tk-multi-publish2, keep_in_menu: True, name: 'Publish...', requires_selection: true}
   spreadsheet_context_menu:
   - {app_instance: tk-hiero-openinshotgun, keep_in_menu: false, name: "Open in Shotgun", requires_selection: true}
   timeline_context_menu:
