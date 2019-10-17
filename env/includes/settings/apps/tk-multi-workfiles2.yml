@@ -65,8 +65,7 @@ settings.tk-multi-workfiles2: &default_workfiles2_settings
   template_work:
   version_compare_ignore_fields: []
   location: "@apps.tk-multi-workfiles2.location"
-  task_status_updates:
-    "ip": ["rev", "kbk", "rdy"]
+  task_status_updates: {}
 
 # task
 settings.tk-multi-workfiles2.task: &default_workfiles2_task_settings
@@ -89,8 +88,7 @@ settings.tk-multi-workfiles2.task: &default_workfiles2_task_settings
   template_work_area: '{engine_name}_{env_name}_work_area'
   template_work: '{engine_name}_{env_name}_work_file'
   location: "@apps.tk-multi-workfiles2.location"
-  task_status_updates:
-    "ip": ["rev", "kbk", "rdy"]
+  task_status_updates: {}
 
 # 3dequalizer task
 settings.tk-multi-workfiles2.3dequalizer.task:
