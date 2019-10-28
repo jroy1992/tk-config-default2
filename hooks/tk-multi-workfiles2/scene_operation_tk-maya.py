@@ -325,9 +325,9 @@ class SceneOperation(HookClass):
 
         for node in vray_nodes:
             # set resolution
-            self.unlock_and_set_attr("{}.aspectLock".format(node), False, lock=True)
-            self.unlock_and_set_attr("{}.width".format(node), fields["width"], lock=True)
-            self.unlock_and_set_attr("{}.height".format(node), fields["height"], lock=True)
+            # self.unlock_and_set_attr("{}.aspectLock".format(node), False, lock=True)
+            # self.unlock_and_set_attr("{}.width".format(node), fields["width"], lock=True)
+            # self.unlock_and_set_attr("{}.height".format(node), fields["height"], lock=True)
 
             prefix, ext = self.split_prefix_ext(render_path, frame_sq_key)
 
