@@ -180,7 +180,64 @@ class IngestCollectorPlugin(HookBaseClass):
             "default_value": "contents.yaml",
             "description": "Name of the file to look for, as a source for processing files to be ingested."
         }
+        schema["Properties To Display"] = {
+            "type": "list",
+            "values": {
+                "type": "dict"
+            },
+            "default_value": [
+                {
+                    "name": "fields",
+                    "display_name": "Item Fields",
+                    "editable": True,
+                    "editable_fields": ["^((?!SEQ|eye|MM|DD|YYYY).)*$"],
+                    "type": "FieldsPropertyWidget"
+                },
+                {
+                    "name": "missing_fields",
+                    "creation_property": "fields",
+                    "display_name": "Missing Fields",
+                    "editable": True,
+                    "editable_fields": ["^.*$"],
+                    "type": "FieldsCreatePropertyWidget"
+                },
+                {
+                    "name": "context_fields",
+                    "display_name": "Context Fields",
+                    "type": "FieldsPropertyWidget"
+                },
+            ],
+            "allows_empty": True,
+            "description": (
+                "A list of properties to display in the UI. Each entry in the list is a dict "
+                "that defines the associated property name, the widget class to use, as well "
+                "as any keyword arguments to pass to the constructor."
+            ),
+        }
         return schema
+
+    class FieldsCreatePropertyWidget(HookBaseClass.FieldsPropertyWidget):
+        def __init__(self, parent, hook, items, name, **kwargs):
+
+            # apply_changes will commit the field changes on creation_property
+            # by default it commits changes to property changes on self._name
+            self._creation_property = kwargs.pop("creation_property", name)
+
+            super(IngestCollectorPlugin.FieldsCreatePropertyWidget, self).__init__(
+                parent, hook, items, name, **kwargs)
+
+        def apply_changes(self):
+            """Store persistent data on the properties object"""
+            for item in self._items:
+                for key, value in self._fields.iteritems():
+                    if value == self.MultiplesValue or \
+                            not any([re.match(pattern, key) for pattern in self._editable_fields]):
+                        # Don't override value with multiples key,
+                        # or even keys that are not editable.
+                        continue
+                    # update the item.properties.fields
+                    item.properties[self._name][key] = value
+                    item.properties[self._creation_property][key] = value
 
     def _resolve_work_path_template(self, settings, item):
         """
@@ -267,6 +324,14 @@ class IngestCollectorPlugin(HookBaseClass):
 
         item = super(IngestCollectorPlugin, self)._add_file_item(settings, parent_item, path, is_sequence, seq_files,
                                                                  item_name, item_type, context, properties)
+
+        # create/add the properties required for missing fields and context fields
+        if "missing_fields" not in item.properties:
+            item.properties.missing_fields = dict()
+
+        if "context_fields" not in item.properties:
+            item.properties.context_fields = dict()
+
         return item
 
     def _add_note_item(self, settings, parent_item, fields, is_sequence=False, seq_files=None):
