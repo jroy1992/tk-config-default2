@@ -12,6 +12,7 @@
 import pprint
 
 import sgtk
+from sgtk import TankError, TankMissingTemplateError, TankMissingTemplateKeysError
 
 
 HookBaseClass = sgtk.get_hook_baseclass()
@@ -51,6 +52,44 @@ class IngestBasePlugin(HookBaseClass):
                         }
                     }
                 )
+
+    def _resolve_template_setting_value(self, setting, item):
+        """Resolve the setting template value"""
+        publisher = self.parent
+
+        if not setting.value:
+            return None
+
+        # Start with the fields stored with the setting
+        fields = {k: v.value for (k, v) in setting.extra["fields"].iteritems()}
+
+        tmpl = publisher.get_template_by_name(setting.value)
+        if not tmpl:
+            # this template was not found in the template config!
+            raise TankMissingTemplateError("The Template '%s' does not exist!" % setting.value)
+
+        # First get the fields from the context
+        try:
+            context_fields = item.context.as_template_fields(tmpl)
+            fields.update(context_fields)
+            # update the properties context_fields
+            item.properties.context_fields.update(context_fields)
+        except TankError:
+            self.logger.debug(
+                "Unable to get context fields for publish_path_template.")
+
+        missing_keys = tmpl.missing_keys(fields, True)
+        # update the missing fields
+        [item.properties.missing_fields.setdefault(key, None) for key in missing_keys]
+
+        if missing_keys:
+            raise TankMissingTemplateKeysError(
+                "Cannot resolve Template (%s). Missing keys: %s" %
+                (setting.value, pprint.pformat(missing_keys))
+            )
+
+        # Apply fields to template to get resolved value
+        return tmpl.apply_fields(fields)
 
     def validate(self, task_settings, item):
         """
@@ -141,7 +180,26 @@ class IngestBasePlugin(HookBaseClass):
 
             return False
 
-        # rest of the validations run after the context is verified.
-        status = super(IngestBasePlugin, self).validate(task_settings, item)
+        try:
+            # reset missing_fields and context_fields
+            item.properties.missing_fields = dict()
+            item.properties.context_fields = dict()
+            # rest of the validations run after the context is verified.
+            status = super(IngestBasePlugin, self).validate(task_settings, item)
+        except TankMissingTemplateKeysError:
+            # we want the user to fill these missing fields!
+            self.logger.error(
+                "Missing fields in the templates!",
+                extra={
+                    "action_show_more_info": {
+                        "label": "Show Fields",
+                        "tooltip": "Shows the missing fields across all templates.",
+                        "text": "Missing Fields: %s\nContext Fields: %s" % (
+                            pprint.pformat(item.properties.missing_fields),
+                            pprint.pformat(item.properties.context_fields))
+                    }
+                }
+            )
+            status = False
 
         return status

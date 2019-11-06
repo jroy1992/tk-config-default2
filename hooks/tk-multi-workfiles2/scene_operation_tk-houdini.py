@@ -80,7 +80,10 @@ class SceneOperation(HookClass):
             if parent_action == "new_file":
                 self.set_show_preferences(fields)
                 self.sync_frame_range()
-            return True
+
+        # call the task status updates
+        return super(SceneOperation, self).execute(operation, file_path, context, parent_action, file_version,
+                                                   read_only, **kwargs)
 
     def sync_frame_range(self):
         # using sgtk.platform.current_engine() instead of self.parent.engine because

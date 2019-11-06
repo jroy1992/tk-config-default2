@@ -8,17 +8,16 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import os
+import copy
 import maya.cmds as cmds
+import pymel.core as pm
 
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
 from sgtk.platform.settings import resolve_setting_expression
+from sgtk.util import filesystem
 
-from dd.runtime import api
-api.load('frangetools')
-import frangetools
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -37,7 +36,7 @@ CAM_TASK_SUFFIX = "cam"
 UNDIST_TASK_SUFFIX = "undist"
 
 
-class MayaPublishDDIntegValidationPlugin(HookBaseClass):
+class MayaPublishSessionIntegPlugin(HookBaseClass):
     """
     Inherits from MayaPublishFilesPlugin
     """
@@ -49,67 +48,18 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         contain simple html for formatting.
         """
 
-        desc = super(MayaPublishDDIntegValidationPlugin, self).description
+        desc = super(MayaPublishSessionIntegPlugin, self).description
 
         return desc + "<br><br>" + """
-        Validation checks before a file is published.
+        Additional integ validations will be run before a file is published.
         """
 
-
-    def _build_dict(self, seq, key):
-        """
-        Creating a dictionary based on a key.
-
-        :param seq: list of dictionaries
-        :param key: dictionary key from which to create the dictionary
-        :return: dict with information arranged based on that particular key
-        """
-        return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))
-
-
-    def _framerange_of_sequence(self, item):
-        """
-        Since users have the option to render only a subset of frames,
-        adding validation to check if the full frame range is being published.
-
-        :param item: Item to process
-        :return: True if yes false otherwise
-        """
-        lss_path = item.properties['path']
-        lss_data = frangetools.getSequence(lss_path)
-
-        info_by_path = self._build_dict(lss_data, key="path")
-        missing_frames = info_by_path.get(lss_path)['missing_frames']
-
-        if missing_frames:
-            self.logger.error("Incomplete playblast! All the frames are not the playblast.")
-            return False
-        else:
-            # If there are no missing frames, checking if the start and end frames match with playblast settings.
-            # This is being directly checked with playblast settings in the scene since
-            # _sync_frame_range_with_shotgun() will ensure playblast frame range is synced with shotgun
-            import pymel.core as pm
-            playback_start = pm.playbackOptions(q=True, minTime=True)
-            playback_end = pm.playbackOptions(q=True, maxTime=True)
-            collected_playblast_firstframe = info_by_path.get(lss_path)['frame_range'][0]
-            collected_playblast_lastframe = info_by_path.get(lss_path)['frame_range'][1]
-            if (collected_playblast_firstframe > playback_start) or (collected_playblast_lastframe < playback_end):
-                self.logger.error("Incomplete playblast! All the frames are not in the playblast.")
-                return False
-            elif (collected_playblast_firstframe < playback_start) or (collected_playblast_lastframe > playback_end):
-                self.logger.warning("Playblast exceeds Shotgun frame range.")
-                QtGui.QMessageBox.warning(None, "PLayblast frame range mismatch!",
-                                          "WARNING! Playblast exceeds Shotgun frame range.")
-                return True
-        return True
-
-
-    def _sync_frame_range_with_shotgun(self, item):
+    def _check_frame_range_with_shotgun(self, item):
         """
         Checks whether frame range is in sync with shotgun.
 
         :param item: Item to process
-        :return: True if yes false otherwise
+        :return: True if yes False otherwise
         """
         context = item.context
         entity = context.entity
@@ -140,16 +90,18 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
 
             # Check if playback_start or animation_start is not in sync with shotgun
             # Similarly if animation_start or animation_start is not in sync with shotgun
-            import pymel.core as pm
             playback_start = pm.playbackOptions(q=True, minTime=True)
             playback_end = pm.playbackOptions(q=True, maxTime=True)
+            
             animation_start = pm.playbackOptions(q=True, animationStartTime=True)
             animation_end = pm.playbackOptions(q=True, animationEndTime=True)
+            
             if playback_start != data[in_field] or playback_end != data[out_field]:
                 self.logger.warning("Frame range not synced with Shotgun.")
                 QtGui.QMessageBox.warning(None, "Frame range mismatch!",
                                           "WARNING! Frame range not synced with Shotgun.")
                 return True
+            
             if animation_start != data[in_field] or animation_end != data[out_field]:
                 self.logger.warning("Frame range not synced with Shotgun.")
                 QtGui.QMessageBox.warning(None, "Frame range mismatch!",
@@ -159,10 +111,11 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         return True
 
 
-    def _extra_nodes_outside_track_geo(self):
+    def _no_nodes_outside_track_geo(self):
         """
-        Check for nodes, apart from groups and camera lying outside of TRACK_GEO node
-        :return: True if yes false otherwise
+        Checks that there are no nodes, apart from groups and camera, outside of TRACK_GEO node
+        
+        :return: True if yes False otherwise
         """
         children = cmds.listRelatives('TRACK_GEO', c=True)
         # Subtracting group nodes, cameras and child nodes of TRACK_GEO from the list of dag nodes.
@@ -186,11 +139,12 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         return True
 
 
-    def _track_geo_locked_channels(self):
-        """Check for locked channels for all nodes under the group TRACK_GEO.
-            :param:
-                nodes: list of nodes under TRACK_GEO
-            :return: True if yes false otherwise
+    def _check_locked_channels_track_geo(self):
+        """
+        Check that there are no locked attributes in all nodes under the group TRACK_GEO.
+        
+        :param nodes: list of nodes under TRACK_GEO
+        :return: True if yes False otherwise
         """
         children = cmds.listRelatives('TRACK_GEO', c=True)
         if children:
@@ -200,7 +154,7 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
                 lock_per_node = cmds.listAttr(node, l=True)
                 if lock_per_node:
                     locked += "\n" + node + ": " + ", ".join(lock_per_node)
-            # If there are locked channels, error message with node name and locked attribute name(s).
+            # If there are locked channels, error message with node name and locked attribute(s).
             if locked:
                 self.logger.error("Locked channels detected.",
                                   extra={
@@ -209,8 +163,7 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
                                           "tooltip": "Show the node and locked channels",
                                           "text": "Locked channels:\n{}".format(locked)
                                       }
-                                  }
-                                  )
+                                  })
                 return False
             return True
         return True
@@ -220,7 +173,7 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         """Checks if the name of nodes under TRACK_GEO are prefixed with 'integ_'.
             :param:
                 track_geo: nodes under TRACK_GEO
-            :return: True if yes false otherwise
+            :return: True if yes False otherwise
         """
         # Nodes under TRACK_GEO group
         children = cmds.listRelatives('TRACK_GEO', c=True)
@@ -249,7 +202,7 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         """Checks the hierarchy of group nodes in the scene.
             :param:
                 group_nodes: the list of nodes in the scene
-            :return: True if yes false otherwise
+            :return: True if yes False otherwise
         """
         for name in range(len(group_nodes) - 1):
             # Listing children of group nodes
@@ -287,7 +240,7 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
             :param:
                 group_nodes: The list of nodes that should be in the scene. This will be
                 used to check node hierarchy once camera naming is validated.
-            :return: True if yes false otherwise
+            :return: True if yes False otherwise
         """
         # Look for all the cameras present in the scene
         all_cameras = cmds.listCameras()
@@ -313,7 +266,7 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
             :param:
                 group_nodes: group nodes to be present in the scene
                 groups: group nodes that are actually present
-            :return: True if yes false otherwise
+            :return: True if yes False otherwise
         """
         # Check for extra group nodes apart from the ones in group_nodes
         extras = list(set(groups) - set(GROUP_NODES))
@@ -348,11 +301,12 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
 
 
     @staticmethod
-    def _is_group(node=None):
-        """Check for all the group nodes present in the scene.
-            :param:
-                node: all the nodes in the scene
-            :return: True if yes false otherwise
+    def _is_group_transform(node=None):
+        """
+        Check whether all non-leaf nodes under the given node are transform nodes.
+
+        :param node:    Node whose hierarchy needs to be checked
+        :return:        True if only transform nodes have children, else False
         """
         if cmds.nodeType(node) != "transform":
             return False
@@ -454,36 +408,68 @@ class MayaPublishDDIntegValidationPlugin(HookBaseClass):
         :returns: True if item is valid, False otherwise.
         """
 
-        status = True
+        status = super(MayaPublishSessionIntegPlugin, self).validate(task_settings, item)
         
         # Checks for the scene file
-        if item.type == "maya.session":
-            if item.context.entity["type"] == "Shot":
-                task_name = item.context.task['name']
-                task_name_suffix = task_name.split("_")[-1]
-                if task_name_suffix == CAM_TASK_SUFFIX:
-                    all_dag_nodes = cmds.ls(dag=True, sn=True)
-                    groups = [g for g in all_dag_nodes if self._is_group(g)]
+        if item.context.entity["type"] == "Shot":
+            task_name = item.context.task['name']
+            task_name_suffix = task_name.split("_")[-1]
+            if task_name_suffix == CAM_TASK_SUFFIX:
+                all_dag_nodes = cmds.ls(dag=True, sn=True)
+                groups = [g for g in all_dag_nodes if self._is_group_transform(g)]
 
-                    nodes_status = self._node_naming(groups) and \
-                                   self._check_hierarchy(groups) and \
-                                   self._track_geo_child_naming() and \
-                                   self._track_geo_locked_channels() and \
-                                   self._extra_nodes_outside_track_geo() and \
-                                   self._sync_frame_range_with_shotgun(item)
-                    cam_status = self._camera_naming() and self._connected_image_plane()
-                    undist_status = self._check_undist_status(item)
+                nodes_status = self._node_naming(groups) and \
+                               self._check_hierarchy(groups) and \
+                               self._track_geo_child_naming() and \
+                               self._check_locked_channels_track_geo() and \
+                               self._no_nodes_outside_track_geo() and \
+                               self._check_frame_range_with_shotgun(item)
+                cam_status = self._camera_naming() and self._connected_image_plane()
+                undist_status = self._check_undist_status(item)
 
-                    status = nodes_status and cam_status and undist_status and status
-                elif task_name_suffix != UNDIST_TASK_SUFFIX: # this is a matchmove task
-                    status = self._sync_frame_range_with_shotgun(item)
+                status = nodes_status and cam_status and undist_status and status
+            elif task_name_suffix != UNDIST_TASK_SUFFIX: # this is a matchmove task
+                status = self._check_frame_range_with_shotgun(item)
 
-        # Checks for the scene file, i.e if the item is not a sequence or a cache file
-        if item.properties.get('is_sequence', False):
-            sequences = self._framerange_of_sequence(item)
-            status = sequences and status
+        return status
 
-        if not status:
-            return status
+    def publish_files(self, task_settings, item, publish_path):
+        """
+        This method publishes (copies) the item's path property to the publish location.
+        For session override this to do cleanup and save to publish location instead,
+        then discard the changes done during cleanup from the workfile so that they are
+        not preserved while versioning up.
 
-        return super(MayaPublishDDIntegValidationPlugin, self).validate(task_settings, item)
+        :param task_settings: Dictionary of Settings. The keys are strings, matching
+            the keys returned in the settings property. The values are `Setting`
+            instances.
+        :param item: Item to process
+        :param publish_path: The output path to publish files to
+        """
+
+        path = copy.deepcopy(item.properties.get("path"))
+        if not path:
+            raise KeyError("Base class implementation of publish_files() method requires a 'path' property.")
+
+        # Save to publish path
+        self.import_references(item)
+        self._save_session(publish_path, item.properties.get("publish_version"), item)
+
+        # Determine if we should seal the copied files or not
+        seal_files = item.properties.get("seal_files", False)
+        if seal_files:
+            filesystem.seal_file(publish_path)
+
+        # Reopen work file and reset item property path, context
+        cmds.file(new=True, force=True)
+        cmds.file(path, open=True, force=True)
+
+        item.properties.path = path
+        self.parent.engine.change_context(item.context)
+
+    def import_references(self, item):
+        # import all references in the file
+        self.parent.logger.info("Importing references in the current session...")
+        references = pm.ls(references=1)
+        for reference in references:
+            cmds.file(pm.referenceQuery(reference, f=True), importReference=True)

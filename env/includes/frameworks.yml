@@ -30,6 +30,7 @@ frameworks:
 
   # qtwidgets - collection of Toolkit related QT Widgets
   tk-framework-qtwidgets_v2.x.x:
+    external_screenshot_hook: '{self}/external_screenshot.py:{config}/tk-framework-qtwidgets/external_screenshot.py'
     location:
       version: v2.x.x
       type: manual

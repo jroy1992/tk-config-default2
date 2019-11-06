@@ -9,7 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
-import tde4
+import fx
 
 import sgtk
 
@@ -18,9 +18,9 @@ HookBaseClass = sgtk.get_hook_baseclass()
 
 class BreakdownSceneOperations(HookBaseClass):
     """
-    Breakdown operations for 3dequalizer.
+    Breakdown operations for silhouette.
 
-    This implementation handles detection of 3de camera footage and obj models.
+    This implementation handles detection of 3de camera footage.
     """
 
     def scan_scene(self):
@@ -46,21 +46,15 @@ class BreakdownSceneOperations(HookBaseClass):
         """
         reads = []
 
-        # let's look at the camera nodes
-        for camera_id in tde4.getCameraList():
-            path = tde4.getCameraPath(camera_id)
-            name = tde4.getCameraName(camera_id)
-            reads.append({"node": name, "type": "camera", "path": path})
-
-        # also at 3D models in all point groups:
-        for pgroup_id in tde4.getPGroupList():
-            for model_id in tde4.get3DModelList(pgroup_id):
-                path = tde4.get3DModelFilepath(pgroup_id, model_id)
-                name = tde4.get3DModelName(pgroup_id, model_id)
-                # internal 3D objects (eg. cube, sphere) will not have a path
-                if path:
-                    # there is no find_model_by_name as of 3de r6.b2
-                    reads.append({"node": (name, pgroup_id, model_id), "type": "model", "path": path})
+        project = fx.activeProject()
+        # find source items in project
+        for item in project.items:
+            if isinstance(item, fx.SourceItem):
+                source = item.source
+                # label is human readable, but only id is unique
+                reads.append({"node": (source.label, item.id),
+                              "type": "source",
+                              "path": source.property("path").value})
 
         return reads
 
@@ -77,17 +71,37 @@ class BreakdownSceneOperations(HookBaseClass):
         """
         engine = self.parent.engine
 
+        # TODO: is there a way to find input nodes from source/source_item?
+        project = fx.activeProject()
+        source_node_mapping = {}
+        for session in project.sessions:
+            for node in session.inputs:
+                source_id = node.property("stream.primary").value.id
+                node_list = source_node_mapping.setdefault(source_id, [])
+                node_list.append(node)
+
         for i in items:
             node_id = i["node"]
             node_type = i["type"]
             new_path = i["path"]
 
-            if node_type == "camera":
-                engine.log_debug("Footage for camera %s: Updating to version %s" % (node_id, new_path))
-                camera_id = tde4.findCameraByName(node_id)
-                tde4.setCameraPath(camera_id, new_path)
+            if node_type == "source":
+                source_label, source_item_id = node_id
+                engine.log_debug("Path for source %s: Updating to version %s" % (source_label, new_path))
 
-            elif node_type == "model":
-                engine.log_debug("OBJ file for model %s: Updating to version %s" % (node_id, new_path))
-                name, pgroup_id, model_id = node_id
-                tde4.importOBJ3DModel(pgroup_id, model_id, new_path)
+                # update source.property("path")
+                source_item = fx.findObject(source_item_id)
+                path_property = source_item.source.property("path")
+                formatted_path, errors = engine.utils.seq_path_to_silhouette_format(self.sgtk, new_path)
+                if errors:
+                    engine.utils.warn_with_pop_up(self.parent.logger, "Image path used as is", errors)
+                path_property.setValue(formatted_path)
+
+                # update source and node labels.
+                # TODO: does silhouette ever have anything in the trailing brackets?
+                label = os.path.basename(formatted_path) + " []"
+
+                # TODO: the display doesn't auto-refresh
+                source_item.label = label
+                for node in source_node_mapping[source_item.source.id]:
+                    node.label = label

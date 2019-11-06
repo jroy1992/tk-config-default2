@@ -9,7 +9,9 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
-import tde4
+import shutil
+import tempfile
+import fx
 
 import sgtk
 from sgtk.platform.qt import QtGui, QtCore
@@ -57,66 +59,75 @@ class SceneOperation(HookClass):
                                                  state, otherwise False
                                 all others     - None
         """
+        active_project = fx.activeProject()
+        temp_dir = os.path.realpath(tempfile.gettempdir())
+
         if operation == "current_path":
             # return the current project path
-            return tde4.getProjectPath()
+            if active_project:
+                return active_project.path
+            else:
+                return None
+
         elif operation == "open":
-            self._set_preferences(context)
-            tde4.loadProject(file_path)
+            fx.loadProject(file_path)
+
         elif operation == "save":
-            project_path = tde4.getProjectPath()
-            tde4.saveProject(project_path)
+            active_project.save()
+
         elif operation == "save_as":
-            tde4.saveProject(file_path)
+            initial_project_path = os.path.realpath(active_project.path)
+
+            save_path = self.parent.engine.utils.get_stripped_project_path(file_path)
+            active_project.save(save_path)
+
+            # delete earlier project directory if it was a temporary path
+            if initial_project_path.startswith(temp_dir):
+                shutil.rmtree(os.path.dirname(os.path.dirname(initial_project_path)))
+
         elif operation == "reset":
             """
             Reset the scene to an empty state
             """
-            while not tde4.isProjectUpToDate():
-                self.logger.debug(file_path)
-                # changes have been made to the scene
+            # save activeProject
+            exit_and_call_save = False
+            if active_project:
+                if active_project.path:
+                    project_dir = os.path.realpath(os.path.dirname(active_project.path))
+                    if not project_dir.startswith(temp_dir):
+                        active_project.save()
+                    else:
+                        exit_and_call_save = True
+                else:
+                    exit_and_call_save = True
+
+            if exit_and_call_save:
                 res = QtGui.QMessageBox.question(QtGui.QApplication.activeWindow(),
                                                  "Save your scene?",
                                                  "Your scene has unsaved changes. Save before proceeding?",
-                                                 QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel)
+                                                 QtGui.QMessageBox.Yes | QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
 
                 if res == QtGui.QMessageBox.Cancel:
                     return False
                 elif res == QtGui.QMessageBox.No:
-                    break
+                    pass
                 else:
-                    project_path = tde4.getProjectPath()
-                    if not project_path:
-                        # there is no 3de python API to open a save file GUI, so just use sgtk
-                        self.parent.engine.commands["File Save..."]["callback"]()
-                        return False
-                    else:
-                        tde4.saveProject(project_path)
-
-            # do new file:
-            tde4.newProject()
+                    # there is an active project with no path or temp path - save it
+                    # there is no silhouette python API to open a save file GUI, so just use sgtk
+                    self.parent.engine.commands["File Save..."]["callback"]()
+                    return False
 
             if parent_action == "new_file":
-                self._set_preferences(context)
+                # do new file. silhouette doesn't do unnamed projects well
+                new_project_name = os.path.join(tempfile.mkdtemp(), "tk_silhouette_project")
+                new_project = fx.Project(new_project_name)
 
-        # call the task status updates
-        return super(SceneOperation, self).execute(operation, file_path, context, parent_action, file_version,
-                                                   read_only, **kwargs)
+                # silhouette 7 has method setActiveProject(), which can take None
+                fx.activate(new_project)
+                new_project.save()
 
-    def _set_preferences(self, context):
-        fields = context.as_template_fields()
-        project_area_path = self._get_template_path("{engine_name}_{env_name}_work_project_area", fields)
-        tde4.setPreferenceValue("PROJECT_DIR", project_area_path)
+                # make the user save the file immediately,
+                # so that we can avoid using the temp location
+                self.parent.engine.commands["File Save..."]["callback"]()
 
-        export_area_path = self._get_template_path("{engine_name}_{env_name}_work_export_area", fields)
-        tde4.setPreferenceValue("OBJ_DIR", export_area_path)
-
-        publish_area_path = self._get_template_path("{env_name}_publish_area", fields)
-        tde4.setPreferenceValue("IMAGES_DIR", os.path.join(publish_area_path, "IMG"))
-
-    def _get_template_path(self, template_expression, fields):
-        templates = self.parent.sgtk.templates
-        template_name = self.parent.resolve_setting_expression(template_expression)
-        template = templates.get(template_name)
-        template_value = template.apply_fields(fields)
-        return template_value
+        return True

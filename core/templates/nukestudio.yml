@@ -42,9 +42,9 @@ paths:
     tk-nukestudio_shot_work_render:             '@tk-nukestudio_shot_work_area/renders/{Sequence}/{Shot}/v{version}/@shot_version_name.{SEQ}.{img.ext}'
 
     # EXPORT PLATES
-    tk-nukestudio_project_work_movie:           '@tk-nukestudio_project_work_area/movies/{Sequence}/{Shot}/@shot_version_name.mov'
-    tk-nukestudio_sequence_work_movie:          '@tk-nukestudio_sequence_work_area/movies/{Sequence}/{Shot}/@shot_version_name.mov'
-    tk-nukestudio_shot_work_movie:              '@tk-nukestudio_shot_work_area/movies/{Sequence}/{Shot}/@shot_version_name.mov'
+    tk-nukestudio_project_work_movie:           '@tk-nukestudio_project_work_area/movies/@project_version_name.mov'
+    tk-nukestudio_sequence_work_movie:          '@tk-nukestudio_sequence_work_area/movies/@sequence_version_name.mov'
+    tk-nukestudio_shot_work_movie:              '@tk-nukestudio_shot_work_area/movies/@shot_version_name.mov'
 
 
 aliases:
