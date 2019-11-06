@@ -120,7 +120,11 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
                     submitted = False
                     msg = e
 
-                if not submitted:
+                if submitted:
+                    self.logger.info(
+                        "Job for item '%s' submitted successfully: %s" % (item.name, msg)
+                    )
+                else:
                     self.logger.error(
                         "Job for item '%s' failed to submit." % (item.name,),
                         extra={
@@ -145,13 +149,14 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
         """
         Generate the publish tree file
         """
-        tree_file = os.path.join(output_dir, "publish2_tree.json")
+        file_name = "publish2_tree.json"
+        tree_file = os.path.join(output_dir, file_name)
         tree.save_file(tree_file)
         self.logger.info(
-            "Wrote publish tree file: %r", tree_file,
+            "Wrote publish tree file: %r", file_name,
             extra={
                 "action_show_folder": {
-                    "path": output_dir
+                    "path": tree_file
                 }
             }
         )
@@ -168,10 +173,10 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
         filesystem.ensure_folder_exists(os.path.dirname(workflow_path))
         filesystem.copy_file(src_workflow_path, workflow_path)
         self.logger.info(
-            "Wrote workflow xml: %r", workflow_path,
+            "Wrote workflow xml: %r", os.path.basename(workflow_path),
             extra={
                 "action_show_folder": {
-                    "path": output_dir
+                    "path": workflow_path
                 }
             }
         )
@@ -193,7 +198,8 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
         filesystem.ensure_folder_exists(actions_dir)
         open(os.path.join(actions_dir, "__init__.py"), 'w').close()
 
-        publish_action = os.path.join(actions_dir, "RunPublishAction.py")
+        file_name = "RunPublishAction.py"
+        publish_action = os.path.join(actions_dir, file_name)
         with open(publish_action, 'w') as of:
             lines = [
                 'import sgtk',
@@ -235,10 +241,10 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
             of.write('\n'.join(lines) + '\n')
 
         self.logger.info(
-            "Wrote publish action: %r" % publish_action,
+            "Wrote publish action: %r" % file_name,
             extra={
                 "action_show_folder": {
-                    "path": actions_dir
+                    "path": publish_action
                 }
             }
         )
@@ -293,13 +299,14 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
         data.parameters["item_filters"] = [item.name]
         data.parameters["task_filters"] = [task.name for task in tasks]
 
-        data_path = os.path.join(output_dir, "wam_data.yml")
+        file_name = "wam_data.yml"
+        data_path = os.path.join(output_dir, file_name)
         data.stash(data_path)
         self.logger.info(
-            "Wrote serialized WAM data block: %r", data_path,
+            "Wrote serialized WAM data block: %r", file_name,
             extra={
                 "action_show_folder": {
-                    "path": output_dir
+                    "path": data_path
                 }
             }
         )
@@ -311,7 +318,7 @@ class DDFarmSubmission(sgtk.get_hook_baseclass()):
         # Generate the job object
         job = Job(job_name=item.name, env=env)
         job.software = [_get_host_application()]
-        job.activity = "publish"
+        job.activity = "modelpublish"
         job.notes = "SGTK Batch Publisher"
         job.log_dir = os.path.join(output_dir, "logs")
 
