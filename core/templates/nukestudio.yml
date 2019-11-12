@@ -22,9 +22,9 @@ keys:
 paths:
 
     # WORK AREAS
-    tk-nukestudio_project_work_area:            './{department}/user/@user_work'
-    tk-nukestudio_sequence_work_area:           './{department}/{Sequence}/user/@user_work'
-    tk-nukestudio_shot_work_area:               './{department}/{Sequence}/{Shot}/user/@user_work'
+    tk-nukestudio_project_work_area:            './user/@user_work/nukestudio'
+    tk-nukestudio_sequence_work_area:           './{Sequence}/user/@user_work/nukestudio'
+    tk-nukestudio_shot_work_area:               './{Sequence}/{Shot}/user/@user_work/nukestudio'
 
     # WORK FILES
     tk-nukestudio_project_work_file:            '@tk-nukestudio_project_work_area/projects/@project_version_name.hrox'
@@ -37,9 +37,9 @@ paths:
     tk-nukestudio_shot_work_snapshot:           '@tk-nukestudio_shot_work_area/projects/snapshots/@shot_version_name.{timestamp}.hrox'
 
     # EXPORT RENDERS
-    tk-nukestudio_project_work_render:          '@tk-nukestudio_project_work_area/renders/{Sequence}/{Shot}/v{version}/@shot_version_name.{SEQ}.{img.ext}'
-    tk-nukestudio_sequence_work_render:         '@tk-nukestudio_sequence_work_area/renders/{Sequence}/{Shot}/v{version}/@shot_version_name.{SEQ}.{img.ext}'
-    tk-nukestudio_shot_work_render:             '@tk-nukestudio_shot_work_area/renders/{Sequence}/{Shot}/v{version}/@shot_version_name.{SEQ}.{img.ext}'
+    tk-nukestudio_project_work_render:          '@tk-nukestudio_project_work_area/renders/v{version}/@project_version_name.{SEQ}.{img.ext}'
+    tk-nukestudio_sequence_work_render:         '@tk-nukestudio_sequence_work_area/renders/v{version}/@sequence_version_name.{SEQ}.{img.ext}'
+    tk-nukestudio_shot_work_render:             '@tk-nukestudio_shot_work_area/renders/v{version}/@shot_version_name.{SEQ}.{img.ext}'
 
     # EXPORT PLATES
     tk-nukestudio_project_work_movie:           '@tk-nukestudio_project_work_area/movies/@project_version_name.mov'
