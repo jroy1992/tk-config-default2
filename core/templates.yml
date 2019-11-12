@@ -235,7 +235,6 @@ paths:
     project_publish_area_movie:             '@project_publish_area/MOV/{Step}'
     project_publish_area_scene:             '@project_publish_area/SCENE/{Step}'
     project_publish_area_script:            '@project_publish_area/SCRIPT/{Step}'
-    project_publish_area_project:           '@project_publish_area/PROJECT/{Step}'
     project_publish_area_sfx:               '@project_publish_area/SILHOUETTE/{Step}'
     project_publish_area_texture:           '@project_publish_area/TEXTURE/{Step}'
 
@@ -247,7 +246,6 @@ paths:
     sequence_publish_area_movie:            '@sequence_publish_area/MOV/{Step}'
     sequence_publish_area_scene:            '@sequence_publish_area/SCENE/{Step}'
     sequence_publish_area_script:           '@sequence_publish_area/SCRIPT/{Step}'
-    sequence_publish_area_project:          '@sequence_publish_area/PROJECT/{Step}'
     sequence_publish_area_sfx:              '@sequence_publish_area/SILHOUETTE/{Step}'
     sequence_publish_area_texture:          '@sequence_publish_area/TEXTURE/{Step}'
 
@@ -259,7 +257,6 @@ paths:
     shot_publish_area_movie:                '@shot_publish_area/MOV/{Step}'
     shot_publish_area_scene:                '@shot_publish_area/SCENE/{Step}'
     shot_publish_area_script:               '@shot_publish_area/SCRIPT/{Step}'
-    shot_publish_area_project:              '@shot_publish_area/PROJECT/{Step}'
     shot_publish_area_sfx:                  '@shot_publish_area/SILHOUETTE/{Step}'
     shot_publish_area_texture:              '@shot_publish_area/TEXTURE/{Step}'
 
@@ -336,9 +333,9 @@ paths:
     shot_asset_publish_nuke_script:         '@shot_asset_publish_area_script/@shot_asset_version_name.nk'
 
     # NUKESTUDIO PROJECTS
-    project_publish_nukestudio_project:     '@project_publish_area_project/@project_version_name.hrox'
-    sequence_publish_nukestudio_project:    '@sequence_publish_area_project/@sequence_version_name.hrox'
-    shot_publish_nukestudio_project:        '@shot_publish_area_project/@shot_version_name.hrox'
+    project_publish_nukestudio_project:     '@project_publish_area_script/@project_version_name.hrox'
+    sequence_publish_nukestudio_project:    '@sequence_publish_area_script/@sequence_version_name.hrox'
+    shot_publish_nukestudio_project:        '@shot_publish_area_script/@shot_version_name.hrox'
 
     # RENDERS
     project_publish_render:                 '@project_publish_area_image/@image_subdirs/@project_version_name.{SEQ}.{img.ext}'
