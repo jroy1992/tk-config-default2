@@ -176,7 +176,7 @@ class CustomMayaActions(HookBaseClass):
         if name == "import_without_namespace":
             self._do_import_without_namespace(path, sg_publish_data)
 
-    ##############################################################################################################
+    ##############################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
 
     def _create_texture_node_with_frames(self, path, sg_publish_data):
@@ -188,7 +188,8 @@ class CustomMayaActions(HookBaseClass):
         :returns:                The newly created file node
         """
 
-        # use mel command instead, since that creates the corresponding place2dtexture node with connections
+        # use mel command instead, since that creates the corresponding place2dtexture node with
+        # connections
         # file_node = cmds.shadingNode('file', asTexture=True)
         file_node = mel.eval('createRenderNodeCB -as2DTexture "" file ""')
 
@@ -199,6 +200,15 @@ class CustomMayaActions(HookBaseClass):
             # setting the frame extension flag will create an expression to use
             # the current frame.
             cmds.setAttr("%s.useFrameExtension" % (file_node,), 1)
+
+            # Fetching the map type name from the file name at the path
+            entity_name = sg_publish_data["entity"]["name"]
+            pub_name = sg_publish_data["name"]
+            file_node_name = "{0}{1}".format(entity_name, pub_name.split(entity_name)[-1])
+            # Renaming the file node created to the map being loaded
+            # Overriding the file_node variable to return the newly assigned name
+            file_node = cmds.rename(file_node, file_node_name)
+
         return file_node
 
     def _create_texture_node(self, path, sg_publish_data):
@@ -210,13 +220,24 @@ class CustomMayaActions(HookBaseClass):
         :returns:                The newly created file node
         """
 
-        # use mel command instead, since that creates the corresponding place2dtexture node with connections
+        # use mel command instead, since that creates the corresponding place2dtexture node with
+        # connections
         # file_node = cmds.shadingNode('file', asTexture=True)
         file_node = mel.eval('createRenderNodeCB -as2DTexture "" file ""')
 
         has_frame_spec, path = self._find_first_frame(path)
+
         # use the first frame instead of %04d, else maya errors out with "File Doesn't exist".
         cmds.setAttr("%s.fileTextureName" % file_node, path, type="string")
+
+        # Fetching the map type name from the file name at the path
+        entity_name = sg_publish_data["entity"]["name"]
+        pub_name = sg_publish_data["name"]
+        file_node_name = "{0}{1}".format(entity_name, pub_name.split(entity_name)[-1])
+        # Renaming the file node created to the map being loaded
+        # Overriding the file_node variable to return the newly assigned name
+        file_node = cmds.rename(file_node, file_node_name)
+
         return file_node
 
     def _create_udim_texture_node(self, path, sg_publish_data):
