@@ -194,7 +194,7 @@ class SilhouetteSessionCollector(HookBaseClass):
 
         # also collect sequence files
         for key in self.sgtk.template_keys.values():
-            if isinstance(key, SequenceKey):
+            if isinstance(key, SequenceKey) and key.name in fields:
                 fields.pop(key.name)
 
         work_tmpl = publisher.get_template_by_name(work_path_template)
