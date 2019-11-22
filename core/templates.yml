@@ -158,6 +158,20 @@ keys:
             ccc: ccc
         default: cc
         alias: extension
+    zbrush.ext:
+        type: str
+        choices:
+            ztl: ztl
+            ZTL: ZTL
+        default: ztl
+        alias: extension
+    substance.ext:
+        type: str
+        choices:
+            spp: spp
+            SPP: SPP
+        default: spp
+        alias: extension
 
     # Hook-modified keys (camelCase)
     customKeyExample:

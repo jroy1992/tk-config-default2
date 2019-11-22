@@ -102,22 +102,6 @@ keys:
         type: str
         filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
 
-    zbrush.ext:
-        type: str
-        choices:
-            ztl: ztl
-            ZTL: ZTL
-        default: ztl
-        alias: extension
-
-    substance.ext:
-        type: str
-        choices:
-            spp: spp
-            SPP: SPP
-        default: spp
-        alias: extension
-
 paths:
     ingest_folder:                          './REF/CLIENT_VAULT/incoming/{ingestDateFolder}/{asperaFolderName}/{packageName}'
 
