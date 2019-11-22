@@ -165,7 +165,7 @@ keys:
             ZTL: ZTL
         default: ztl
         alias: extension
-    substance_painter.ext:
+    substance.ext:
         type: str
         choices:
             spp: spp
@@ -341,22 +341,22 @@ paths:
     shot_asset_publish_maya_scene:          '@shot_asset_publish_area_scene/@shot_asset_version_name.{maya.ext}'
 
     # ZBRUSH SCENES
-    project_publish_zbrush_scene:             '@project_publish_area_scene/@project_version_name.{zbrush.ext}'
-    sequence_publish_zbrush_scene:            '@sequence_publish_area_scene/@sequence_version_name.{zbrush.ext}'
-    shot_publish_zbrush_scene:                '@shot_publish_area_scene/@shot_version_name.{zbrush.ext}'
+    ingest_project_publish_zbrush_scene:             '@project_publish_area_scene/@project_version_name.{zbrush.ext}'
+    ingest_sequence_publish_zbrush_scene:            '@sequence_publish_area_scene/@sequence_version_name.{zbrush.ext}'
+    ingest_shot_publish_zbrush_scene:                '@shot_publish_area_scene/@shot_version_name.{zbrush.ext}'
 
-    project_asset_publish_zbrush_scene:       '@project_asset_publish_area_scene/@project_asset_version_name.{zbrush.ext}'
-    sequence_asset_publish_zbrush_scene:      '@sequence_asset_publish_area_scene/@sequence_asset_version_name.{zbrush.ext}'
-    shot_asset_publish_zbrush_scene:          '@shot_asset_publish_area_scene/@shot_asset_version_name.{zbrush.ext}'
+    ingest_project_asset_publish_zbrush_scene:       '@project_asset_publish_area_scene/@project_asset_version_name.{zbrush.ext}'
+    ingest_sequence_asset_publish_zbrush_scene:      '@sequence_asset_publish_area_scene/@sequence_asset_version_name.{zbrush.ext}'
+    ingest_shot_asset_publish_zbrush_scene:          '@shot_asset_publish_area_scene/@shot_asset_version_name.{zbrush.ext}'
 
     # SUBSTANCE PAINTER SCENES
-    project_publish_substance_painter_scene:  '@project_publish_area_scene/@project_version_name.{substance_painter.ext}'
-    sequence_publish_substance_painter_scene: '@sequence_publish_area_scene/@sequence_version_name.{substance_painter.ext}'
-    shot_publish_substance_painter_scene:     '@shot_publish_area_scene/@shot_version_name.{substance_painter.ext}'
+    ingest_project_publish_substance_scene:  '@project_publish_area_scene/@project_version_name.{substance.ext}'
+    ingest_sequence_publish_substance_scene: '@sequence_publish_area_scene/@sequence_version_name.{substance.ext}'
+    ingest_shot_publish_substance_scene:     '@shot_publish_area_scene/@shot_version_name.{substance.ext}'
 
-    project_asset_publish_substance_painter_scene:  '@project_asset_publish_area_scene/@project_asset_version_name.{substance_painter.ext}'
-    sequence_asset_publish_substance_painter_scene: '@sequence_asset_publish_area_scene/@sequence_asset_version_name.{substance_painter.ext}'
-    shot_asset_publish_substance_painter_scene:     '@shot_asset_publish_area_scene/@shot_asset_version_name.{substance_painter.ext}'
+    ingest_project_asset_publish_substance_scene:  '@project_asset_publish_area_scene/@project_asset_version_name.{substance.ext}'
+    ingest_sequence_asset_publish_substance_scene: '@sequence_asset_publish_area_scene/@sequence_asset_version_name.{substance.ext}'
+    ingest_shot_asset_publish_substance_scene:     '@shot_asset_publish_area_scene/@shot_asset_version_name.{substance.ext}'
 
     # NUKE SCRIPTS
     project_publish_nuke_script:            '@project_publish_area_script/@project_version_name.nk'
