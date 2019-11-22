@@ -102,6 +102,22 @@ keys:
         type: str
         filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
 
+    zbrush.ext:
+        type: str
+        choices:
+            ztl: ztl
+            ZTL: ZTL
+        default: ztl
+        alias: extension
+
+    substance.ext:
+        type: str
+        choices:
+            spp: spp
+            SPP: SPP
+        default: spp
+        alias: extension
+
 paths:
     ingest_folder:                          './REF/CLIENT_VAULT/incoming/{ingestDateFolder}/{asperaFolderName}/{packageName}'
 
@@ -173,6 +189,24 @@ paths:
     ingest_project_asset_output_scene:      '@project_asset_publish_area_scene/{snapshot_type}/@ingest_project_asset_output_name.{maya.ext}'
     ingest_sequence_asset_output_scene:     '@sequence_asset_publish_area_scene/{snapshot_type}/@ingest_sequence_asset_output_name.{maya.ext}'
     ingest_shot_asset_output_scene:         '@shot_asset_publish_area_scene/{snapshot_type}/@ingest_shot_asset_output_name.{maya.ext}'
+
+    # ZBRUSH
+    ingest_project_output_zbrush_scene:            '@project_publish_area_scene/{snapshot_type}/@ingest_project_output_name.{zbrush.ext}'
+    ingest_sequence_output_zbrush_scene:           '@sequence_publish_area_scene/{snapshot_type}/@ingest_sequence_output_name.{zbrush.ext}'
+    ingest_shot_output_zbrush_scene:               '@shot_publish_area_scene/{snapshot_type}/@ingest_shot_output_name.{zbrush.ext}'
+
+    ingest_project_asset_output_zbrush_scene:      '@project_asset_publish_area_scene/{snapshot_type}/@ingest_project_asset_output_name.{zbrush.ext}'
+    ingest_sequence_asset_output_zbrush_scene:     '@sequence_asset_publish_area_scene/{snapshot_type}/@ingest_sequence_asset_output_name.{zbrush.ext}'
+    ingest_shot_asset_output_zbrush_scene:         '@shot_asset_publish_area_scene/{snapshot_type}/@ingest_shot_asset_output_name.{zbrush.ext}'
+
+    # SUBSTANCE
+    ingest_project_output_substance_scene:         '@project_publish_area_scene/{snapshot_type}/@ingest_project_output_name.{substance.ext}'
+    ingest_sequence_output_substance_scene:        '@sequence_publish_area_scene/{snapshot_type}/@ingest_sequence_output_name.{substance.ext}'
+    ingest_shot_output_substance_scene:            '@shot_publish_area_scene/{snapshot_type}/@ingest_shot_output_name.{substance.ext}'
+
+    ingest_project_asset_output_substance_scene:   '@project_asset_publish_area_scene/{snapshot_type}/@ingest_project_asset_output_name.{substance.ext}'
+    ingest_sequence_asset_output_substance_scene:  '@sequence_asset_publish_area_scene/{snapshot_type}/@ingest_sequence_asset_output_name.{substance.ext}'
+    ingest_shot_asset_output_substance_scene:      '@shot_asset_publish_area_scene/{snapshot_type}/@ingest_shot_asset_output_name.{substance.ext}'
 
     # silhouette
     ingest_project_output_sil_scene:        '@project_publish_area_scene/{snapshot_type}/@ingest_project_output_name.sfx'
