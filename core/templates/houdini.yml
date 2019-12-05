@@ -109,6 +109,15 @@ paths:
     tk-houdini_sequence_asset_work_aov:         '@tk-houdini_sequence_asset_work_area/images/{Step}/@image_subdirs/{aov_name}/@sequence_asset_version_name.{SEQ}.{img.ext}'
     tk-houdini_shot_asset_work_aov:             '@tk-houdini_shot_asset_work_area/images/{Step}/@image_subdirs/{aov_name}/@shot_asset_version_name.{SEQ}.{img.ext}'
 
+    # FLIPBOOKS
+    tk-houdini_project_work_flipbook:            '@tk-houdini_project_work_area/flipbooks/{Step}/{name}/v{version}/@project_version_name.{SEQ}.exr'
+    tk-houdini_sequence_work_flipbook:            '@tk-houdini_sequence_work_area/flipbooks/{Step}/{name}/v{version}/@sequence_version_name.{SEQ}.exr'
+    tk-houdini_shot_work_flipbook:                '@tk-houdini_shot_work_area/flipbooks/{Step}/{name}/v{version}/@shot_version_name.{SEQ}.exr'
+
+    tk-houdini_project_asset_work_flipbook:       '@tk-houdini_project_asset_work_area/flipbooks/{Step}/{name}/v{version}/@project_asset_version_name.{SEQ}.exr'
+    tk-houdini_sequence_asset_work_flipbook:      '@tk-houdini_sequence_asset_work_area/flipbooks/{Step}/{name}/v{version}/@sequence_asset_version_name.{SEQ}.exr'
+    tk-houdini_shot_asset_work_flipbook:          '@tk-houdini_shot_asset_work_area/flipbooks/{Step}/{name}/v{version}/@shot_asset_version_name.{SEQ}.exr'
+
 aliases:
 
     # PUBLISH AREAS
