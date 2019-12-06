@@ -176,8 +176,24 @@ class CustomMayaActions(HookBaseClass):
         if name == "import_without_namespace":
             self._do_import_without_namespace(path, sg_publish_data)
 
-    ##############################################################################################
+    ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
+
+    def rename_file_node(self, sg_publish_data, file_node):
+        """
+        This function would facilitate renaming of a given file_node based on the entity name
+        available in sg_publish_info
+
+        :param sg_publish_data: (dict) Shotgun data dictionary with all the standard publish fields.
+        :param file_node: (uniicode)   File Node that has to be renamed.
+        :return: (uniicode)            New file node name after renaming.
+        """
+        # Fetching the map type name from the file name at the path
+        entity_name = sg_publish_data["entity"]["name"]
+        pub_name = sg_publish_data["name"]
+        file_node_name = "{0}{1}".format(entity_name, pub_name.split(entity_name)[-1])
+        # Renaming the file node created to the map being loaded
+        return cmds.rename(file_node, file_node_name)
 
     def _create_texture_node_with_frames(self, path, sg_publish_data):
         """
@@ -188,6 +204,7 @@ class CustomMayaActions(HookBaseClass):
         :returns:                The newly created file node
         """
 
+        # use mel command instead, since that creates the corresponding place2dtexture node with connections
         # use mel command instead, since that creates the corresponding place2dtexture node with
         # connections
         # file_node = cmds.shadingNode('file', asTexture=True)
@@ -195,31 +212,26 @@ class CustomMayaActions(HookBaseClass):
 
         has_frame_spec, path = self._find_first_frame(path)
         cmds.setAttr("%s.fileTextureName" % file_node, path, type="string")
-
         if has_frame_spec:
             # setting the frame extension flag will create an expression to use
             # the current frame.
             cmds.setAttr("%s.useFrameExtension" % (file_node,), 1)
 
-            # Fetching the map type name from the file name at the path
-            entity_name = sg_publish_data["entity"]["name"]
-            pub_name = sg_publish_data["name"]
-            file_node_name = "{0}{1}".format(entity_name, pub_name.split(entity_name)[-1])
-            # Renaming the file node created to the map being loaded
-            # Overriding the file_node variable to return the newly assigned name
-            file_node = cmds.rename(file_node, file_node_name)
+        # Overriding the file_node variable to return the newly assigned name
+        file_node = self.rename_file_node(sg_publish_data, file_node)
 
         return file_node
 
     def _create_texture_node(self, path, sg_publish_data):
         """
         Create a file texture node for a texture
-        
+
         :param path:             Path to file.
         :param sg_publish_data:  Shotgun data dictionary with all the standard publish fields.
         :returns:                The newly created file node
         """
 
+        # use mel command instead, since that creates the corresponding place2dtexture node with connections
         # use mel command instead, since that creates the corresponding place2dtexture node with
         # connections
         # file_node = cmds.shadingNode('file', asTexture=True)
@@ -230,13 +242,8 @@ class CustomMayaActions(HookBaseClass):
         # use the first frame instead of %04d, else maya errors out with "File Doesn't exist".
         cmds.setAttr("%s.fileTextureName" % file_node, path, type="string")
 
-        # Fetching the map type name from the file name at the path
-        entity_name = sg_publish_data["entity"]["name"]
-        pub_name = sg_publish_data["name"]
-        file_node_name = "{0}{1}".format(entity_name, pub_name.split(entity_name)[-1])
-        # Renaming the file node created to the map being loaded
         # Overriding the file_node variable to return the newly assigned name
-        file_node = cmds.rename(file_node, file_node_name)
+        file_node = self.rename_file_node(sg_publish_data, file_node)
 
         return file_node
 
