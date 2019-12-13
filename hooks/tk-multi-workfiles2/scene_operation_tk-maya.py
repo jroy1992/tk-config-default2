@@ -337,7 +337,7 @@ class SceneOperation(HookClass):
                                      attribute_type="string", lock=True)
 
             # ensure frame/animation ext = name.#.ext
-            self.set_enum_attr("{}.animType".format(node), "Standard", lock=True)
+            self.set_enum_attr("{}.animType".format(node), "Standard")
             self.unlock_and_set_attr("{}.fileNamePadding".format(node),
                                      int(frame_sq_key.format_spec), lock=True)
 
