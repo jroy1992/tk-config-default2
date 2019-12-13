@@ -36,7 +36,7 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         """
         One line display name describing the plugin
         """
-        return "Publish Maya Geometry"
+        return "Publish Maya Geometry based on ModelPublish hierarchy"
 
     @property
     def description(self):
@@ -47,7 +47,7 @@ class MayaPublishGeometryPlugin(HookBaseClass):
 
         return """
         <p>This plugin publishes session geometry for the current session. Any
-        session geometry will be exported to the path defined by this plugin's
+        geometry LOD in the session will be exported to the path defined by this plugin's
         configured "Publish Template" setting. The plugin will fail to validate
         if the "AbcExport" plugin is not enabled or cannot be found.</p>
         """
@@ -74,6 +74,24 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         schema = super(MayaPublishGeometryPlugin, self).settings_schema
         schema["Item Type Filters"]["default_value"] = ["maya.geometry"]
         schema["Item Type Settings"]["default_value"] = MAYA_GEOMETRY_ITEM_TYPE_SETTINGS
+        schema["Export UVs"] = {
+            "type": "bool",
+            "description": "Specifies whether to export the UVs with the alembic",
+            "allows_empty": True,
+            "default_value": True
+        }
+        schema["Export WorldSpace"] = {
+            "type": "bool",
+            "description": "Specifies whether to export the alembic in worldspace",
+            "allows_empty": True,
+            "default_value": False
+        }
+        schema["Strip Namespace"] = {
+            "type": "bool",
+            "description": "Specifies whether to strip the namespace while exporting the alembic",
+            "allows_empty": True,
+            "default_value": False
+        }
         return schema
 
 
@@ -182,6 +200,14 @@ class MayaPublishGeometryPlugin(HookBaseClass):
 
         # Set the root node to be exported
         alembic_args.append("-root %s" % item.properties.fields["node"])
+
+        # Add args based on publish settings
+        if task_settings["Export UVs"].value:
+            alembic_args.append("-uvWrite -writeCreases -writeUVSets")
+        if task_settings["Export WorldSpace"].value:
+            alembic_args.append("-worldSpace")
+        if task_settings["Strip Namespace"].value:
+            alembic_args.append("-stripNamespaces")
 
         # build the export command.  Note, use AbcExport -help in Maya for
         # more detailed Alembic export help
