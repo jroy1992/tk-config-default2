@@ -183,8 +183,6 @@ class MayaPublishGeometryPlugin(HookBaseClass):
             "-renderableOnly",
             # write shading group set assignments (Maya 2015+)
             "-writeFaceSets",
-            # write uv's (only the current uv set gets written)
-            "-uvWrite",
             # apply euler filter to avoid gimbal lock issues
             "-eulerFilter"
         ]
