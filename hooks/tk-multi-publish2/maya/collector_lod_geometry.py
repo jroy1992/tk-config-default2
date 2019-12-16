@@ -50,19 +50,18 @@ class MayaSessionCollector(HookBaseClass):
         """
         geo_items = []
 
-        # Copy the parent session's properties
-        properties = copy.deepcopy(parent_item.properties)
-        properties["fields"].update({"extension": "abc"})
-
         lod_nodes = self._get_lod_nodes(parent_item)
         for lod_node in lod_nodes:
+            # Copy the parent session's properties
+            properties = copy.deepcopy(parent_item.properties)
+            properties["fields"].update({"extension": "abc"})
+
             properties["fields"].update({"node": lod_node})
             geo_item = self._add_item(settings,
                                       parent_item,
                                       "Geometry: {}".format(lod_node),
                                       "maya.geometry",
                                       properties=properties)
-
             self.logger.info("Collected item: %s" % geo_item.name)
 
             geo_items.append(geo_item)
