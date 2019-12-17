@@ -105,7 +105,7 @@ keys:
     # used for nuke retime script
     ingestRetimeName:
         type: str
-        filter_by: '^(\w+_rt)$'
+        filter_by: '^([a-zA-Z]\w+_rt)$'
         alias: name
 paths:
     ingest_folder:                          './REF/CLIENT_VAULT/incoming/{ingestDateFolder}/{asperaFolderName}/{packageName}'
