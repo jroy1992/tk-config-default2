@@ -270,9 +270,9 @@ class SceneOperation(HookClass):
         """
         render_path = placeholder_render_path.replace(LAYER_PLACEHOLDER, "<RenderLayer>")
         # set resolution
-        self.unlock_and_set_attr("defaultResolution.aspectLock", False, lock=True)
-        self.unlock_and_set_attr("defaultResolution.width", fields["width"], lock=True)
-        self.unlock_and_set_attr("defaultResolution.height", fields["height"], lock=True)
+        self.unlock_and_set_attr("defaultResolution.aspectLock", False)
+        self.unlock_and_set_attr("defaultResolution.width", fields["width"])
+        self.unlock_and_set_attr("defaultResolution.height", fields["height"])
 
         prefix, ext = self.split_prefix_ext(render_path, frame_sq_key)
 
@@ -328,9 +328,9 @@ class SceneOperation(HookClass):
 
         for node in vray_nodes:
             # set resolution
-            self.unlock_and_set_attr("{}.aspectLock".format(node), False, lock=True)
-            self.unlock_and_set_attr("{}.width".format(node), fields["width"], lock=True)
-            self.unlock_and_set_attr("{}.height".format(node), fields["height"], lock=True)
+            self.unlock_and_set_attr("{}.aspectLock".format(node), False)
+            self.unlock_and_set_attr("{}.width".format(node), fields["width"])
+            self.unlock_and_set_attr("{}.height".format(node), fields["height"])
 
             prefix, ext = self.split_prefix_ext(render_path, frame_sq_key)
 
@@ -340,7 +340,7 @@ class SceneOperation(HookClass):
                                      attribute_type="string", lock=True)
 
             # ensure frame/animation ext = name.#.ext
-            self.set_enum_attr("{}.animType".format(node), "Standard", lock=True)
+            self.set_enum_attr("{}.animType".format(node), "Standard")
             self.unlock_and_set_attr("{}.fileNamePadding".format(node),
                                      int(frame_sq_key.format_spec), lock=True)
 
@@ -376,7 +376,7 @@ class SceneOperation(HookClass):
                                          attribute_type="string", lock=True)
                 # apply default settings
                 self.unlock_and_set_attr("{}.ai_translator".format(node), ext,
-                                         attribute_type="string", lock=True)
+                                         attribute_type="string")
                 if ext == "exr":
                     # if not exr, assume other settings are specified as overrides
                     exr_compression = enum_overrides.get('exrCompression', 'dwaa')
@@ -385,7 +385,7 @@ class SceneOperation(HookClass):
                 self.unlock_and_set_attr("{}.prefix".format(node),
                                          prefix.replace(LAYER_PLACEHOLDER, "<RenderLayer>Deep"),
                                          attribute_type="string", lock=True)
-            self.unlock_and_set_attr("{}.mergeAOVs".format(node), True, lock=True)
+            self.unlock_and_set_attr("{}.mergeAOVs".format(node), True)
             self.unlock_and_set_attr("{}.tiled".format(node), False, lock=True)
 
             # apply overrides from prefs
