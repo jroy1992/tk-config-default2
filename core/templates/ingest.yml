@@ -102,6 +102,11 @@ keys:
         type: str
         filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
 
+    # used for nuke retime script
+    ingestRetimeName:
+        type: str
+        filter_by: '^([a-zA-Z]\w+_rt)$'
+        alias: name
 paths:
     ingest_folder:                          './REF/CLIENT_VAULT/incoming/{ingestDateFolder}/{asperaFolderName}/{packageName}'
 
@@ -384,3 +389,12 @@ strings:
     ingest_shot_movie:                      '@ingest_shot_input_name.mov'
     ingest_sequence_movie:                  '@ingest_sequence_input_name.mov'
     ingest_project_movie:                   '@ingest_project_input_name.mov'
+
+    # strings for parsing retime nuke scripts
+    ingest_shot_input_name_retime:          '{ingestShot}_{ingestRetimeName}_v{ingestVersion}'
+    ingest_sequence_input_name_retime:      '{ingestSequence}_{ingestRetimeName}_v{ingestVersion}'
+    ingest_project_input_name_retime:       '{ingestStep}_{ingestRetimeName}_v{ingestVersion}'
+
+    ingest_shot_script_retime:              '@ingest_shot_input_name_retime.nk'
+    ingest_sequence_script_retime:          '@ingest_sequence_input_name_retime.nk'
+    ingest_project_script_retime:           '@ingest_project_input_name_retime.nk'
