@@ -149,6 +149,7 @@ keys:
             dds: dds
             rat: rat
             png: png
+            exr: exr
         default: tiff
         alias: extension
     cdl.ext:
@@ -452,6 +453,15 @@ paths:
     project_asset_publish_texture:          '@project_asset_publish_area_texture/@texture_subdirs/@project_asset_version_name[.{UDIM}].{tex.ext}'
     sequence_asset_publish_texture:         '@sequence_asset_publish_area_texture/@texture_subdirs/@sequence_asset_version_name[.{UDIM}].{tex.ext}'
     shot_asset_publish_texture:             '@shot_asset_publish_area_texture/@texture_subdirs/@shot_asset_version_name[.{UDIM}].{tex.ext}'
+
+    # MIPMAPS
+    project_publish_mipmap:                 '@project_publish_area_texture/@texture_subdirs/mipmaps/@project_version_name[.{UDIM}].{tex.ext}'
+    sequence_publish_mipmap:                '@sequence_publish_area_texture/@texture_subdirs/mipmaps/@sequence_version_name[.{UDIM}].{tex.ext}'
+    shot_publish_mipmap:                    '@shot_publish_area_texture/@texture_subdirs/mipmaps/@shot_version_name[.{UDIM}].{tex.ext}'
+
+    project_asset_publish_mipmap:           '@project_asset_publish_area_texture/@texture_subdirs/mipmaps/@project_asset_version_name[.{UDIM}].{tex.ext}'
+    sequence_asset_publish_mipmap:          '@sequence_asset_publish_area_texture/@texture_subdirs/mipmaps/@sequence_asset_version_name[.{UDIM}].{tex.ext}'
+    shot_asset_publish_mipmap:              '@shot_asset_publish_area_texture/@texture_subdirs/mipmaps/@shot_asset_version_name[.{UDIM}].{tex.ext}'
 
     # 3DEQUALIZER FILES
     project_publish_3de_file:               '@project_publish_area_3de/project/@project_version_name.3de'
