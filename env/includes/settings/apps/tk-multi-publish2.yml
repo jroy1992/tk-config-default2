@@ -38,7 +38,7 @@ settings.tk-multi-publish2.mari.collector:              '@settings.tk-multi-publ
 settings.tk-multi-publish2.mari.publish_files:          '@settings.tk-multi-publish2.basic.publish_files'
 settings.tk-multi-publish2.mari.publish_session:        '@settings.tk-multi-publish2.basic.publish_session:{self}/mari/publish_session.py'
 settings.tk-multi-publish2.mari.publish_textures:       '@settings.tk-multi-publish2.publish:{self}/mari/publish_textures.py'
-settings.tk-multi-publish2.mari.publish_mipmaps:        '@settings.tk-multi-publish2.publish:{self}/mari/publish_mipmaps.py'
+settings.tk-multi-publish2.mari.publish_mipmaps:        '@settings.tk-multi-publish2.publish:{self}/mari/publish_textures.py:{self}/mari/publish_mipmaps.py'
 settings.tk-multi-publish2.mari.create_version:         '@settings.tk-multi-publish2.basic.create_version'
 settings.tk-multi-publish2.mari.upload_version:         '@settings.tk-multi-publish2.basic.upload_version'
 
