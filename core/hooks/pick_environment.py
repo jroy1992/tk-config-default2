@@ -45,6 +45,8 @@ class PickEnvironment(HookBaseClass):
                 return "sequence"
             elif entity_type == "Shot":
                 return "shot"
+            elif entity_type == "Project":
+                return "project"
             else:
                 addl_entity_types = [x["type"] for x in context.additional_entities]
                 if "Shot" in addl_entity_types:
