@@ -56,7 +56,6 @@ DEFAULT_MANIFEST_SG_MAPPINGS = {
 
 # This is a dictionary of note_type values to item type.
 DEFAULT_NOTE_TYPES_MAPPINGS = {
-    None: "kickoff",
     "kickoff": "kickoff",
     "role supervisor": "annotation",
     "dailies": "annotation",
@@ -67,8 +66,10 @@ DEFAULT_SNAPSHOT_TYPE = "ingest"
 
 # This is a dictionary of note_type values to their access keys in the fields dict.
 DEFAULT_NOTE_TYPES_ACCESS_FALLBACKS = {
-    "kickoff": [["original_name"], ["sg_version", "name"]],
-    "annotation": [["original_name"], ["sg_version", "name"]]
+    "kickoff": [["sg_version", "name"], ["ingest_note_links", "Version", "original_name"],
+                ["ingest_note_links", "Version", "name"]],
+    "annotation": [["sg_version", "name"], ["ingest_note_links", "Version", "original_name"],
+                   ["ingest_note_links", "Version", "name"]]
 }
 
 
@@ -372,52 +373,64 @@ class IngestCollectorPlugin(HookBaseClass):
         work_path_template = None
 
         for note_type_acess_keys in note_type_acess_fallbacks[note_type]:
-            path = reduce(operator.getitem, note_type_acess_keys, fields) + ".%s" % note_type
-            display_name = path + ".notes"
-
-            item_type = "notes.entity.%s" % note_type
-
-            relevant_item_settings = raw_item_settings[item_type]
-            raw_template_name = relevant_item_settings.get("work_path_template")
-            envs = self.parent.sgtk.pipeline_configuration.get_environments()
-
-            template_names_per_env = [
-                sgtk.platform.resolve_setting_expression(raw_template_name,
-                                                         self.parent.engine.instance_name,
-                                                         env_name) for env_name in envs
-            ]
-
-            templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
-                                 template_names_per_env if self.parent.get_template_by_name(template_name)]
-            for template in templates_per_env:
-                try:
-                    template.get_fields(path)
-                    # we have a match!
-                    work_path_template = template.name
-                except:
-                    # it errored out
-                    continue
-
-            if work_path_template:
-                # calculate the context and give to the item
-                context = self._get_item_context_from_path(work_path_template, path, parent_item)
-
-                file_item = self._add_file_item(settings, parent_item, path, item_name=display_name,
-                                                item_type=item_type, context=context)
-
-                # we found the template match in one of the fallbacks, break-out
-                return file_item
-            else:
-                self.logger.warning("No matching template found for %s with raw template %s" % (path,
-                                                                                                raw_template_name),
+            try:
+                path = reduce(operator.getitem, note_type_acess_keys, fields) + ".%s" % note_type
+                display_name = path + ".notes"
+            except Exception:
+                self.logger.warning("Unable to resolve a path using keys.",
                                     extra={
                                         "action_show_more_info": {
-                                            "label": "Show Fields",
-                                            "tooltip": "Show the fields used.",
-                                            "text": note_type_acess_keys
+                                            "label": "Show Keys",
+                                            "tooltip": "Show the access keys used.",
+                                            "text": "Keys: %s\nError: %s" % (note_type_acess_keys,
+                                                                             traceback.format_exc())
                                         }
                                     })
-                return
+                continue
+            else:
+                item_type = "notes.entity.%s" % note_type
+
+                relevant_item_settings = raw_item_settings[item_type]
+                raw_template_name = relevant_item_settings.get("work_path_template")
+                envs = self.parent.sgtk.pipeline_configuration.get_environments()
+
+                template_names_per_env = [
+                    sgtk.platform.resolve_setting_expression(raw_template_name,
+                                                             self.parent.engine.instance_name,
+                                                             env_name) for env_name in envs
+                ]
+
+                templates_per_env = [self.parent.get_template_by_name(template_name) for template_name in
+                                     template_names_per_env if self.parent.get_template_by_name(template_name)]
+                for template in templates_per_env:
+                    try:
+                        template.get_fields(path)
+                        # we have a match!
+                        work_path_template = template.name
+                    except:
+                        # it errored out
+                        continue
+
+                if work_path_template:
+                    # calculate the context and give to the item
+                    context = self._get_item_context_from_path(work_path_template, path, parent_item)
+
+                    file_item = self._add_file_item(settings, parent_item, path, item_name=display_name,
+                                                    item_type=item_type, context=context)
+
+                    # we found the template match in one of the fallbacks, break-out
+                    return file_item
+                else:
+                    self.logger.warning("No matching template found for %s with raw template %s" % (path,
+                                                                                                    raw_template_name),
+                                        extra={
+                                            "action_show_more_info": {
+                                                "label": "Show Fields",
+                                                "tooltip": "Show the fields used.",
+                                                "text": note_type_acess_keys
+                                            }
+                                        })
+                    continue
 
     def process_file(self, settings, parent_item, path):
         """
@@ -654,15 +667,27 @@ class IngestCollectorPlugin(HookBaseClass):
             data["fields"] = {note_manifest_mappings[k] if k in note_manifest_mappings else k: v
                               for k, v in note.iteritems()}
 
-            # every note item has a corresponding snapshot and version associated with it
-            if notes_index >= len(snapshots) or notes_index >= len(versions):
-                break
+            # special case handling for note links, this is a list of entities
+            # it will converted to a dict in ingest_note_links <link["type"]>: link
+            # this is to facilitate easier access using nested keys of a dict
+            if "note_links" in note:
+                data["fields"]["ingest_note_links"] = dict()
+                for note_link in note["note_links"]:
+                    data["fields"]["ingest_note_links"][note_link["type"]] = note_link
 
-            note_snapshot = snapshots[notes_index]
-            note_version = versions[notes_index]
+            # every note item might not have a corresponding snapshot and version associated with it
+            # in that case don't pick out the fields from snapshot and version
+            # notes are for most cases self contained and leaking into snapshot, version shouldn't be required
+            if notes_index >= len(snapshots) or notes_index >= len(versions):
+                note_snapshot = dict()
+                note_version = dict()
+            else:
+                note_snapshot = snapshots[notes_index]
+                note_version = versions[notes_index]
 
             # pop the notes from version_data they are already stored
-            note_version.pop("notes")
+            if "notes" in note_version:
+                note_version.pop("notes")
 
             version_manifest_mappings = note_item_manifest_mappings["versions"]
             version_data["fields"] = {version_manifest_mappings[k] if k in version_manifest_mappings else k: v
@@ -677,7 +702,8 @@ class IngestCollectorPlugin(HookBaseClass):
                                        for k, v in note_snapshot.iteritems()}
 
             # pop the files from snapshot_data they are not useful
-            snapshot_data["fields"].pop("file_types")
+            if "file_types" in note_snapshot:
+                snapshot_data["fields"].pop("file_types")
 
             # update the item fields with snapshot_data fields
             data["fields"].update(snapshot_data["fields"])
