@@ -172,21 +172,26 @@ class MayaPublishSessionModelPlugin(HookBaseClass):
         if not path:
             raise KeyError("Base class implementation of publish_files() method requires a 'path' property.")
 
-        # Save to publish path
-        self.cleanup_file(item)
-        self._save_session(publish_path, item.properties.get("publish_version"), item)
+        deleted_objects = self.cleanup_file(item)
 
-        # Determine if we should seal the copied files or not
-        seal_files = item.properties.get("seal_files", False)
-        if seal_files:
-            filesystem.seal_file(publish_path)
+        if deleted_objects:
+            # Save to publish path
+            self._save_session(publish_path, item.properties.get("publish_version"), item)
 
-        # Reopen work file and reset item property path, context
-        cmds.file(new=True, force=True)
-        cmds.file(path, open=True, force=True)
+            # Determine if we should seal the copied files or not
+            seal_files = item.properties.get("seal_files", False)
+            if seal_files:
+                filesystem.seal_file(publish_path)
 
-        item.properties.path = path
-        self.parent.engine.change_context(item.context)
+            # Reopen work file and reset item property path, context
+            cmds.file(new=True, force=True)
+            cmds.file(path, open=True, force=True)
+
+            item.properties.path = path
+            self.parent.engine.change_context(item.context)
+        else:
+            # if nothing is cleaned up, use the copy method to avoid file reopening
+            super(MayaPublishSessionModelPlugin, self).publish_files(task_settings, item, publish_path)
 
     def cleanup_file(self, item):
         # delete any item in outliner not named "assetname"
@@ -196,3 +201,5 @@ class MayaPublishSessionModelPlugin(HookBaseClass):
 
         self.logger.debug("Attempting to delete: {}".format(toplevel_objects))
         cmds.delete(toplevel_objects)
+        toplevel_objects_post_delete = cmds.ls(assemblies=True)
+        return set(toplevel_objects) - set(toplevel_objects_post_delete)
