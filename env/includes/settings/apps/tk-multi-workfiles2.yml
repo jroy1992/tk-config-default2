@@ -146,12 +146,14 @@ settings.tk-multi-workfiles2.nukestudio.task:
   file_extensions: ['hrox']
   entities: '@settings.tk-multi-workfiles2.entities.nukestudio'
   my_tasks_extra_display_fields: []
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_tk-nuke.py'
 
 settings.tk-multi-workfiles2.nukestudio:
   <<: *default_workfiles2_settings
   file_extensions: ['hrox']
   entities: '@settings.tk-multi-workfiles2.entities.nukestudio'
   my_tasks_extra_display_fields: []
+  hook_scene_operation: '{config}/tk-multi-workfiles2/task_operations_base.py:{config}/tk-multi-workfiles2/scene_operation_tk-nuke.py'
 
 # silhouette task
 settings.tk-multi-workfiles2.silhouette.task:
