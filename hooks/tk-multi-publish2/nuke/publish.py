@@ -404,10 +404,11 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                 display_files.display_ui()
                 if sg_data:
                     failed_replace = []
+                    # This is in case the user closes the UI without running "Replace user files with published files"
                     for path in suspicious_paths['unpublished']:
                         node_name = visited_files[path][0]
                         node = nuke.toNode(node_name)
-                        # This is in case the user closes the UI without running "Replace user files with published files"
+                        # Check if the file on node now is same as when initially collected during graph traversal
                         if node.knob('file').value() == path:
                             failed_replace.append(path)
                 else:
