@@ -117,6 +117,7 @@ keys:
             exr: exr
             jpg: jpeg
             tiff: tiff
+            tif: tif
             png: png
             dpx: dpx
         default: exr
