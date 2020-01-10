@@ -6,8 +6,9 @@ keys:
             exr: exr
             dpx: dpx
             jpg: jpeg
-            png: png
             tiff: tiff
+            tif: tif
+            png: png
         default: exr
         alias: extension
 

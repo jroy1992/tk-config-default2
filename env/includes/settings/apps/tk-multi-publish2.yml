@@ -139,6 +139,7 @@ settings.tk-multi-publish2.silhouette:
 # Ingest
 settings.tk-multi-publish2.ingest:
   display_name: 'Ingest'
+  display_host_name: True
   collector: '@settings.tk-multi-publish2.ingest.collector'
   collector_settings: '@settings.tk-multi-publish2.ingest.collector.settings'
   path_info: '@settings.tk-multi-publish2.path_info'
