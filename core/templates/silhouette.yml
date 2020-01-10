@@ -62,6 +62,15 @@ paths:
     tk-silhouette_sequence_asset_shake_export:  '@tk-silhouette_sequence_asset_work_export_area/@geom_subdirs/@sequence_asset_version_name.ssf'
     tk-silhouette_shot_asset_shake_export:      '@tk-silhouette_shot_asset_work_export_area/@geom_subdirs/@shot_asset_version_name.ssf'
 
+    # RENDERS
+    tk-silhouette_project_work_render:          '@tk-silhouette_project_work_area/images/{Step}/@image_subdirs/@project_version_name.{SEQ}.{img.ext}'
+    tk-silhouette_sequence_work_render:         '@tk-silhouette_sequence_work_area/images/{Step}/@image_subdirs/@sequence_version_name.{SEQ}.{img.ext}'
+    tk-silhouette_shot_work_render:             '@tk-silhouette_shot_work_area/images/{Step}/@image_subdirs/@shot_version_name.{SEQ}.{img.ext}'
+
+    tk-silhouette_project_asset_work_render:    '@tk-silhouette_project_asset_work_area/images/{Step}/@image_subdirs/@project_asset_version_name.{SEQ}.{img.ext}'
+    tk-silhouette_sequence_asset_work_render:   '@tk-silhouette_sequence_asset_work_area/images/{Step}/@image_subdirs/@sequence_asset_version_name.{SEQ}.{img.ext}'
+    tk-silhouette_shot_asset_work_render:       '@tk-silhouette_shot_asset_work_area/images/{Step}/@image_subdirs/@shot_asset_version_name.{SEQ}.{img.ext}'
+
 aliases:
 
     # PUBLISH AREAS
