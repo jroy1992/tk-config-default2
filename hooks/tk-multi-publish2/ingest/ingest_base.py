@@ -36,7 +36,8 @@ class IngestBasePlugin(HookBaseClass):
             "step": step_entity,
             "project": item.context.project,
             "entity": item.context.entity if item.context.entity else item.context.project,
-            "content": "Vendor"
+            "content": "Vendor",
+            "sg_status_list": "na"
         }
 
         # create the task
