@@ -927,7 +927,8 @@ class IngestCollectorPlugin(HookBaseClass):
                         "step": step_entity,
                         "project": context.project,
                         "entity": context.entity,
-                        "content": content
+                        "content": content,
+                        "sg_status_list": "na"
                     }
 
                     task_entity = self.sgtk.shotgun.create("Task", data, return_fields=task_fields)
@@ -943,9 +944,9 @@ class IngestCollectorPlugin(HookBaseClass):
                                           })
 
                 if task_entity:
-                    # try to clear the status of the task entity.
+                    # try to set the status of the task entity to na
                     try:
-                        self.sgtk.shotgun.update("Task", task_entity["id"], {"sg_status_list": None})
+                        self.sgtk.shotgun.update("Task", task_entity["id"], {"sg_status_list": "na"})
                     except:
                         pass
 
