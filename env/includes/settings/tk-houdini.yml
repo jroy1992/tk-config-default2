@@ -27,6 +27,7 @@ includes:
 - ./apps/tk-houdini-mantranode.yml
 - ./apps/tk-multi-setframerange.yml
 - ./apps/tk-multi-timelogger.yml
+- ./apps/tk-houdini-arnoldnode.yml
 
 ################################################################################
 
@@ -92,6 +93,7 @@ settings.tk-houdini.shot:
     tk-houdini-geometrynode: "@settings.tk-houdini-geometrynode"
     tk-houdini-mantranode: "@settings.tk-houdini-mantranode"
     tk-multi-timelogger: "@settings.tk-multi-timelogger"
+    tk-houdini-arnoldnode: "@settings.tk-houdini-arnoldnode"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   - {app_instance: tk-multi-snapshot, name: Snapshot...}
