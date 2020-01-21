@@ -41,7 +41,12 @@ settings.tk-multi-loader2.entities: &loader2_entities
       - [project, is, '{context.project}']
       - [task_assignees, is, '{context.user}']
     hierarchy: [entity, content]
-
+  - caption: DDI LIBRARY
+    type: Query
+    entity_type: Element
+    filters:
+      - ['project.Project.name', 'is', 'DDILIBRARY']
+    hierarchy: [code]
 
 # 3dequalizer
 settings.tk-multi-loader2.3dequalizer:
