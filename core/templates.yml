@@ -167,13 +167,6 @@ keys:
             ZTL: ZTL
         default: ztl
         alias: extension
-    substance.ext:
-        type: str
-        choices:
-            spp: spp
-            SPP: SPP
-        default: spp
-        alias: extension
 
     # Hook-modified keys (camelCase)
     customKeyExample:
@@ -253,6 +246,7 @@ paths:
     project_publish_area_script:            '@project_publish_area/SCRIPT/{Step}'
     project_publish_area_project:           '@project_publish_area/PROJECT/{Step}'
     project_publish_area_sfx:               '@project_publish_area/SILHOUETTE/{Step}'
+    project_publish_area_substance:         '@project_publish_area/SUBSTANCE/{Step}'
     project_publish_area_texture:           '@project_publish_area/TEXTURE/{Step}'
 
     sequence_publish_area_3de:              '@sequence_publish_area/EQUALIZER/{Step}'
@@ -265,6 +259,7 @@ paths:
     sequence_publish_area_script:           '@sequence_publish_area/SCRIPT/{Step}'
     sequence_publish_area_project:          '@sequence_publish_area/PROJECT/{Step}'
     sequence_publish_area_sfx:              '@sequence_publish_area/SILHOUETTE/{Step}'
+    sequence_publish_area_substance:        '@sequence_publish_area/SUBSTANCE/{Step}'
     sequence_publish_area_texture:          '@sequence_publish_area/TEXTURE/{Step}'
 
     shot_publish_area_3de:                  '@shot_publish_area/EQUALIZER/{Step}'
@@ -277,6 +272,7 @@ paths:
     shot_publish_area_script:               '@shot_publish_area/SCRIPT/{Step}'
     shot_publish_area_project:              '@shot_publish_area/PROJECT/{Step}'
     shot_publish_area_sfx:                  '@shot_publish_area/SILHOUETTE/{Step}'
+    shot_publish_area_substance:            '@shot_publish_area/SUBSTANCE/{Step}'
     shot_publish_area_texture:              '@shot_publish_area/TEXTURE/{Step}'
 
 
@@ -290,6 +286,7 @@ paths:
     project_asset_publish_area_scene:       '@project_publish_area_scene/{AssetType}/{Asset}'
     project_asset_publish_area_script:      '@project_publish_area_script/{AssetType}/{Asset}'
     project_asset_publish_area_sfx:         '@project_publish_area_sfx/{AssetType}/{Asset}'
+    project_asset_publish_area_substance:   '@project_publish_area_substance/{AssetType}/{Asset}'
     project_asset_publish_area_texture:     '@project_publish_area_texture/{AssetType}/{Asset}'
 
     sequence_asset_publish_area_3de:        '@sequence_publish_area_3de/{AssetType}/{Asset}'
@@ -301,6 +298,7 @@ paths:
     sequence_asset_publish_area_scene:      '@sequence_publish_area_scene/{AssetType}/{Asset}'
     sequence_asset_publish_area_script:     '@sequence_publish_area_script/{AssetType}/{Asset}'
     sequence_asset_publish_area_sfx:        '@sequence_publish_area_sfx/{AssetType}/{Asset}'
+    sequence_asset_publish_area_substance:  '@sequence_publish_area_substance/{AssetType}/{Asset}'
     sequence_asset_publish_area_texture:    '@sequence_publish_area_texture/{AssetType}/{Asset}'
 
     shot_asset_publish_area_3de:            '@shot_publish_area_3de/{AssetType}/{Asset}'
@@ -312,6 +310,7 @@ paths:
     shot_asset_publish_area_scene:          '@shot_publish_area_scene/{AssetType}/{Asset}'
     shot_asset_publish_area_script:         '@shot_publish_area_script/{AssetType}/{Asset}'
     shot_asset_publish_area_sfx:            '@shot_publish_area_sfx/{AssetType}/{Asset}'
+    shot_asset_publish_area_substance:      '@shot_publish_area_substance/{AssetType}/{Asset}'
     shot_asset_publish_area_texture:        '@shot_publish_area_texture/{AssetType}/{Asset}'
 
 
@@ -469,54 +468,64 @@ paths:
     sequence_publish_3de_file:              '@sequence_publish_area_3de/project/@sequence_version_name.3de'
     shot_publish_3de_file:                  '@shot_publish_area_3de/project/@shot_version_name.3de'
 
-    project_asset_publish_3de_file:         '@project_asset_publish_area_3de/project/@project_version_name.3de'
-    sequence_asset_publish_3de_file:        '@sequence_asset_publish_area_3de/project/@sequence_version_name.3de'
-    shot_asset_publish_3de_file:            '@shot_asset_publish_area_3de/project/@shot_version_name.3de'
+    project_asset_publish_3de_file:         '@project_asset_publish_area_3de/project/@project_asset_version_name.3de'
+    sequence_asset_publish_3de_file:        '@sequence_asset_publish_area_3de/project/@sequence_asset_version_name.3de'
+    shot_asset_publish_3de_file:            '@shot_asset_publish_area_3de/project/@shot_asset_version_name.3de'
 
     # 3DEQUALIZER MEL EXPORT
     project_publish_mel_file:               '@project_publish_area_3de/mel/@project_version_name.mel'
     sequence_publish_mel_file:              '@sequence_publish_area_3de/mel/@sequence_version_name.mel'
     shot_publish_mel_file:                  '@shot_publish_area_3de/mel/@shot_version_name.mel'
 
-    project_asset_publish_mel_file:         '@project_asset_publish_area_3de/mel/@project_version_name.mel'
-    sequence_asset_publish_mel_file:        '@sequence_asset_publish_area_3de/mel/@sequence_version_name.mel'
-    shot_asset_publish_mel_file:            '@shot_asset_publish_area_3de/mel/@shot_version_name.mel'
+    project_asset_publish_mel_file:         '@project_asset_publish_area_3de/mel/@project_asset_version_name.mel'
+    sequence_asset_publish_mel_file:        '@sequence_asset_publish_area_3de/mel/@sequence_asset_version_name.mel'
+    shot_asset_publish_mel_file:            '@shot_asset_publish_area_3de/mel/@shot_asset_version_name.mel'
 
     # 3DEQUALIZER LENS EXPORT
     project_publish_nuke_lens:              '@project_publish_area_3de/lens/@project_version_name.nk'
     sequence_publish_nuke_lens:             '@sequence_publish_area_3de/lens/@sequence_version_name.nk'
     shot_publish_nuke_lens:                 '@shot_publish_area_3de/lens/@shot_version_name.nk'
 
-    project_asset_publish_nuke_lens:        '@project_asset_publish_area_3de/lens/@project_version_name.nk'
-    sequence_asset_publish_nuke_lens:       '@sequence_asset_publish_area_3de/lens/@sequence_version_name.nk'
-    shot_asset_publish_nuke_lens:           '@shot_asset_publish_area_3de/lens/@shot_version_name.nk'
+    project_asset_publish_nuke_lens:        '@project_asset_publish_area_3de/lens/@project_asset_version_name.nk'
+    sequence_asset_publish_nuke_lens:       '@sequence_asset_publish_area_3de/lens/@sequence_asset_version_name.nk'
+    shot_asset_publish_nuke_lens:           '@shot_asset_publish_area_3de/lens/@shot_asset_version_name.nk'
     
     # SILHOUETTE PROJECTS
     project_publish_sfx_project:            '@project_publish_area_sfx/@project_version_name.sfx/@project_version_name.sfx'
     sequence_publish_sfx_project:           '@sequence_publish_area_sfx/@sequence_version_name.sfx/@sequence_version_name.sfx'
     shot_publish_sfx_project:               '@shot_publish_area_sfx/@shot_version_name.sfx/@shot_version_name.sfx'
 
-    project_asset_publish_sfx_project:      '@project_asset_publish_area_sfx/@project_version_name.sfx/@project_version_name.sfx'
-    sequence_asset_publish_sfx_project:     '@sequence_asset_publish_area_sfx/@sequence_version_name.sfx/@sequence_version_name.sfx'
-    shot_asset_publish_sfx_project:         '@shot_asset_publish_area_sfx/@shot_version_name.sfx/@shot_version_name.sfx'
+    project_asset_publish_sfx_project:      '@project_asset_publish_area_sfx/@project_version_name.sfx/@project_asset_version_name.sfx'
+    sequence_asset_publish_sfx_project:     '@sequence_asset_publish_area_sfx/@sequence_version_name.sfx/@sequence_asset_version_name.sfx'
+    shot_asset_publish_sfx_project:         '@shot_asset_publish_area_sfx/@shot_version_name.sfx/@shot_asset_version_name.sfx'
 
     # SILHOUETTE NUKE SHAPE EXPORTS
     project_publish_nuke_shape:             '@project_publish_area_sfx/shape/@geom_subdirs/@project_version_name.nk'
     sequence_publish_nuke_shape:            '@sequence_publish_area_sfx/shape/@geom_subdirs/@sequence_version_name.nk'
     shot_publish_nuke_shape:                '@shot_publish_area_sfx/shape/@geom_subdirs/@shot_version_name.nk'
 
-    project_asset_publish_nuke_shape:       '@project_asset_publish_area_sfx/shape/@geom_subdirs/@project_version_name.nk'
-    sequence_asset_publish_nuke_shape:      '@sequence_asset_publish_area_sfx/shape/@geom_subdirs/@sequence_version_name.nk'
-    shot_asset_publish_nuke_shape:          '@shot_asset_publish_area_sfx/shape/@geom_subdirs/@shot_version_name.nk'
+    project_asset_publish_nuke_shape:       '@project_asset_publish_area_sfx/shape/@geom_subdirs/@project_asset_version_name.nk'
+    sequence_asset_publish_nuke_shape:      '@sequence_asset_publish_area_sfx/shape/@geom_subdirs/@sequence_asset_version_name.nk'
+    shot_asset_publish_nuke_shape:          '@shot_asset_publish_area_sfx/shape/@geom_subdirs/@shot_asset_version_name.nk'
     
     # SILHOUETTE SHAKE SHAPE EXPORTS
     project_publish_shake_shape:            '@project_publish_area_sfx/shape/@geom_subdirs/@project_version_name.ssf'
     sequence_publish_shake_shape:           '@sequence_publish_area_sfx/shape/@geom_subdirs/@sequence_version_name.ssf'
     shot_publish_shake_shape:               '@shot_publish_area_sfx/shape/@geom_subdirs/@shot_version_name.ssf'
 
-    project_asset_publish_shake_shape:      '@project_asset_publish_area_sfx/shape/@geom_subdirs/@project_version_name.ssf'
-    sequence_asset_publish_shake_shape:     '@sequence_asset_publish_area_sfx/shape/@geom_subdirs/@sequence_version_name.ssf'
-    shot_asset_publish_shake_shape:         '@shot_asset_publish_area_sfx/shape/@geom_subdirs/@shot_version_name.ssf'
+    project_asset_publish_shake_shape:      '@project_asset_publish_area_sfx/shape/@geom_subdirs/@project_asset_version_name.ssf'
+    sequence_asset_publish_shake_shape:     '@sequence_asset_publish_area_sfx/shape/@geom_subdirs/@sequence_asset_version_name.ssf'
+    shot_asset_publish_shake_shape:         '@shot_asset_publish_area_sfx/shape/@geom_subdirs/@shot_asset_version_name.ssf'
+
+    # SUBSTANCE PAINTER PROJECT
+    project_publish_substancepainter_project:        '@project_publish_area_substance/@geom_subdirs/@project_version_name.spp'
+    sequence_publish_substancepainter_project:       '@sequence_publish_area_substance/@geom_subdirs/@sequence_version_name.spp'
+    shot_publish_substancepainter_project:           '@shot_publish_area_substance/@geom_subdirs/@shot_version_name.spp'
+
+    project_asset_publish_substancepainter_project:  '@project_asset_publish_area_substance/@geom_subdirs/@project_asset_version_name.spp'
+    sequence_asset_publish_substancepainter_project: '@sequence_asset_publish_area_substance/@geom_subdirs/@sequence_asset_version_name.spp'
+    shot_asset_publish_substancepainter_project:     '@shot_asset_publish_area_substance/@geom_subdirs/@shot_asset_version_name.spp'
+
     
     # REVIEW SUBMISSION
     reviewsubmission_burnin_nuke_file:      '@project_publish_area/etc/reviewsubmit_presets/burnin.nk'
