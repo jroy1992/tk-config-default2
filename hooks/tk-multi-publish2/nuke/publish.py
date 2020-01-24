@@ -369,8 +369,8 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         show_path = os.path.join(os.environ['DD_SHOWS_ROOT'], os.environ['DD_SHOW'])
         valid_paths = {
             'dd_library': os.path.join(os.environ['DD_ROOT'], 'library', '**'),  # dd library path
-            'show': show_path,
-            'show_pub': os.path.join(show_path, '**', 'SHARED', '*'),  # show published glob
+            'shot_pub': os.path.join(show_path, '**', 'SHARED', '*'),  # shot published glob
+            'show_pub': os.path.join(show_path, 'SHARED', '*'),  # show published glob
         }
 
         # Collect all the nodes associated with a write node
