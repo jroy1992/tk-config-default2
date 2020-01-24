@@ -565,6 +565,7 @@ strings:
 
     # COMMON
     user_work:                              'work.{User}'
+    channel_name:                           '-{channel}[-{layer}]'
     image_subdirs:                          '{name}/v{version}/{width}x{height}'
     deep_subdirs:                           '{name}/v{version}/deep/{width}x{height}'
     playblast_subdirs:                      'playblasts/{name}/v{version}'
@@ -594,6 +595,8 @@ strings:
     shot_asset_version_name:                '@shot_asset_publish_name.v{version}'
 
 
+
+
 includes:
   - templates/3dequalizer.yml
   - templates/houdini.yml
@@ -603,4 +606,5 @@ includes:
   - templates/nuke.yml
   - templates/nukestudio.yml
   - templates/silhouette.yml
+  - templates/substancepainter.yml
   - '{preferences}/sgtk_config_templates.yaml'
