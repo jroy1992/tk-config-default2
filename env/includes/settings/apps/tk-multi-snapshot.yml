@@ -26,6 +26,6 @@ settings.tk-multi-snapshot.maya:
   <<: *default_settings
   hook_scene_operation: '{self}/scene_operation_{engine_name}.py:{config}/tk-multi-snapshot/scene_operation_{engine_name}.py'
 
-settings.tk-multi-snapshot.3de:
+settings.tk-multi-snapshot.config_only:
   <<: *default_settings
   hook_scene_operation: '{config}/tk-multi-snapshot/scene_operation_{engine_name}.py'
