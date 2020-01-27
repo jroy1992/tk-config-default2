@@ -66,9 +66,11 @@ DEFAULT_SNAPSHOT_TYPE = "ingest"
 
 # This is a dictionary of note_type values to their access keys in the fields dict.
 DEFAULT_NOTE_TYPES_ACCESS_FALLBACKS = {
-    "kickoff": [["sg_version", "name"], ["ingest_note_links", "Version", "original_name"],
+    "kickoff": [["sg_version", "original_name"], ["sg_version", "name"],
+                ["ingest_note_links", "Version", "original_name"],
                 ["ingest_note_links", "Version", "name"]],
-    "annotation": [["sg_version", "name"], ["ingest_note_links", "Version", "original_name"],
+    "annotation": [["sg_version", "original_name"], ["sg_version", "name"],
+                   ["ingest_note_links", "Version", "original_name"],
                    ["ingest_note_links", "Version", "name"]]
 }
 
