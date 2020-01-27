@@ -159,7 +159,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))
 
 
-    def _framerange_to_be_published(self, item, log_method = "warning"):
+    def _framerange_to_be_published(self, item):
         """
         Since users have the option to render only a subset of frames,
         adding validation to check if the full frame range is being published.
@@ -169,6 +169,8 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         """
         lss_path = item.properties['node']['cached_path'].value()
         lss_data = frangetools.getSequence(lss_path)
+
+        log_method = item.properties.get("log_method", "warning")
 
         # Since lss_data will be a list of dictionaries,
         # building a dictionary from key value for the ease of fetching data.
@@ -474,6 +476,13 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         context = item.context
         entity = context.entity
 
+        log_method = item.properties.get("log_method", "warning")
+
+        if log_method == "error":
+            log = self.logger.error
+        else:
+            log = self.logger.warning
+
         # checking entity validity since it can be invalid/empty in case of Project Level item
         if entity:
             frame_range_app = self.parent.engine.apps.get("tk-multi-setframerange")
@@ -500,8 +509,10 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             # compare if the frame range set at root level is same as the shotgun cut_in, cut_out
             root = nuke.Root()
             if root.firstFrame() != data[in_field] or root.lastFrame() != data[out_field]:
-                self.logger.warning("Frame range not synced with Shotgun.")
-                nuke.message("WARNING! Frame range not synced with Shotgun.")
+                log("Frame range not synced with Shotgun.")
+                if log_method == "warning":
+                    nuke.message("WARNING! Frame range not synced with Shotgun.")
+                return False if log_method == "error" else True
         return True
 
 
