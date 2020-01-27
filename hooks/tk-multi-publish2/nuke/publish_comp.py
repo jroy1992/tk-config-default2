@@ -35,46 +35,6 @@ class NukePublishDDCompValidationPlugin(HookBaseClass):
         """
         return dict((d[key], d) for d in seq)
 
-
-    def _framerange_to_be_published(self, item):
-        """
-        Since users have the option to render only a subset of frames,
-        adding validation to check if the full frame range is being published.
-
-        :param item: Item to process
-        :return: True if yes false otherwise
-        """
-        lss_path = item.properties['path']
-        lss_data = frangetools.getSequence(lss_path)
-
-        # Since lss_data will be a list of dictionaries,
-        # building a dictionary from key value for the ease of fetching data.
-        info_by_path = self._build_dict(lss_data, key="path")
-        missing_frames = info_by_path.get(lss_path)['missing_frames']
-        root = nuke.Root()
-
-        # If there are no missing frames, then checking if the first and last frames match with root first and last
-        # Checking with root because _sync_frame_range() will ensure root is up to date with shotgun
-        if missing_frames:
-            self.logger.error("Renders Mismatch! Incomplete renders on disk. "
-                              "Missing frames: {}".format(missing_frames))
-            return False
-        else:
-            first_rendered_frame = info_by_path.get(lss_path)['frame_range'][0]
-            last_rendered_frame = info_by_path.get(lss_path)['frame_range'][1]
-            if (first_rendered_frame > root.firstFrame()) or (last_rendered_frame < root.lastFrame()):
-                self.logger.error("Renders Mismatch! Incomplete renders on disk. "
-                                  "Expected: {}-{}. Found: {}-{}".format(root.firstFrame(), root.lastFrame(),
-                                                                         first_rendered_frame, last_rendered_frame))
-                return False
-            elif (first_rendered_frame < root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
-                self.logger.error("Renders Mismatch! Extra renders on disk. "
-                                  "Expected: {}-{}. Found: {}-{}".format(root.firstFrame(), root.lastFrame(),
-                                                                         first_rendered_frame, last_rendered_frame))
-                return False
-            return True
-
-
     def _sync_frame_range(self, item):
         """
         Checks whether frame range is in sync with shotgun.
@@ -166,7 +126,7 @@ class NukePublishDDCompValidationPlugin(HookBaseClass):
             status = self._bbsize(item) and status
             if item.properties['fields'].get('output') == 'main':
                 status = self._sync_frame_range(item) and status
-            status = self._framerange_to_be_published(item) and status
+                status = self._framerange_to_be_published(item, log_method="error") and status
 
         if not status:
             return status
