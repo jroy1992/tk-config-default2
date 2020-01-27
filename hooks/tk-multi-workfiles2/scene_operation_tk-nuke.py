@@ -80,6 +80,7 @@ class SceneOperation(HookClass):
         # specific methods.
 
         engine = self.parent.engine
+        print "engine:", engine
         if hasattr(engine, "hiero_enabled") and (engine.hiero_enabled or engine.studio_enabled):
             return self._scene_operation_hiero_nukestudio(
                 operation,
@@ -333,6 +334,7 @@ class SceneOperation(HookClass):
 
         engine = sgtk.platform.current_engine()
         engine_context = engine.context
+        context_str = engine_context.serialize(engine_context)
 
         if operation == "current_path":
             # return the current script path
@@ -366,7 +368,6 @@ class SceneOperation(HookClass):
             project = hiero.core.openProject(file_path.replace(os.path.sep, "/"))
 
             # store project context in tag.note()
-            context_str = engine_context.serialize(engine_context)
             self.add_context_to_project(project, context_str)
 
         elif operation == "save":
@@ -376,6 +377,9 @@ class SceneOperation(HookClass):
 
         elif operation == "save_as":
             project = self._get_current_hiero_project()
+            if 'Untitled' in project.name():
+                # add tag for untitled project only
+                self.add_context_to_project(project, context_str, file_path)
             project.saveAs(file_path.replace(os.path.sep, "/"))
 
             # ensure the save menus are displayed correctly
@@ -393,38 +397,49 @@ class SceneOperation(HookClass):
         return super(SceneOperation, self).execute(operation, file_path, context, parent_action, file_version, read_only,
                                             **kwargs)
 
-    def get_tag_name(self, project):
+    def get_tag_name(self, project, file_path=None):
         """
-        return selected project tag name
+        return tag name in 2 cases:
+            1. file_path : used for untitled(new) project
+            2. project : used if project is already saved
         :param project:
+        :param file_path:
         :return:
         """
-        return "{}_tag".format(project.name().split(".")[0])
+        if not file_path:
+            return "{}_tag".format(project.name().split(".")[0])
+        else:
+            return "{}_tag".format(os.path.basename(file_path).split(".")[0])
 
-    def add_context_to_project(self, project, context_str):
-        import hiero
+    def add_context_to_project(self, project, context_str, file_path=None):
         """
         Add context to project(hrox file) using Tags to store serialized project's context as note
         :param project:
         :param context_str:
+        :param file_path:
         :return:
         """
+        import hiero
         # add tag if doesn't link to respective project
-        tag_object = self.get_tag_object(project)
+        tag_object = self.get_tag_object(project, file_path)
         if not tag_object:
-            tag = hiero.core.Tag(self.get_tag_name(project))
+            tag = hiero.core.Tag(self.get_tag_name(project, file_path))
             tag.setNote(context_str)
             project.tagsBin().addItem(tag)
 
-    def get_tag_object(self, project):
+    def get_tag_object(self, project, file_path=None):
         """
         return tag object for selected project
         :param project:
+        :param file_path:
         :return:
         """
-        for tag_item in project.tagsBin().items():
-            if tag_item.name() == self.get_tag_name(project):
-                return tag_item
+        if file_path:
+            return
+        else:
+            for tag_item in project.tagsBin().items():
+                if tag_item.name() == self.get_tag_name(project, file_path):
+                    return tag_item
         return
 
 
