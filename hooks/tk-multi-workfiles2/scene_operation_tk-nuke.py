@@ -343,7 +343,7 @@ class SceneOperation(HookClass):
                 project = self._get_current_hiero_project()
                 tag_object = self.get_tag_object(project)
                 selected_context_str = tag_object.note()
-                selected_project_context = context.deserialize(selected_context_str, engine.tank)
+                selected_project_context = sgtk.context.deserialize(selected_context_str, engine.tank)
                 self.parent.change_context(selected_project_context)
             return curr_path
 
