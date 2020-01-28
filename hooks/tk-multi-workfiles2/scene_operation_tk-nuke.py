@@ -332,7 +332,7 @@ class SceneOperation(HookClass):
         import hiero
 
         engine = sgtk.platform.current_engine()
-        context_str = context.serialize(context)
+        context_str = context.serialize()
 
         if operation == "current_path":
             # return the current script path
@@ -430,12 +430,9 @@ class SceneOperation(HookClass):
         :param file_path:
         :return:
         """
-        if file_path:
-            return
-        else:
-            for tag_item in project.tagsBin().items():
-                if tag_item.name() == self.get_tag_name(project, file_path):
-                    return tag_item
+        for tag_item in project.tagsBin().items():
+            if tag_item.name() == self.get_tag_name(project, file_path):
+                return tag_item
         return
 
 
