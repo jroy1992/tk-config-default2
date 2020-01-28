@@ -80,7 +80,6 @@ class SceneOperation(HookClass):
         # specific methods.
 
         engine = self.parent.engine
-        print "engine:", engine
         if hasattr(engine, "hiero_enabled") and (engine.hiero_enabled or engine.studio_enabled):
             return self._scene_operation_hiero_nukestudio(
                 operation,
@@ -333,8 +332,7 @@ class SceneOperation(HookClass):
         import hiero
 
         engine = sgtk.platform.current_engine()
-        engine_context = engine.context
-        context_str = engine_context.serialize(engine_context)
+        context_str = engine.context.serialize(engine.context)
 
         if operation == "current_path":
             # return the current script path
@@ -344,8 +342,8 @@ class SceneOperation(HookClass):
                 # switch file-save window context to selected project context
                 project = self._get_current_hiero_project()
                 tag_object = self.get_tag_object(project)
-                context_str = tag_object.note()
-                selected_project_context = engine_context.deserialize(context_str, engine.tank)
+                selected_context_str = tag_object.note()
+                selected_project_context = sgtk.context.deserialize(selected_context_str, engine.tank)
                 self.parent.change_context(selected_project_context)
             return curr_path
 
@@ -377,9 +375,7 @@ class SceneOperation(HookClass):
 
         elif operation == "save_as":
             project = self._get_current_hiero_project()
-            if 'Untitled' in project.name():
-                # add tag for untitled project only
-                self.add_context_to_project(project, context_str, file_path)
+            self.add_context_to_project(project, context_str, file_path)
             project.saveAs(file_path.replace(os.path.sep, "/"))
 
             # ensure the save menus are displayed correctly
