@@ -35,87 +35,6 @@ class NukePublishDDCompValidationPlugin(HookBaseClass):
         """
         return dict((d[key], d) for d in seq)
 
-
-    def _framerange_to_be_published(self, item):
-        """
-        Since users have the option to render only a subset of frames,
-        adding validation to check if the full frame range is being published.
-
-        :param item: Item to process
-        :return: True if yes false otherwise
-        """
-        lss_path = item.properties['path']
-        lss_data = frangetools.getSequence(lss_path)
-
-        # Since lss_data will be a list of dictionaries,
-        # building a dictionary from key value for the ease of fetching data.
-        info_by_path = self._build_dict(lss_data, key="path")
-        missing_frames = info_by_path.get(lss_path)['missing_frames']
-        root = nuke.Root()
-
-        # If there are no missing frames, then checking if the first and last frames match with root first and last
-        # Checking with root because _sync_frame_range() will ensure root is up to date with shotgun
-        if missing_frames:
-            self.logger.error("Renders Mismatch! Incomplete renders on disk. "
-                              "Missing frames: {}".format(missing_frames))
-            return False
-        else:
-            first_rendered_frame = info_by_path.get(lss_path)['frame_range'][0]
-            last_rendered_frame = info_by_path.get(lss_path)['frame_range'][1]
-            if (first_rendered_frame > root.firstFrame()) or (last_rendered_frame < root.lastFrame()):
-                self.logger.error("Renders Mismatch! Incomplete renders on disk. "
-                                  "Expected: {}-{}. Found: {}-{}".format(root.firstFrame(), root.lastFrame(),
-                                                                         first_rendered_frame, last_rendered_frame))
-                return False
-            elif (first_rendered_frame < root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
-                self.logger.error("Renders Mismatch! Extra renders on disk. "
-                                  "Expected: {}-{}. Found: {}-{}".format(root.firstFrame(), root.lastFrame(),
-                                                                         first_rendered_frame, last_rendered_frame))
-                return False
-            return True
-
-
-    def _sync_frame_range(self, item):
-        """
-        Checks whether frame range is in sync with shotgun.
-
-        :param item: Item to process
-        :return: True if yes false otherwise
-        """
-        context = item.context
-        entity = context.entity
-
-        # checking entity validity since it can be invalid/empty in case of Project Level item
-        if entity:
-            frame_range_app = self.parent.engine.apps.get("tk-multi-setframerange")
-            if not frame_range_app:
-                # return valid for asset/sequence entities
-                self.logger.warning("Unable to find tk-multi-setframerange app. "
-                                    "Not validating frame range.")
-                return True
-
-            sg_entity_type = entity["type"]
-            sg_filters = [["id", "is", entity["id"]]]
-            in_field = frame_range_app.get_setting("sg_in_frame_field")
-            out_field = frame_range_app.get_setting("sg_out_frame_field")
-            fields = [in_field, out_field]
-
-            # get the field information from shotgun based on Shot
-            # sg_cut_in and sg_cut_out info will be on Shot entity, so skip in case this info is not present
-            data = self.sgtk.shotgun.find_one(sg_entity_type, filters=sg_filters, fields=fields)
-            if in_field not in data or out_field not in data:
-                return True
-            elif data[in_field] is None or data[out_field] is None:
-                return True
-
-            # compare if the frame range set at root level is same as the shotgun cut_in, cut_out
-            root = nuke.Root()
-            if root.firstFrame() != data[in_field] or root.lastFrame() != data[out_field]:
-                self.logger.error("Frame range not synced with Shotgun.")
-                return False
-            return True
-        return True
-
     def _bbsize(self, item):
         """
         Checks for oversized bounding box for shotgun write nodes.
@@ -165,8 +84,8 @@ class NukePublishDDCompValidationPlugin(HookBaseClass):
         if item.properties.get("node"):
             status = self._bbsize(item) and status
             if item.properties['fields'].get('output') == 'main':
+                item.properties.log_method = "error"
                 status = self._sync_frame_range(item) and status
-            status = self._framerange_to_be_published(item) and status
 
         if not status:
             return status

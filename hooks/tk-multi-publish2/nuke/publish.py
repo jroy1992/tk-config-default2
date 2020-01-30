@@ -170,6 +170,8 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         lss_path = item.properties['node']['cached_path'].value()
         lss_data = frangetools.getSequence(lss_path)
 
+        log_method = item.properties.get("log_method", "warning")
+
         # Since lss_data will be a list of dictionaries,
         # building a dictionary from key value for the ease of fetching data.
         info_by_path = self._build_dict(lss_data, key="path")
@@ -178,19 +180,33 @@ class NukePublishDDValidationPlugin(HookBaseClass):
 
         # If there are no missing frames, then checking if the first and last frames match with root first and last
         # Checking with root because _sync_frame_range() will ensure root is up to date with shotgun
+        if log_method == "error":
+            log = self.logger.error
+        else:
+            log = self.logger.warning
+
         if missing_frames:
-            self.logger.warning("Renders Mismatch! Incomplete renders on disk.")
-            nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Incomplete renders on disk.")
+            log("Renders Mismatch! Incomplete renders on disk.")
+            if log_method == "warning":
+                nuke.message("WARNING!\n"+item.properties['node'].name() +
+                             "\nRenders Mismatch! Incomplete renders on disk.")
+            return False if log_method == "error" else True
         else:
             first_rendered_frame = info_by_path.get(lss_path)['frame_range'][0]
             last_rendered_frame = info_by_path.get(lss_path)['frame_range'][1]
 
             if (first_rendered_frame > root.firstFrame()) or (last_rendered_frame < root.lastFrame()):
-                self.logger.warning("Renders Mismatch! Incomplete renders on disk.")
-                nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Incomplete renders on disk.")
+                log("Renders Mismatch! Incomplete renders on disk.")
+                if log_method == "warning":
+                    nuke.message("WARNING!\n"+item.properties['node'].name() +
+                                 "\nRenders Mismatch! Incomplete renders on disk.")
+                return False if log_method == "error" else True
             elif (first_rendered_frame < root.firstFrame()) or (last_rendered_frame > root.lastFrame()):
-                self.logger.warning("Renders Mismatch! Extra renders on disk.")
-                nuke.message("WARNING!\n"+item.properties['node'].name()+"\nRenders Mismatch! Extra renders on disk.")
+                log("Renders Mismatch! Extra renders on disk.")
+                if log_method == "warning":
+                    nuke.message("WARNING!\n"+item.properties['node'].name() +
+                                 "\nRenders Mismatch! Extra renders on disk.")
+                return False if log_method == "error" else True
         return True
 
     def _collect_file_nodes_in_graph(self, node, visited_files):
@@ -460,6 +476,13 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         context = item.context
         entity = context.entity
 
+        log_method = item.properties.get("log_method", "warning")
+
+        if log_method == "error":
+            log = self.logger.error
+        else:
+            log = self.logger.warning
+
         # checking entity validity since it can be invalid/empty in case of Project Level item
         if entity:
             frame_range_app = self.parent.engine.apps.get("tk-multi-setframerange")
@@ -486,8 +509,10 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             # compare if the frame range set at root level is same as the shotgun cut_in, cut_out
             root = nuke.Root()
             if root.firstFrame() != data[in_field] or root.lastFrame() != data[out_field]:
-                self.logger.warning("Frame range not synced with Shotgun.")
-                nuke.message("WARNING! Frame range not synced with Shotgun.")
+                log("Frame range not synced with Shotgun.")
+                if log_method == "warning":
+                    nuke.message("WARNING! Frame range not synced with Shotgun.")
+                return False if log_method == "error" else True
         return True
 
 
