@@ -85,6 +85,7 @@ class NukePublishDDCompValidationPlugin(HookBaseClass):
             status = self._bbsize(item) and status
             if item.properties['fields'].get('output') == 'main':
                 item.properties.log_method = "error"
+                status = self._sync_frame_range(item) and status
 
         if not status:
             return status
