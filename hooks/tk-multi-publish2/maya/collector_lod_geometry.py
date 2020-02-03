@@ -56,7 +56,8 @@ class MayaSessionCollector(HookBaseClass):
             properties = copy.deepcopy(parent_item.properties)
             properties["fields"].update({"extension": "abc"})
 
-            properties["fields"].update({"node": lod_node})
+            properties["lod_full_name"] = lod_node
+            properties["fields"].update({"node": lod_node.split('|')[-1]})
             geo_item = self._add_item(settings,
                                       parent_item,
                                       "Geometry: {}".format(lod_node),
@@ -69,6 +70,9 @@ class MayaSessionCollector(HookBaseClass):
         return geo_items
 
     def _get_lod_nodes(self, parent_item):
+        """
+        Return list of full names of all lod nodes
+        """
         valid_node_name = parent_item.context.entity['name']
         toplevel_objects = find_model_root_nodes()
 
@@ -100,4 +104,4 @@ class MayaSessionCollector(HookBaseClass):
             return []
         else:
             # all children are lod nodes; this is verified in find_model_root_nodes()
-            return cmds.listRelatives(valid_node_name, children=True)
+            return cmds.listRelatives(valid_node_name, children=True, fullPath=True)

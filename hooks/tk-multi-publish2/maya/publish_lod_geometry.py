@@ -197,7 +197,7 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         alembic_args.append("-file %s" % publish_path.replace("\\", "/"))
 
         # Set the root node to be exported
-        alembic_args.append("-root %s" % item.properties.fields["node"])
+        alembic_args.append("-root %s" % item.get_property("lod_full_name"))
 
         # Add args based on publish settings
         if task_settings["Export UVs"].value:
