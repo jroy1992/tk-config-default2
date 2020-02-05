@@ -427,6 +427,42 @@ paths:
     sequence_asset_publish_standin:         '@sequence_asset_publish_area_scene/standin/@geom_subdirs/@sequence_asset_version_name.{maya.std.ext}'
     shot_asset_publish_standin:             '@shot_asset_publish_area_scene/standin/@geom_subdirs/@shot_asset_version_name.{maya.std.ext}'
 
+    # XGEN FILES
+    project_publish_xgen_file:             '@project_publish_area_scene/@project_version_name_xgen_file.xgen'
+    sequence_publish_xgen_file:            '@sequence_publish_area_scene/@sequence_version_name_xgen_file.xgen'
+    shot_publish_xgen_file:                '@shot_publish_area_scene/@shot_version_name_xgen_file.xgen'
+
+    project_asset_publish_xgen_file:       '@project_asset_publish_area_scene/@project_asset_version_name_xgen_file.xgen'
+    sequence_asset_publish_xgen_file:      '@sequence_asset_publish_area_scene/@sequence_asset_version_name_xgen_file.xgen'
+    shot_asset_publish_xgen_file:          '@shot_asset_publish_area_scene/@shot_asset_version_name_xgen_file.xgen'
+
+    # XGEN PATCHES
+    project_publish_xgen_patch:             '@project_publish_area_scene/@project_version_name_xgen_file.abc'
+    sequence_publish_xgen_patch:            '@sequence_publish_area_scene/@sequence_version_name_xgen_file.abc'
+    shot_publish_xgen_patch:                '@shot_publish_area_scene/@shot_version_name_xgen_file.abc'
+
+    project_asset_publish_xgen_patch:       '@project_asset_publish_area_scene/@project_asset_version_name_xgen_file.abc'
+    sequence_asset_publish_xgen_patch:      '@sequence_asset_publish_area_scene/@sequence_asset_version_name_xgen_file.abc'
+    shot_asset_publish_xgen_patch:          '@shot_asset_publish_area_scene/@shot_asset_version_name_xgen_file.abc'
+
+    # XGEN COLLECTION
+    project_publish_xgen_collection:             '@project_publish_area_scene/xgen/collections/@project_version_name[/{palette_name}]'
+    sequence_publish_xgen_collection:            '@sequence_publish_area_scene/xgen/collections/@sequence_version_name[/{palette_name}]'
+    shot_publish_xgen_collection:                '@shot_publish_area_scene/xgen/collections/@shot_version_name[/{palette_name}]'
+
+    project_asset_publish_xgen_collection:       '@project_asset_publish_area_scene/xgen/collections/@project_asset_version_name[/{palette_name}]'
+    sequence_asset_publish_xgen_collection:      '@sequence_asset_publish_area_scene/xgen/collections/@sequence_asset_version_name[/{palette_name}]'
+    shot_asset_publish_xgen_collection:          '@shot_asset_publish_area_scene/xgen/collections/@shot_asset_version_name[/{palette_name}]'
+
+    # 3DPAINTTEXTURES FILES
+    project_publish_3dPaintTextures:             '@project_publish_area_scene/@3dPaintTextures_subdir/@project_version_name'
+    sequence_publish_3dPaintTextures:            '@sequence_publish_area_scene/@3dPaintTextures_subdir/@sequence_version_name'
+    shot_publish_3dPaintTextures:                '@shot_publish_area_scene/@3dPaintTextures_subdir/@shot_version_name'
+
+    project_asset_publish_3dPaintTextures:       '@project_asset_publish_area_scene/@3dPaintTextures_subdir/@project_asset_version_name'
+    sequence_asset_publish_3dPaintTextures:      '@sequence_asset_publish_area_scene/@3dPaintTextures_subdir/@sequence_asset_version_name'
+    shot_asset_publish_3dPaintTextures:          '@shot_asset_publish_area_scene/@3dPaintTextures_subdir/@shot_asset_version_name'
+
     # REFERENCE CAMERA
     project_publish_ref_cam:               '@project_publish_area_model/ref_cam/@geom_subdirs/@project_version_name.abc'
     sequence_publish_ref_cam:              '@sequence_publish_area_model/ref_cam/@geom_subdirs/@sequence_version_name.abc'
@@ -573,6 +609,8 @@ strings:
     2k_subdirs:                             '{name}/v{version}/2K'
     geom_subdirs:                           '{name}/v{version}[/{node}]'
     texture_subdirs:                        '{name}/v{version}[/{node}]/{channel}[/{layer}]'
+    xgen_collection_subdirs:                'xgen/collections[/{palette_name}]'
+    3dPaintTextures_subdir:                 'sourceimages/3dPaintTextures'
 
     # SCENE PUBLISH NAMES
     project_publish_name:                   '{Step}_{name}[-{node}]'
@@ -593,6 +631,18 @@ strings:
     project_asset_version_name:             '@project_asset_publish_name.v{version}'
     sequence_asset_version_name:            '@sequence_asset_publish_name.v{version}'
     shot_asset_version_name:                '@shot_asset_publish_name.v{version}'
+
+    # ASSET XGEN VERSION NAMES:
+    project_asset_version_name_xgen_file:        '@project_asset_publish_name.v{version}__[{palette_name}]'
+    sequence_asset_version_name_xgen_file:       '@sequence_asset_publish_name.v{version}__[{palette_name}]'
+    shot_asset_version_name_xgen_file:           '@shot_asset_publish_name.v{version}__[{palette_name}]'
+
+    # SCENE XGEN VERSION NAMES
+    project_version_name_xgen_file:                   '@project_publish_name.v{version}__[{palette_name}]'
+    sequence_version_name_xgen_file:                  '@sequence_publish_name.v{version}__[{palette_name}]'
+    shot_version_name_xgen_file:                      '@shot_publish_name.v{version}__[{palette_name}]'
+
+
 
 
 

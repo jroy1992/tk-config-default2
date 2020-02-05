@@ -23,6 +23,19 @@ keys:
             ass: Arnold (.ass)
         default: ass
 
+    palette_name:
+        type: str
+        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
+
+    description_name:
+        type: str
+        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
+
+    patch_name:
+        type: str
+        filter_by: '^[a-zA-Z](\w+)?[a-zA-Z0-9]$'
+
+
 paths:
 
     # WORK AREAS
@@ -128,6 +141,42 @@ paths:
     tk-maya_project_asset_work_standin:    '@tk-maya_project_asset_work_area/cache/standin/@geom_subdirs/@project_asset_version_name.{maya.std.ext}'
     tk-maya_sequence_asset_work_standin:   '@tk-maya_sequence_asset_work_area/cache/standin/@geom_subdirs/@sequence_asset_version_name.{maya.std.ext}'
     tk-maya_shot_asset_work_standin:       '@tk-maya_shot_asset_work_area/cache/standin/@geom_subdirs/@shot_asset_version_name.{maya.std.ext}'
+
+    # XGEN FILES
+    tk-maya_project_work_xgen_file:             '@tk-maya_project_work_area/scenes/@project_version_name_xgen_file.xgen'
+    tk-maya_sequence_work_xgen_file:            '@tk-maya_sequence_work_area/scenes/@sequence_version_name_xgen_file.xgen'
+    tk-maya_shot_work_xgen_file:                '@tk-maya_shot_work_area/scenes/@shot_version_name_xgen_file.xgen'
+
+    tk-maya_project_asset_work_xgen_file:   '@tk-maya_project_asset_work_area/scenes/@project_asset_version_name_xgen_file.xgen'
+    tk-maya_sequence_asset_work_xgen_file:  '@tk-maya_sequence_asset_work_area/scenes/@sequence_asset_version_name_xgen_file.xgen'
+    tk-maya_shot_asset_work_xgen_file:      '@tk-maya_shot_asset_work_area/scenes/@shot_asset_version_name_xgen_file.xgen'
+
+    # XGEN Patches
+    tk-maya_project_work_xgen_patch:             '@tk-maya_project_work_area/scenes/@project_version_name_xgen_file.abc'
+    tk-maya_sequence_work_xgen_patch:            '@tk-maya_sequence_work_area/scenes/@sequence_version_name_xgen_file.abc'
+    tk-maya_shot_work_xgen_patch:                '@tk-maya_shot_work_area/scenes/@shot_version_name_xgen_file.abc'
+
+    tk-maya_project_asset_work_xgen_patch:   '@tk-maya_project_asset_work_area/scenes/@project_asset_version_name_xgen_file.abc'
+    tk-maya_sequence_asset_work_xgen_patch:  '@tk-maya_sequence_asset_work_area/scenes/@sequence_asset_version_name_xgen_file.abc'
+    tk-maya_shot_asset_work_xgen_patch:      '@tk-maya_shot_asset_work_area/scenes/@shot_asset_version_name_xgen_file.abc'
+
+    # XGEN COLLECTIONS
+    tk-maya_project_work_xgen_collection:             '@tk-maya_project_work_area/@xgen_collection_subdirs'
+    tk-maya_sequence_work_xgen_collection:            '@tk-maya_sequence_work_area/@xgen_collection_subdirs'
+    tk-maya_shot_work_xgen_collection:                '@tk-maya_shot_work_area/@xgen_collection_subdirs'
+
+    tk-maya_project_asset_work_xgen_collection:   '@tk-maya_project_asset_work_area/@xgen_collection_subdirs'
+    tk-maya_sequence_asset_work_xgen_collection:  '@tk-maya_sequence_asset_work_area/@xgen_collection_subdirs'
+    tk-maya_shot_asset_work_xgen_collection:      '@tk-maya_shot_asset_work_area/@xgen_collection_subdirs'
+
+    # 3dPaintTextures FILES
+    tk-maya_project_work_3dPaintTextures:             '@tk-maya_project_work_area/@3dPaintTextures_subdir/@project_version_name'
+    tk-maya_sequence_work_3dPaintTextures:            '@tk-maya_sequence_work_area/@3dPaintTextures_subdir/@sequence_version_name'
+    tk-maya_shot_work_3dPaintTextures:                '@tk-maya_shot_work_area/@3dPaintTextures_subdir/@shot_version_name'
+
+    tk-maya_project_asset_work_3dPaintTextures:        '@tk-maya_project_asset_work_area/@3dPaintTextures_subdir/@project_asset_version_name'
+    tk-maya_sequence_asset_work_3dPaintTextures:       '@tk-maya_sequence_asset_work_area/@3dPaintTextures_subdir/@sequence_asset_version_name'
+    tk-maya_shot_asset_work_3dPaintTextures:           '@tk-maya_shot_asset_work_area/@3dPaintTextures_subdir/@shot_asset_version_name'
 
 aliases:
 
