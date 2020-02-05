@@ -19,13 +19,13 @@ paths:
     tk-substancepainter_shot_asset_work_file:           '@tk-substancepainter_shot_asset_work_area/projects/@shot_asset_publish_name@version_suffix.spp'
 
     # TEXTURES
-    tk-substancepainter_project_work_texture:            '@tk-substancepainter_project_work_area/textures/@project_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
-    tk-substancepainter_sequence_work_texture:           '@tk-substancepainter_sequence_work_area/textures/@sequence_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
-    tk-substancepainter_shot_work_texture:               '@tk-substancepainter_shot_work_area/textures/@shot_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
+    tk-substancepainter_project_work_texture:            '@tk-substancepainter_project_work_area/textures/v{version}/@project_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
+    tk-substancepainter_sequence_work_texture:           '@tk-substancepainter_sequence_work_area/textures/v{version}/@sequence_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
+    tk-substancepainter_shot_work_texture:               '@tk-substancepainter_shot_work_area/textures/v{version}/@shot_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
 
-    tk-substancepainter_project_asset_work_texture:      '@tk-substancepainter_project_asset_work_area/textures/@project_asset_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
-    tk-substancepainter_sequence_asset_work_texture:     '@tk-substancepainter_sequence_asset_work_area/textures/@sequence_asset_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
-    tk-substancepainter_shot_asset_work_texture:         '@tk-substancepainter_shot_asset_work_area/textures/@shot_asset_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
+    tk-substancepainter_project_asset_work_texture:      '@tk-substancepainter_project_asset_work_area/textures/v{version}/@project_asset_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
+    tk-substancepainter_sequence_asset_work_texture:     '@tk-substancepainter_sequence_asset_work_area/textures/v{version}/@sequence_asset_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
+    tk-substancepainter_shot_asset_work_texture:         '@tk-substancepainter_shot_asset_work_area/textures/v{version}/@shot_asset_publish_name@version_suffix@channel_name[.{UDIM}].{tex.ext}'
 
 strings:
     # using - as a version separator to ensure this gets passed to
