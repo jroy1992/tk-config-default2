@@ -190,15 +190,6 @@ class MayaSessionCollector(HookBaseClass):
         """
         items = super(MayaSessionCollector, self).process_current_session(settings, parent_item)
 
-        # items = []
-
-        # # create an item representing the current maya session
-        # session_item = self.collect_current_maya_session(settings, parent_item)
-        # items.append(session_item)
-        #
-        # # look at the render layers to find rendered images on disk
-        # items.extend(self.collect_rendered_images(settings, session_item))
-
         session_item = None
         for item in items:
             if item.type_spec == "maya.session":
@@ -206,21 +197,10 @@ class MayaSessionCollector(HookBaseClass):
                 break
         # Adding xgen dependencies as session item properties
         self.collect_xgen_dependencies(settings, session_item)
-        # print 'session_item.properties.xgen_dependencies: ', session_item.properties.xgen_dependencies
 
         # Collecting 3dPainteTextures
         self.collect_paint_textures(settings, session_item)
-        # print 'parent_item.properties.paint_textures: ', session_item.properties.paint_textures
 
-        # # collect any scene geometry
-        # if cmds.ls(geometry=True, noIntermediate=True):
-        #     items.extend(self.collect_session_geometry(settings, session_item))
-        #
-        # # if we have work path templates, collect matching files to publish
-        # for work_template in settings["Work File Templates"].value:
-        #     items.extend(self.collect_work_files(settings, session_item, work_template))
-
-        # Return the list of items
         return items
 
     def collect_paint_textures(self, settings, parent_item):
