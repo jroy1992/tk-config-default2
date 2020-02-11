@@ -528,7 +528,7 @@ paths:
 
     
     # REVIEW SUBMISSION
-    reviewsubmission_burnin_nuke_file:      'user/work.jroy/etc/reviewsubmit_presets/burnin.nk'
+    reviewsubmission_burnin_nuke_file:      '@project_publish_area/etc/reviewsubmit_presets/burnin.nk'
     reviewsubmission_slate_logo_file:       '@project_publish_area/etc/reviewsubmit_presets/logo.png'
     reviewsubmission_render_script_path:    '@project_publish_area/etc/reviewsubmit_presets/nuke_batch_render_movie.py'
 
