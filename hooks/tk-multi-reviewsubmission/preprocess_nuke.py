@@ -39,7 +39,7 @@ class PreprocessNuke(HookBaseClass):
             if tasks.get('time_logs_sum'):
                 time_logs_sum = str(tasks['time_logs_sum']/(8*60))+' day(s)' if tasks['time_logs_sum'] else 'None'
                 replace_data.update({'time_logs_sum': time_logs_sum})
-
+            replace_data.update(tasks)
 
         if not replace_data:
             # nothing to replace, nothing to do here
