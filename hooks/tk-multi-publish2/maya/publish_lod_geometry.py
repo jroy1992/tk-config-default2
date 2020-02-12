@@ -15,6 +15,11 @@ import sgtk
 from sgtk import TankError
 from sgtk.util.filesystem import ensure_folder_exists
 
+# A convenience wrapper on top of alembic's Python api
+from dd.runtime import api
+api.load("cask")
+import cask
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
@@ -94,6 +99,47 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         }
         return schema
 
+    def _rename_abc_top_group(self, abc_file, rename_to):
+        """
+        This function renames the "top" group of the alembic heirarchy.
+        Please dont confuse this top with the alembic root, which will always be named 'ABC'
+        The "top" here, is the first group in heirarchy of exported scene.
+        NOTE: This function does not recursively go through the entire scene and only renames the first group encountered in the chain.
+
+        :param string abc_file: Path of the alembic file to be modified.
+        :param string rename_to: The new name that you would want to assign to the top group.
+        """
+        import tempfile
+
+        if not os.path.exists(abc_file):
+            self.logger.error("Invalid Alembic path provided. Aborting the process "
+                              "-- {0}".format(abc_file)
+                              )
+            return
+
+        tmp_file = tempfile.NamedTemporaryFile(mode='w+b',
+                                               suffix='',
+                                               prefix='tmp',
+                                               dir=os.path.dirname(abc_file),
+                                               delete=True)
+
+        tmp_file_name = "{0}.abc".format(tmp_file.name)
+
+        # Loading the alembic archive in memory to process
+        abc_archive = cask.Archive(abc_file)
+
+        try:
+            abc_archive.top.children.values()[0].name = rename_to
+            abc_archive.write_to_file(tmp_file_name, asOgawa=True)
+            # Renaming the temporary file to replace the original alembic
+            os.rename(tmp_file_name, abc_file)
+        except Exception as err:
+            self.logger.error("Unhandled Exceptions encountered. Securing original alembic.")
+            abc_archive.write_to_file(abc_file)
+            self.logger.error("File Secure Successful. Error Message below.")
+            self.logger.error(err.message)
+        finally:
+            abc_archive.close()
 
     def accept(self, task_settings, item):
         """
@@ -136,7 +182,6 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         # return the accepted info
         return accept_data
 
-
     def validate(self, task_settings, item):
         """
         Validates the given item to check that it is ok to publish. Returns a
@@ -159,7 +204,6 @@ class MayaPublishGeometryPlugin(HookBaseClass):
             raise TankError(error_msg)
 
         return super(MayaPublishGeometryPlugin, self).validate(task_settings, item)
-
 
     def publish_files(self, task_settings, item, publish_path):
         """
@@ -197,7 +241,7 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         alembic_args.append("-file %s" % publish_path.replace("\\", "/"))
 
         # Set the root node to be exported
-        alembic_args.append("-root %s" % item.get_property("lod_full_name"))
+        alembic_args.append("-root %s" % item.properties.fields["node"])
 
         # Add args based on publish settings
         if task_settings["Export UVs"].value:
@@ -228,6 +272,11 @@ class MayaPublishGeometryPlugin(HookBaseClass):
             "Exported group %s to '%s'." % (item.properties.fields["node"], publish_path)
         )
 
+        # Renaming top group name to be the asset name, in exported alembic.
+        published_abc = publish_path.replace("\\", "/")
+        asset_name = item.context.entity["name"]
+        self._rename_abc_top_group(str(published_abc), str(asset_name))
+
         return [publish_path]
 
 
@@ -250,3 +299,4 @@ def _find_scene_animation_range():
     end = int(cmds.playbackOptions(q=True, max=True))
 
     return start, end
+
