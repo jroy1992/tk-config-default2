@@ -32,6 +32,8 @@ settings.tk-multi-reviewsubmission:
   render_script: 'reviewsubmission_render_script_path'
   preprocess_nuke_hook: '{config}/tk-multi-reviewsubmission/preprocess_nuke.py'
   mov_has_slate: '@settings.tk-multi-reviewsubmission.mov_has_slate'
+  entity_burnin_sg_fields: '@settings.tk-multi-reviewsubmission.entity_burnin_sg_fields'
+  task_burnin_sg_fields: '@settings.tk-multi-reviewsubmission.task_burnin_sg_fields'
 
 settings.tk-multi-colorprocessfiles:
   movie_width: '@settings.tk-multi-colorprocessfiles.width'

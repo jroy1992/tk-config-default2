@@ -24,13 +24,22 @@ class PreprocessNuke(HookBaseClass):
             sg_entity_type = context.entity["type"]
             sg_filters = [["id", "is", context.entity["id"]]]
 
-            # TODO: should we get this list of fields from an app setting? In case we need different fields per show.
-            sg_fields = ["smart_cut_summary_display",
-                         "sg_client_name",
-                         "sg_lens___primary"]
+            sg_fields = self.parent.get_setting('entity_burnin_sg_fields')
             replace_data.update(self.parent.shotgun.find_one(sg_entity_type,
                                                       filters=sg_filters,
                                                       fields=sg_fields))
+        if context.task:
+            sg_fields = self.parent.get_setting('task_burnin_sg_fields')
+            tasks = self.parent.shotgun.find_one('Task', filters=[['entity', 'is', context.entity],
+                                                                  ['id', 'is', context.task['id']]],
+                                                 fields=sg_fields)
+            if tasks.get('duration'):
+                duration = str(tasks['duration']/(8*60))+' day(s)' if tasks['duration'] else 'None'
+                replace_data.update({'duration': duration})
+            if tasks.get('time_logs_sum'):
+                time_logs_sum = str(tasks['time_logs_sum']/(8*60))+' day(s)' if tasks['time_logs_sum'] else 'None'
+                replace_data.update({'time_logs_sum': time_logs_sum})
+            replace_data.update(tasks)
 
         if not replace_data:
             # nothing to replace, nothing to do here
