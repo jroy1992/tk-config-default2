@@ -33,13 +33,13 @@ class PreprocessNuke(HookBaseClass):
             tasks = self.parent.shotgun.find_one('Task', filters=[['entity', 'is', context.entity],
                                                                   ['id', 'is', context.task['id']]],
                                                  fields=sg_fields)
+            replace_data.update(tasks)
             if tasks.get('duration'):
-                duration = str(tasks['duration']/(8*60))+' day(s)' if tasks['duration'] else 'None'
+                duration = str(tasks['duration']/(8.0*60.0))+' day(s)' if tasks['duration'] else 'None'
                 replace_data.update({'duration': duration})
             if tasks.get('time_logs_sum'):
-                time_logs_sum = str(tasks['time_logs_sum']/(8*60))+' day(s)' if tasks['time_logs_sum'] else 'None'
+                time_logs_sum = str(tasks['time_logs_sum']/(8.0*60.0))+' day(s)' if tasks['time_logs_sum'] else 'None'
                 replace_data.update({'time_logs_sum': time_logs_sum})
-            replace_data.update(tasks)
 
         if not replace_data:
             # nothing to replace, nothing to do here
