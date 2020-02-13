@@ -139,6 +139,12 @@ apps.tk-hiero-openinshotgun.location:
 
 # ---- Houdini apps
 
+# arnoldnode
+apps.tk-houdini-arnoldnode.location:
+  type: manual
+  name: tk-houdini-arnoldnode
+  version: v0.x.x
+
 # geometrynode
 apps.tk-houdini-geometrynode.location:
   type: manual
