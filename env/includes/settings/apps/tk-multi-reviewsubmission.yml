@@ -50,3 +50,5 @@ settings.tk-multi-colorprocessfiles:
   render_script: 'colorprocessfiles_render_script_path'
   preprocess_nuke_hook: '{config}/tk-multi-colorprocessfiles/preprocess_nuke.py'
   mov_has_slate: '@settings.tk-multi-colorprocessfiles.mov_has_slate'
+  entity_burnin_sg_fields: '@settings.tk-multi-reviewsubmission.entity_burnin_sg_fields'
+  task_burnin_sg_fields: '@settings.tk-multi-reviewsubmission.task_burnin_sg_fields'
