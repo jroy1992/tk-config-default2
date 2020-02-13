@@ -65,6 +65,7 @@ settings.tk-houdini.asset:
     tk-houdini-mantranode: "@settings.tk-houdini-mantranode"
     tk-multi-setframerange: "@settings.tk-multi-setframerange"
     tk-multi-timelogger: "@settings.tk-multi-timelogger"
+    tk-houdini-arnoldnode: "@settings.tk-houdini-arnoldnode"
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   - {app_instance: tk-multi-snapshot, name: Snapshot...}
