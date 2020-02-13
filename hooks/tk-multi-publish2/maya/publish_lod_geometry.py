@@ -131,9 +131,6 @@ class MayaPublishGeometryPlugin(HookBaseClass):
                     }
 
                 })
-
-            self.logger.info("Attempting to recover original alembic file.")
-            self.logger.info("Recover Succesful.")
         finally:
             abc_archive.close()
 
