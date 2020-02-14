@@ -382,6 +382,15 @@ paths:
     sequence_asset_publish_movie:           '@sequence_asset_publish_area_movie/@sequence_asset_version_name.mov'
     shot_asset_publish_movie:               '@shot_asset_publish_area_movie/@shot_asset_version_name.mov'
 
+    # MP4 MOVIES
+    project_publish_mp4_movie:              '@project_publish_area_movie/@project_version_name.mp4'
+    sequence_publish_mp4_movie:             '@sequence_publish_area_movie/@sequence_version_name.mp4'
+    shot_publish_mp4_movie:                 '@shot_publish_area_movie/@shot_version_name.mp4'
+
+    project_asset_publish_mp4_movie:        '@project_asset_publish_area_movie/@project_asset_version_name.mp4'
+    sequence_asset_publish_mp4_movie:       '@sequence_asset_publish_area_movie/@sequence_asset_version_name.mp4'
+    shot_asset_publish_mp4_movie:           '@shot_asset_publish_area_movie/@shot_asset_version_name.mp4'
+
     # MODELS
     project_publish_model:                  '@project_publish_area_model/{geo.ext}/@geom_subdirs/@project_version_name[.{SEQ}].{geo.ext}'
     sequence_publish_model:                 '@sequence_publish_area_model/{geo.ext}/@geom_subdirs/@sequence_version_name[.{SEQ}].{geo.ext}'

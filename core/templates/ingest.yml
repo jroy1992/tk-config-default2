@@ -270,6 +270,15 @@ paths:
     ingest_sequence_asset_output_movie:     '@sequence_asset_publish_area_movie/{snapshot_type}/@ingest_sequence_asset_output_name.mov'
     ingest_shot_asset_output_movie:         '@shot_asset_publish_area_movie/{snapshot_type}/@ingest_shot_asset_output_name.mov'
 
+    # MP4 MOVIES
+    ingest_project_output_mp4_movie:        '@project_publish_area_movie/{snapshot_type}/@ingest_project_output_name.mp4'
+    ingest_sequence_output_mp4_movie:       '@sequence_publish_area_movie/{snapshot_type}/@ingest_sequence_output_name.mp4'
+    ingest_shot_output_mp4_movie:           '@shot_publish_area_movie/{snapshot_type}/@ingest_shot_output_name.mp4'
+
+    ingest_project_asset_output_mp4_movie:  '@project_asset_publish_area_movie/{snapshot_type}/@ingest_project_asset_output_name.mp4'
+    ingest_sequence_asset_output_mp4_movie: '@sequence_asset_publish_area_movie/{snapshot_type}/@ingest_sequence_asset_output_name.mp4'
+    ingest_shot_asset_output_mp4_movie:     '@shot_asset_publish_area_movie/{snapshot_type}/@ingest_shot_asset_output_name.mp4'
+
     # CACHE
     ingest_project_output_cache:            '@project_publish_area_anim/{snapshot_type}/@ingest_project_output_name.{geo.ext}'
     ingest_sequence_output_cache:           '@sequence_publish_area_anim/{snapshot_type}/@ingest_sequence_output_name.{geo.ext}'
