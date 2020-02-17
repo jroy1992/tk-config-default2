@@ -119,7 +119,7 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         try:
             abc_archive.top.children.values()[0].name = rename_to
             abc_archive.write_to_file(publish_path, asOgawa=True)
-        except Exception:
+        except Exception as err:
             import traceback
             self.logger.error(
                 "Unhandled exceptions encountered.",
@@ -129,8 +129,9 @@ class MayaPublishGeometryPlugin(HookBaseClass):
                         "tooltip": "Show complete traceback",
                         "text": traceback.format_exc()
                     }
-
                 })
+
+            raise err
         finally:
             abc_archive.close()
 
