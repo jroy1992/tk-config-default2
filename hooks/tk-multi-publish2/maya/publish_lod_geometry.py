@@ -9,11 +9,17 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
+import tempfile
 import maya.cmds as cmds
 import maya.mel as mel
 import sgtk
 from sgtk import TankError
 from sgtk.util.filesystem import ensure_folder_exists
+
+# A convenience wrapper on top of alembic's Python api
+from dd.runtime import api
+api.load("cask")
+import cask
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -68,6 +74,7 @@ class MayaPublishGeometryPlugin(HookBaseClass):
                     "description": "One line description of the setting"
             }
 
+
         The type string should be one of the data types that toolkit accepts
         as part of its environment configuration.
         """
@@ -94,6 +101,39 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         }
         return schema
 
+    def _rename_abc_top_group(self, publish_path_temp, publish_path, rename_to):
+        """
+        This function renames the "top" group of the alembic heirarchy.
+
+        :param string publish_path: Path of the alembic file to be modified.
+        :param string rename_to: The new name that you would want to assign to the top group.
+        """
+        if not os.path.exists(publish_path_temp):
+            self.logger.error("Invalid Alembic path : {0}. Not renaming the top group.".format(
+                publish_path_temp))
+            return
+
+        # Loading the alembic archive
+        abc_archive = cask.Archive(publish_path_temp)
+
+        try:
+            abc_archive.top.children.values()[0].name = rename_to
+            abc_archive.write_to_file(publish_path, asOgawa=True)
+        except Exception as err:
+            import traceback
+            self.logger.error(
+                "Unhandled exceptions encountered.",
+                extra={
+                    "action_show_more_info": {
+                        "label": "Show Traceback",
+                        "tooltip": "Show complete traceback",
+                        "text": traceback.format_exc()
+                    }
+                })
+
+            raise err
+        finally:
+            abc_archive.close()
 
     def accept(self, task_settings, item):
         """
@@ -136,7 +176,6 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         # return the accepted info
         return accept_data
 
-
     def validate(self, task_settings, item):
         """
         Validates the given item to check that it is ok to publish. Returns a
@@ -159,7 +198,6 @@ class MayaPublishGeometryPlugin(HookBaseClass):
             raise TankError(error_msg)
 
         return super(MayaPublishGeometryPlugin, self).validate(task_settings, item)
-
 
     def publish_files(self, task_settings, item, publish_path):
         """
@@ -192,9 +230,19 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         if start_frame and end_frame:
             alembic_args.append("-fr %d %d" % (start_frame, end_frame))
 
+        # Creating a temporary file on the publish path, where the alembic from maya would be
+        # exported
+        publish_file_temp = tempfile.NamedTemporaryFile(mode='w+b',
+                                                        suffix='.abc',
+                                                        prefix='tmp',
+                                                        dir="/var/tmp/",
+                                                        delete=True)
+
+        publish_path_temp = publish_file_temp.name.replace("\\", "/")
+
         # Set the output path:
         # Note: The AbcExport command expects forward slashes!
-        alembic_args.append("-file %s" % publish_path.replace("\\", "/"))
+        alembic_args.append("-file %s" % publish_path_temp)
 
         # Set the root node to be exported
         alembic_args.append("-root %s" % item.get_property("lod_full_name"))
@@ -227,6 +275,11 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         self.logger.debug(
             "Exported group %s to '%s'." % (item.properties.fields["node"], publish_path)
         )
+
+        # Renaming top group name to be the asset name, in exported alembic.
+        asset_name = item.context.entity["name"]
+        self._rename_abc_top_group(publish_path_temp, str(publish_path), asset_name)
+        publish_file_temp.close()
 
         return [publish_path]
 
