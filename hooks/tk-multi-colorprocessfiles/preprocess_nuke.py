@@ -30,16 +30,27 @@ class PreprocessNuke(HookBaseClass):
                                                       fields=sg_fields))
         if context.task:
             sg_fields = self.parent.get_setting('task_burnin_sg_fields')
-            tasks = self.parent.shotgun.find_one('Task', filters=[['entity', 'is', context.entity],
-                                                                  ['id', 'is', context.task['id']]],
-                                                 fields=sg_fields)
-            replace_data.update(tasks)
-            if tasks.get('duration'):
-                duration = str(tasks['duration']/(8.0*60.0))+' day(s)' if tasks['duration'] else 'None'
-                replace_data.update({'duration': duration})
-            if tasks.get('time_logs_sum'):
-                time_logs_sum = str(tasks['time_logs_sum']/(8.0*60.0))+' day(s)' if tasks['time_logs_sum'] else 'None'
-                replace_data.update({'time_logs_sum': time_logs_sum})
+            if 'duration' in sg_fields and 'time_logs_sum' in sg_fields:
+                sg_time_data = self.parent.shotgun.find('Task', filters=[['entity', 'is', context.entity],
+                                                                    ['step', 'is', context.step]],
+                                                        fields=['duration', 'time_logs_sum'])
+                total_duration = 0
+                total_time_logged = 0
+                for data in sg_time_data:
+                    total_duration += data['duration'] if data['duration'] else 0
+                    total_time_logged += data['time_logs_sum'] if data['time_logs_sum'] else 0
+                if total_duration: total_duration = str(total_duration / (8.0 * 60.0)) + ' day(s)'
+                if total_time_logged: total_time_logged = str(total_time_logged / (8.0 * 60.0)) + ' day(s)'
+
+                replace_data.update({'duration': total_duration})
+                replace_data.update({'time_logs_sum': total_time_logged})
+
+                sg_fields = list(set(sg_fields) - set(['duration', 'time_logs_sum']))
+
+            sg_data = self.parent.shotgun.find_one('Task', filters=[['entity', 'is', context.entity],
+                                                                    ['id', 'is', context.task['id']]],
+                                                   fields=sg_fields)
+            replace_data.update(sg_data)
 
         if not replace_data:
             # nothing to replace, nothing to do here
