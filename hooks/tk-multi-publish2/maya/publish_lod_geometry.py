@@ -32,6 +32,14 @@ MAYA_GEOMETRY_ITEM_TYPE_SETTINGS = {
     }
 }
 
+MAYA_GPU_ITEM_TYPE_SETTINGS = {
+    "maya.geometry": {
+        "publish_type": "GPU Alembic Cache",
+        "publish_name_template": None,
+        "publish_path_template": None
+    }
+}
+
 
 class MayaPublishGeometryPlugin(HookBaseClass):
     """
@@ -80,31 +88,46 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         """
         schema = super(MayaPublishGeometryPlugin, self).settings_schema
         schema["Item Type Filters"]["default_value"] = ["maya.geometry"]
-        schema["Item Type Settings"]["default_value"] = MAYA_GEOMETRY_ITEM_TYPE_SETTINGS
-        schema["Export UVs"] = {
-            "type": "bool",
-            "description": "Specifies whether to export the UVs with the alembic",
-            "allows_empty": True,
-            "default_value": True
-        }
-        schema["Export WorldSpace"] = {
-            "type": "bool",
-            "description": "Specifies whether to export the alembic in worldspace",
-            "allows_empty": True,
-            "default_value": False
-        }
-        schema["Strip Namespace"] = {
-            "type": "bool",
-            "description": "Specifies whether to strip the namespace while exporting the alembic",
-            "allows_empty": True,
-            "default_value": False
-        }
+
+        current_plugin = self.plugin.name
+
+        if current_plugin == "Publish Geometry":
+            schema["Item Type Settings"]["default_value"] = MAYA_GEOMETRY_ITEM_TYPE_SETTINGS
+            schema["Export UVs"] = {
+                "type": "bool",
+                "description": "Specifies whether to export the UVs with the alembic",
+                "allows_empty": True,
+                "default_value": True
+            }
+            schema["Export WorldSpace"] = {
+                "type": "bool",
+                "description": "Specifies whether to export the alembic in worldspace",
+                "allows_empty": True,
+                "default_value": False
+            }
+            schema["Strip Namespace"] = {
+                "type": "bool",
+                "description": "Specifies whether to strip the namespace while exporting the "
+                               "alembic",
+                "allows_empty": True,
+                "default_value": False
+            }
+        elif current_plugin == "Publish GPU Cache":
+            schema["Item Type Settings"]["default_value"] = MAYA_GPU_ITEM_TYPE_SETTINGS
+            schema["Export UVs"] = {
+                "type": "bool",
+                "description": "Specifies whether to export the UVs with the GPU alembic cache.",
+                "allows_empty": True,
+                "default_value": True
+            }
+
         return schema
 
     def _rename_abc_top_group(self, publish_path_temp, publish_path, rename_to):
         """
         This function renames the "top" group of the alembic heirarchy.
 
+        :param string publish_path_temp: temporary path to export alembic.
         :param string publish_path: Path of the alembic file to be modified.
         :param string rename_to: The new name that you would want to assign to the top group.
         """
@@ -164,10 +187,15 @@ class MayaPublishGeometryPlugin(HookBaseClass):
             return accept_data
 
         # check that the AbcExport command is available!
-        if not mel.eval("exists \"AbcExport\""):
+        if task_settings:
+            command = "AbcExport"
+        else:
+            command = "gpuCache"
+
+        if not mel.eval("exists \"{}\"".format(command)):
             self.logger.debug(
-                "Item not accepted because alembic export command 'AbcExport' "
-                "is not available. Perhaps the plugin is not enabled?"
+                "Item not accepted because alembic export command '{}' "
+                "is not available. Perhaps the plugin is not enabled?".format(command)
             )
             accept_data["accepted"] = False
 
@@ -210,6 +238,83 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         :param item: Item to process
         :param publish_path: The output path to publish files to
         """
+        # Creating a temporary file on the publish path, where the alembic from maya would be
+        # exported
+        publish_file_temp = tempfile.NamedTemporaryFile(mode='w+b',
+                                                        suffix='.abc',
+                                                        prefix='tmp',
+                                                        dir="/var/tmp/",
+                                                        delete=True)
+
+        publish_path_temp = publish_file_temp.name.replace("\\", "/")
+
+        # Deciding what type of alembic needs to be exported, based on the current plugin name
+        current_plugin = self.plugin.name
+
+        if current_plugin == "Publish Geometry":
+            # Exporting alembic to a temp location.
+            # This will later be renamed and written to the publish_path
+            self._export_abc_cache(task_settings, item, publish_path_temp)
+
+            # ...and execute it:
+            try:
+                # ensure the publish folder exists:
+                publish_folder = os.path.dirname(publish_path)
+                ensure_folder_exists(publish_folder)
+
+                # Renaming top group name to be the asset name, in exported alembic.
+                asset_name = item.context.entity["name"]
+                self._rename_abc_top_group(publish_path_temp, str(publish_path), asset_name)
+            except Exception as e:
+                raise Exception("Failed to export Geometry: %s" % e)
+
+            self.logger.debug(
+                "Exported group %s to Alembic '%s'." % (item.properties.fields["node"],
+                                                        publish_path)
+            )
+        elif current_plugin == "Publish GPU Cache":
+            current_lod_item = item.get_property("lod_full_name")
+
+            # Clearing the selection for gpu cache export and only selecting the group that needs
+            # to be exported
+            cmds.select(clear=True)
+            cmds.select(current_lod_item)
+
+            self._export_gpu_abc_cache(task_settings, item, publish_path_temp)
+
+            # ...and execute it:
+            try:
+                # ensure the publish folder exists:
+                publish_folder = os.path.dirname(publish_path)
+                ensure_folder_exists(publish_folder)
+
+                # Renaming top group name to be the asset name, in exported alembic.
+                asset_name = item.context.entity["name"]
+                self._rename_abc_top_group(publish_path_temp, str(publish_path), asset_name)
+            except Exception as e:
+                raise Exception("Failed to export Geometry: %s" % e)
+
+            self.logger.debug(
+                "Exported group %s to GPU Cache '%s'." % (item.properties.fields["node"],
+                                                          publish_path)
+            )
+
+        # Finally destroying the temporary file
+        publish_file_temp.close()
+
+        return [publish_path]
+
+    def _export_abc_cache(self, task_settings, item, publish_path):
+        """
+        This method is capable of exporting the scene in a gpu alembic cache.
+
+        :param task_settings: Dictionary of Settings. The keys are strings, matching
+            the keys returned in the settings property. The values are `Setting`
+            instances.
+        :param item: Item to process
+        :param publish_path: The output path to export files to
+
+        """
         publisher = self.parent
 
         # set the alembic args that make the most sense when working with Mari.
@@ -230,29 +335,19 @@ class MayaPublishGeometryPlugin(HookBaseClass):
         if start_frame and end_frame:
             alembic_args.append("-fr %d %d" % (start_frame, end_frame))
 
-        # Creating a temporary file on the publish path, where the alembic from maya would be
-        # exported
-        publish_file_temp = tempfile.NamedTemporaryFile(mode='w+b',
-                                                        suffix='.abc',
-                                                        prefix='tmp',
-                                                        dir="/var/tmp/",
-                                                        delete=True)
-
-        publish_path_temp = publish_file_temp.name.replace("\\", "/")
-
         # Set the output path:
         # Note: The AbcExport command expects forward slashes!
-        alembic_args.append("-file %s" % publish_path_temp)
+        alembic_args.append("-file %s" % publish_path)
 
         # Set the root node to be exported
         alembic_args.append("-root %s" % item.get_property("lod_full_name"))
 
         # Add args based on publish settings
-        if task_settings["Export UVs"].value:
+        if task_settings.get("Export UVs").value:
             alembic_args.append("-uvWrite -writeCreases -writeUVSets")
-        if task_settings["Export WorldSpace"].value:
+        if task_settings.get("Export WorldSpace").value:
             alembic_args.append("-worldSpace")
-        if task_settings["Strip Namespace"].value:
+        if task_settings.get("Strip Namespace").value:
             alembic_args.append("-stripNamespaces")
 
         # build the export command.  Note, use AbcExport -help in Maya for
@@ -273,15 +368,50 @@ class MayaPublishGeometryPlugin(HookBaseClass):
             raise Exception("Failed to export Geometry: %s" % e)
 
         self.logger.debug(
-            "Exported group %s to '%s'." % (item.properties.fields["node"], publish_path)
+            "Exported group %s to Temporary File > '%s'." % (item.properties.fields["node"],
+                                                             publish_path)
         )
 
-        # Renaming top group name to be the asset name, in exported alembic.
-        asset_name = item.context.entity["name"]
-        self._rename_abc_top_group(publish_path_temp, str(publish_path), asset_name)
-        publish_file_temp.close()
+    def _export_gpu_abc_cache(self, task_settings, item, publish_path):
+        """
+        This method is capable of exporting the scene in a gpu alembic cache.
 
-        return [publish_path]
+        :param task_settings: Dictionary of Settings. The keys are strings, matching
+            the keys returned in the settings property. The values are `Setting`
+            instances.
+        :param item: Item to process
+        :param publish_path: The output path to export files to
+
+        """
+        # find the animated frame range to use:
+        start_frame, end_frame = _find_scene_animation_range()
+        export_uv = task_settings["Export UVs"].value
+
+        try:
+            # ensure the publish folder exists:
+            publish_folder = os.path.dirname(publish_path)
+            ensure_folder_exists(publish_folder)
+
+            export_filename = os.path.splitext(os.path.basename(publish_path))[0]
+
+            cmds.refresh(suspend=True)
+            cmds.gpuCache(startTime=start_frame,
+                          endTime=end_frame,
+                          allDagObjects=False,
+                          dataFormat="ogawa",
+                          directory=publish_folder,
+                          fileName=export_filename,
+                          saveMultipleFiles=False,
+                          dumpHierarchy=True,
+                          writeUVs=export_uv
+                          )
+            cmds.refresh(suspend=False)
+        except Exception as e:
+            raise Exception("Failed to export Geometry: %s" % e)
+
+        self.logger.debug(
+            "Exported scene geometry to '%s'." % publish_path
+        )
 
 
 def _find_scene_animation_range():
