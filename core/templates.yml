@@ -418,6 +418,15 @@ paths:
     sequence_asset_publish_cache:           '@sequence_asset_publish_area_anim/alembic/@geom_subdirs/@sequence_asset_version_name.abc'
     shot_asset_publish_cache:               '@shot_asset_publish_area_anim/alembic/@geom_subdirs/@shot_asset_version_name.abc'
 
+    # GPU CACHE
+    project_publish_gpucache:                  '@project_publish_area_anim/gpu_cache/@geom_subdirs/@project_version_name.abc'
+    sequence_publish_gpucache:                 '@sequence_publish_area_anim/gpu_cache/@geom_subdirs/@sequence_version_name.abc'
+    shot_publish_gpucache:                     '@shot_publish_area_anim/gpu_cache/@geom_subdirs/@shot_version_name.abc'
+
+    project_asset_publish_gpucache:            '@project_asset_publish_area_anim/gpu_cache/@geom_subdirs/@project_asset_version_name.abc'
+    sequence_asset_publish_gpucache:           '@sequence_asset_publish_area_anim/gpu_cache/@geom_subdirs/@sequence_asset_version_name.abc'
+    shot_asset_publish_gpucache:               '@shot_asset_publish_area_anim/gpu_cache/@geom_subdirs/@shot_asset_version_name.abc'
+
     # STANDIN
     project_publish_standin:                '@project_publish_area_scene/standin/@geom_subdirs/@project_version_name.{maya.std.ext}'
     sequence_publish_standin:               '@sequence_publish_area_scene/standin/@geom_subdirs/@sequence_version_name.{maya.std.ext}'
