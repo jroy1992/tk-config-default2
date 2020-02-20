@@ -556,7 +556,12 @@ class IngestCollectorPlugin(HookBaseClass):
         if "default_fields" in item_info:
             for key, value in item_info["default_fields"].iteritems():
                 if key not in fields:
-                    fields[key] = value
+                    item_attr_match = re.match("%(.*)%", value)
+                    # to assign value on item fields with attributes on the item object
+                    if item_attr_match:
+                        fields[key] = getattr(item, item_attr_match.groups()[0])
+                    else:
+                        fields[key] = value
 
         return fields
 
