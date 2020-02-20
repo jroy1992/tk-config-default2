@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
+from sgtk.platform.qt import QtGui
 
 import hiero.core
 import hiero.ui
@@ -104,8 +105,28 @@ class HieroCustomizeExportUI(HookBaseClass):
             ),
         ]
 
+    def create_shot_processor_widget(self, parent_widget):
+        widget = QtGui.QGroupBox("Custom Properties", parent_widget)
+        widget.setLayout(QtGui.QFormLayout())
+        return widget
 
+    def get_shot_processor_ui_properties(self):
+        return [
+            dict(
+                label="In Handle:",
+                name="In_Handle",
+                value=int(),
+                tooltip="Calculate and update head_in field in shotgun",
+            ),
+            dict(
+                label="Out Handle:",
+                name="Out_Handle",
+                value=int(),
+                tooltip="Calculate and update tail_out field in shotgun",
+            )
+        ]
 
-
-
-
+    def set_shot_processor_ui_properties(self, widget, properties):
+        layout = widget.layout()
+        for label, prop in properties.iteritems():
+            layout.addRow(label, prop)

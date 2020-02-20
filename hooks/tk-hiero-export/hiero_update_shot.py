@@ -31,9 +31,11 @@ class HieroUpdateShot(HookBaseClass):
 
         # apparently shotgun utility 'sync frame range' within Maya uses 'sg_head_in' and 'sg_tail_out'
         start_frame = entity_data['sg_cut_in']
-
-        entity_data['sg_head_in'] = start_frame
-        entity_data['sg_tail_out'] = entity_data['sg_head_in'] + entity_data['sg_cut_duration']
+        # get in_handle and out_handle from exportUI to calculate 'sg_head_in' and 'sg_tail_out'
+        in_handle = preset_properties.get("In_Handle")
+        out_handle = preset_properties.get("Out_Handle")
+        entity_data['sg_head_in'] = start_frame - in_handle
+        entity_data['sg_tail_out'] = start_frame + entity_data['sg_cut_duration'] - 1 + out_handle
 
         self.parent.logger.debug(
             "Updating info for %s %s: %s" % (entity_type, entity_id, entity_data)
