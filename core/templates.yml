@@ -160,6 +160,12 @@ keys:
             ccc: ccc
         default: cc
         alias: extension
+    cube.ext:
+        type: str
+        choices:
+            cube: cube
+        default: cube
+        alias: extension
     zbrush.ext:
         type: str
         choices:
@@ -555,6 +561,15 @@ paths:
     project_publish_cdl_symlink:            '@project_publish_area_cdl/grades/grade/{name}.cc'
     sequence_publish_cdl_symlink:           '@sequence_publish_area_cdl/grades/grade/{name}.cc'
     shot_publish_cdl_symlink:               '@shot_publish_area_cdl/grades/grade/{name}.cc'
+
+    # TODO: we only support cube publishing currently
+    project_publish_cube:                    '@project_publish_area_cdl/grades/grade_v{version}/{name}.cube'
+    sequence_publish_cube:                   '@sequence_publish_area_cdl/grades/grade_v{version}/{name}.cube'
+    shot_publish_cube:                       '@shot_publish_area_cdl/grades/grade_v{version}/{name}.cube'
+
+    project_publish_cube_symlink:            '@project_publish_area_cdl/grades/grade/{name}.cube'
+    sequence_publish_cube_symlink:           '@sequence_publish_area_cdl/grades/grade/{name}.cube'
+    shot_publish_cube_symlink:               '@shot_publish_area_cdl/grades/grade/{name}.cube'
 
 #
 # The aliases section allows you to map one template to another without worrying

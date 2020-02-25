@@ -82,6 +82,7 @@ keys:
         choices:
             avidgrade: avidgrades
             grade: grades
+            avidlut: avidluts
         default: avidgrade
 
     asperaFolderName:
@@ -97,6 +98,9 @@ keys:
     subcontext:
         type: str
         filter_by: '^(\w+)$'
+
+    color_file_name:
+        type: str
 
     # relevant fields from manifest
     snapshot_type:
@@ -126,14 +130,15 @@ paths:
 
     # ORG/5880/SHARED/SCRIPTS/nuke/avidgrades/avidgrade_v001/0068.cc
     # cdl paths
-    ingest_shot_area_legacy_cdl:            '@ingest_shot_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
-    ingest_sequence_area_legacy_cdl:        '@ingest_sequence_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
-    ingest_project_area_legacy_cdl:         '@ingest_project_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{ingestVersion}'
+    ingest_shot_area_legacy_cdl:            '@ingest_shot_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{version}'
+    ingest_sequence_area_legacy_cdl:        '@ingest_sequence_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{version}'
+    ingest_project_area_legacy_cdl:         '@ingest_project_area/SCRIPTS/nuke/{ingestCdlName}s/{ingestCdlName}_v{version}'
 
     # ORG/1400/SHARED/COMP/scene/nukescript_avidgrade/nuke_avidgrade/main/avidgrade_v001/0003.cc
-    ingest_shot_area_cdl:                   '@ingest_shot_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
-    ingest_sequence_area_cdl:               '@ingest_sequence_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
-    ingest_project_area_cdl:                '@ingest_project_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{ingestVersion}'
+    # AF/470140/SHARED/COMP/scene/nukescript_avidlut/nuke_avidlut/main/avidlut_v001/PM_dk1.cube
+    ingest_shot_area_cdl:                   '@ingest_shot_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{version}'
+    ingest_sequence_area_cdl:               '@ingest_sequence_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{version}'
+    ingest_project_area_cdl:                '@ingest_project_area/COMP/scene/nukescript_{ingestCdlName}/nuke_{ingestCdlName}/{subcontext}/{ingestCdlName}_v{version}'
 
     # deep image paths
     # TODO: Remove the _exr context_type hardcoding?
@@ -151,9 +156,15 @@ paths:
     ingest_sequence_legacy_cdl:             '@ingest_sequence_area_legacy_cdl/{name}.{cdl.ext}'
     ingest_project_legacy_cdl:              '@ingest_project_area_legacy_cdl/{name}.{cdl.ext}'
 
-    ingest_shot_cdl:                        '@ingest_shot_area_cdl/{name}.{cdl.ext}'
-    ingest_sequence_cdl:                    '@ingest_sequence_area_cdl/{name}.{cdl.ext}'
-    ingest_project_cdl:                     '@ingest_project_area_cdl/{name}.{cdl.ext}'
+    ingest_shot_cdl:                        '@ingest_shot_area_cdl/{color_file_name}.{cdl.ext}'
+    ingest_sequence_cdl:                    '@ingest_sequence_area_cdl/{color_file_name}.{cdl.ext}'
+    ingest_project_cdl:                     '@ingest_project_area_cdl/{color_file_name}.{cdl.ext}'
+
+    # handling avidlut
+    # AF/470140/SHARED/COMP/scene/nukescript_avidlut/nuke_avidlut/main/avidlut_v001/PM_dk1.cube
+    ingest_shot_cube:                       '@ingest_shot_area_cdl/{color_file_name}.{cube.ext}'
+    ingest_sequence_cube:                   '@ingest_sequence_area_cdl/{color_file_name}.{cube.ext}'
+    ingest_project_cube:                    '@ingest_project_area_cdl/{color_file_name}.{cube.ext}'
 
     ingest_shot_render:                     '@ingest_shot_area_image/@ingest_shot_input_name.{SEQ}.{ingestImgExtension}'
     ingest_sequence_render:                 '@ingest_sequence_area_image/@ingest_sequence_input_name.{SEQ}.{ingestImgExtension}'
