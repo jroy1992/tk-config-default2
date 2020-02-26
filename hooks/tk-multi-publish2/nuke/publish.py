@@ -560,7 +560,8 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         if node_path in all_paths:
             duplicate_path_node = [key for (key, value) in item.parent.properties['write_node_paths_dict'].items()
                                    if value == node_path]
-            if not (len(duplicate_path_node) == 1 and duplicate_path_node[0] == node_name):
+
+            if node_name not in duplicate_path_node:
                 self.logger.error("Duplicate output path.",
                                   extra={
                                       "action_show_more_info": {
@@ -571,7 +572,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                                       }
                                   }
                                   )
-            return False
+                return False
         item.parent.properties['write_node_paths_dict'] = {node_name: node_path}
         return True
 
