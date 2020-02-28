@@ -556,24 +556,27 @@ class NukePublishDDValidationPlugin(HookBaseClass):
     def _write_node_path_duplicacy(self, item):
         node_path = item.properties['node']['cached_path'].value()
         node_name = item.properties['node'].name()
-        all_paths = item.parent.properties['write_node_paths_dict'].values()
+        all_paths = item.parent.properties['write_node_paths_dict'].keys()
         if node_path in all_paths:
-            duplicate_path_node = [key for (key, value) in item.parent.properties['write_node_paths_dict'].items()
-                                   if value == node_path]
+            duplicate_path_nodes = item.parent.properties['write_node_paths_dict'].get(node_path, [])
 
-            if node_name not in duplicate_path_node:
+            if node_name in duplicate_path_nodes:
+                duplicate_path_nodes.remove(node_name)
+            if duplicate_path_nodes:
                 self.logger.error("Duplicate output path.",
                                   extra={
                                       "action_show_more_info": {
                                           "label": "Show Info",
                                           "tooltip": "Show node(s) with identical output path",
                                           "text": "Following node(s) have same output path as {}:\n\n{}".
-                                          format(node_name, '\n'.join(duplicate_path_node))
+                                          format(node_name, '\n'.join(duplicate_path_nodes))
                                       }
                                   }
                                   )
+                item.parent.properties['write_node_paths_dict'][node_path].add(node_name)
                 return False
-        item.parent.properties['write_node_paths_dict'] = {node_name: node_path}
+
+        item.parent.properties['write_node_paths_dict'].update({node_path: set([node_name])})
         return True
 
     @staticmethod
