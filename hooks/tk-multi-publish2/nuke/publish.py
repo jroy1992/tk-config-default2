@@ -558,7 +558,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         node_name = item.properties['node'].name()
         all_paths = item.parent.properties['write_node_paths_dict'].keys()
         if node_path in all_paths:
-            duplicate_path_nodes = item.parent.properties['write_node_paths_dict'].get(node_path, [])
+            duplicate_path_nodes = item.parent.properties['write_node_paths_dict'].get(node_path, set())
 
             if node_name in duplicate_path_nodes:
                 duplicate_path_nodes.remove(node_name)
@@ -576,7 +576,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                 item.parent.properties['write_node_paths_dict'][node_path].add(node_name)
                 return False
 
-        item.parent.properties['write_node_paths_dict'].update({node_path: set([node_name])})
+        item.parent.properties['write_node_paths_dict'][node_path] = {node_name}
         return True
 
     @staticmethod
