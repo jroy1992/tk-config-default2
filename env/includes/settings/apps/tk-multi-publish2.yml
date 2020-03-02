@@ -54,6 +54,7 @@ settings.tk-multi-publish2.nuke.publish_files:          '@settings.tk-multi-publ
 settings.tk-multi-publish2.nuke.publish_session:        '@settings.tk-multi-publish2.basic.publish_session:{self}/nuke/publish_session.py:{config}/tk-multi-publish2/nuke/publish.py'
 settings.tk-multi-publish2.nuke.create_version:         '@settings.tk-multi-publish2.basic.create_version:{self}/nuke/create_version.py'
 settings.tk-multi-publish2.nuke.upload_version:         '@settings.tk-multi-publish2.basic.upload_version'
+settings.tk-multi-publish2.nuke.post_phase:             '{config}/tk-multi-publish2/nuke/post_phase.py'
 
 settings.tk-multi-publish2.nukestudio.collector:        '@settings.tk-multi-publish2.basic.collector:{self}/nuke/collector.py:{config}/tk-multi-publish2/nukestudio/collector.py'
 settings.tk-multi-publish2.nukestudio.publish_files:    '@settings.tk-multi-publish2.basic.publish_files:{self}/nuke/publish_files.py'
@@ -118,6 +119,7 @@ settings.tk-multi-publish2.nuke:
   collector_settings: '@settings.tk-multi-publish2.nuke.collector.settings'
   path_info: '@settings.tk-multi-publish2.path_info'
   publish_plugins: '@settings.tk-multi-publish2.nuke.publish_plugins'
+  post_phase: '@settings.tk-multi-publish2.nuke.post_phase'
   location: '@apps.tk-multi-publish2.location'
 
 # NukeStudio

@@ -24,6 +24,7 @@ from Qt import QtWidgets, QtGui, QtCore
 HookBaseClass = sgtk.get_hook_baseclass()
 
 USER_FILE_SETTING_NAME = "Error On User File"
+NODE_CLASSES_TO_EXCLUDE = "Node Classes To Exclude"
 
 
 class DisplayUnpublishedFiles(QtWidgets.QWidget):
@@ -141,7 +142,15 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                 "type": "bool",
                 "default_value": True,
                 "description": "Setting to Error the validation that checks for user paths in the nuke script."
-            }
+            },
+            NODE_CLASSES_TO_EXCLUDE: {
+                "type": "list",
+                "values": {
+                    "type": "str"
+                },
+                "default_value": ['LD_3DE_Classic_LD_Model'],
+                "description": "Node classes to be excluded which checking for file knob for user file validation"
+            },
         }
 
         schema.update(validation_schema)
@@ -209,7 +218,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
                 return False if log_method == "error" else True
         return True
 
-    def _collect_file_nodes_in_graph(self, node, visited_files):
+    def _collect_file_nodes_in_graph(self, node, visited_files, task_settings):
         """
         Traverses the graph for the write node being validated and collects all the
         nodes with file knobs and their respective file values
@@ -218,6 +227,9 @@ class NukePublishDDValidationPlugin(HookBaseClass):
         :param visited_files: Dictionary of nodes and associated files
         :return: Dictionary of all the file nodes in the graph and associated files
         """
+        if node.Class() in task_settings[NODE_CLASSES_TO_EXCLUDE].value:
+            self.visited_dict[node] = 1
+
         if self.visited_dict[node] == 0:
             # get the file path if exists
             if self._contains_active_file_knob(node):
@@ -229,7 +241,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             dep = node.dependencies()
             if dep:
                 for item in dep:
-                    self._collect_file_nodes_in_graph(item, visited_files)
+                    self._collect_file_nodes_in_graph(item, visited_files, task_settings)
 
         return visited_files
 
@@ -397,7 +409,7 @@ class NukePublishDDValidationPlugin(HookBaseClass):
             'invalid': [],
         }
         visited_files = {}
-        self._collect_file_nodes_in_graph(item.properties['node'], visited_files)
+        self._collect_file_nodes_in_graph(item.properties['node'], visited_files, task_settings)
         self._check_file_validity(visited_files, suspicious_paths, valid_paths, show_path)
         item.parent.properties['visited_dict'] = self.visited_dict
 
@@ -544,22 +556,27 @@ class NukePublishDDValidationPlugin(HookBaseClass):
     def _write_node_path_duplicacy(self, item):
         node_path = item.properties['node']['cached_path'].value()
         node_name = item.properties['node'].name()
-        all_paths = item.parent.properties['write_node_paths_dict'].values()
+        all_paths = item.parent.properties['write_node_paths_dict'].keys()
         if node_path in all_paths:
-            duplicate_path_node = [key for (key, value) in item.parent.properties['write_node_paths_dict'].items()
-                                   if value == node_path]
-            self.logger.error("Duplicate output path.",
-                              extra={
-                                  "action_show_more_info": {
-                                      "label": "Show Info",
-                                      "tooltip": "Show node(s) with identical output path",
-                                      "text": "Following node(s) have same output path as {}:\n\n{}".
-                                      format(node_name, '\n'.join(duplicate_path_node))
+            duplicate_path_nodes = item.parent.properties['write_node_paths_dict'].get(node_path, set())
+
+            if node_name in duplicate_path_nodes:
+                duplicate_path_nodes.remove(node_name)
+            if duplicate_path_nodes:
+                self.logger.error("Duplicate output path.",
+                                  extra={
+                                      "action_show_more_info": {
+                                          "label": "Show Info",
+                                          "tooltip": "Show node(s) with identical output path",
+                                          "text": "Following node(s) have same output path as {}:\n\n{}".
+                                          format(node_name, '\n'.join(duplicate_path_nodes))
+                                      }
                                   }
-                              }
-                              )
-            return False
-        item.parent.properties['write_node_paths_dict'] = {node_name: node_path}
+                                  )
+                item.parent.properties['write_node_paths_dict'][node_path].add(node_name)
+                return False
+
+        item.parent.properties['write_node_paths_dict'][node_path] = {node_name}
         return True
 
     @staticmethod
