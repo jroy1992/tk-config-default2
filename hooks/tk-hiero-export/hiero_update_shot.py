@@ -42,6 +42,8 @@ class HieroUpdateShot(HookBaseClass):
         entity_data['smart_tail_out'] = entity_data['sg_tail_out']
         entity_data['smart_cut_in'] = entity_data['sg_cut_in']
         entity_data['smart_cut_out'] = entity_data['sg_cut_out']
+        entity_data['smart_head_duration'] = entity_data['sg_cut_in'] - entity_data['sg_head_in']
+        entity_data['smart_cut_duration'] = entity_data['sg_cut_out'] - entity_data['sg_cut_in'] + 1
 
         self.parent.logger.debug(
             "Updating info for %s %s: %s" % (entity_type, entity_id, entity_data)
