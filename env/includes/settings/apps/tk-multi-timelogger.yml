@@ -23,13 +23,32 @@ includes:
 # have another file manager app running, with different settings,
 # allowing files to be loaded and saved.
 #
-# References to this @workfiles2 include typically appears at
+# References to this @timelogger include typically appears at
 # 'transit' levels in the configuration, where work normally
 # doesn't happen, but you just want the user to jump to their
 # work area. The work area is typically a task or pipeline step
 # and these 'transit' areas can be project, shot, or sequence level.
 
+settings.tk-multi-timelogger.entities: &timelogger_entities
+  - caption: 'Asset Tasks'
+    entity_type: Task
+    filters:
+      - [entity, type_is, Asset]
+    hierarchy: [entity.Asset.sg_asset_type, entity, step, content]
+  - caption: 'Shot Tasks'
+    entity_type: Task
+    filters:
+      - [entity, type_is, Shot]
+    hierarchy: [entity.Shot.sg_sequence, entity, step, content]
+  - caption: 'Misc Tasks'
+    entity_type: Task
+    filters:
+      - [entity, type_is, Sequence]
+      - [sg_status_list, is, "tlg"]
+      - [step.Step.short_name, is, "tlg"]
+    hierarchy: [entity, step, content]
 
 settings.tk-multi-timelogger:
+  entities: *timelogger_entities
   my_tasks_extra_display_fields: [entity.Shot.sg_sequence.Sequence.code]
   location: "@apps.tk-multi-timelogger.location"
