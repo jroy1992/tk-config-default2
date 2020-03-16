@@ -120,6 +120,24 @@ class IngestCollectorPlugin(HookBaseClass):
             "default_value": {},
             "description": "Default fields to use, with this item"
         }
+        items_schema["manifest_field_filters"] = {
+            "type": dict,
+            "values": {
+                "type": "str",
+            },
+            "allows_empty": True,
+            "default_value": {},
+            "description": (
+                    "This imposes one restriction, "
+                    "that only item types which have matching work_path_template are valid candidates."
+                    "Dictionary of Key in manifest_file_fields"
+                    "'%<operator method>:expected_value:expected_result%' will get the method from operator module"
+                    "'#<value operator method>:expected_value:expected_result#' will get method from value of the key"
+                    "if all the conditions are matching, the match score will be subtracted from the "
+                    "highest resolution order,  else the item will be pushed to the last priority to maintain"
+                    "backwards compatibility with the initial behaviour."
+            )
+        }
         schema["Manifest SG Mappings"] = {
             "type": "dict",
             "values": {
@@ -264,7 +282,7 @@ class IngestCollectorPlugin(HookBaseClass):
         return super(IngestCollectorPlugin, self)._resolve_work_path_template(settings, item)
 
     def _add_file_item(self, settings, parent_item, path, is_sequence=False, seq_files=None,
-                    item_name=None, item_type=None, context=None, properties=None):
+                    item_name=None, item_type=None, context=None, creation_properties=None):
         """
         Creates a file item
 
@@ -276,7 +294,7 @@ class IngestCollectorPlugin(HookBaseClass):
         :param item_name: The name of the item instance
         :param item_type: The type of the item instance
         :param context: The :class:`sgtk.Context` to set for the item
-        :param properties: The dict of initial properties for the item
+        :param creation_properties: The dict of initial properties for the item
 
         :returns: The item that was created
         """
@@ -326,7 +344,7 @@ class IngestCollectorPlugin(HookBaseClass):
                 return
 
         item = super(IngestCollectorPlugin, self)._add_file_item(settings, parent_item, path, is_sequence, seq_files,
-                                                                 item_name, item_type, context, properties)
+                                                                 item_name, item_type, context, creation_properties)
 
         # create/add the properties required for missing fields and context fields
         if "missing_fields" not in item.properties:
@@ -490,6 +508,7 @@ class IngestCollectorPlugin(HookBaseClass):
 
         item_info.setdefault("default_snapshot_type", DEFAULT_SNAPSHOT_TYPE)
         item_info.setdefault("default_fields", dict())
+        item_info.setdefault("manifest_field_filters", dict())
 
         # everything should now be populated, so return the dictionary
         return item_info
@@ -843,11 +862,13 @@ class IngestCollectorPlugin(HookBaseClass):
                         # let's query/create those first.
                         fields["tags"] = self._query_associated_tags(tags)
                         if os.path.isdir(p_file):
-                            items = self._collect_folder(settings, parent_item, p_file)
+                            items = self._collect_folder(settings, parent_item, p_file,
+                                                         creation_properties={'manifest_file_fields': fields})
                             if items:
                                 new_items.extend(items)
                         else:
-                            item = self._collect_file(settings, parent_item, p_file)
+                            item = self._collect_file(settings, parent_item, p_file,
+                                                      creation_properties={'manifest_file_fields': fields})
                             if item:
                                 new_items.append(item)
                     # note type item
@@ -891,6 +912,125 @@ class IngestCollectorPlugin(HookBaseClass):
                     file_items.extend(new_items)
 
         return file_items
+
+    def _get_filtered_item_types_from_settings(self, settings, path, is_sequence, creation_properties):
+
+        """
+        Returns a list of tuples containing (resolution_order, work_path_template, item_type).
+        This filtered list of item types can then be passed down to resolve the correct item_type.
+
+        :param dict settings: Configured settings for this collector
+        :param path: The file path to identify type info for
+        :param is_sequence: Bool whether or not path is a sequence path
+        :param creation_properties: The dict of initial properties for the item
+        """
+
+        template_item_type_mapping = super(IngestCollectorPlugin,
+                                           self)._get_filtered_item_types_from_settings(settings, path,
+                                                                                        is_sequence,
+                                                                                        creation_properties)
+
+        found_matching_manifest_filter = False
+        filtered_template_item_type_mapping = list()
+        max_resolution_order = max(
+            [resolution_order for resolution_order, work_path_template, item_type in template_item_type_mapping])
+
+        # contains the logic that further filters the items based on creation_properties
+        # which in case of manifest file based ingestion would contain a list of manifest_file_fields
+        if "manifest_file_fields" in creation_properties:
+            manifest_file_fields = creation_properties["manifest_file_fields"]
+
+            for resolution_order, work_path_template, item_type in template_item_type_mapping:
+                type_info = self._get_item_type_info(settings, item_type)
+                manifest_field_filters = type_info["manifest_field_filters"]
+
+                if work_path_template and manifest_field_filters:
+                    match_score = 0
+
+                    for field, parser_value in manifest_field_filters.iteritems():
+                        field_value = manifest_file_fields.get(field)
+
+                        if field_value:
+                            field_value_match = False
+                            operator_method = "not found"
+                            expected_value = "not found"
+                            expected_result = "not found"
+                            # operator module specific parsing, '%<operator method>:expected_value:expected_result%'
+                            operator_module_match = re.match("%(.*):(.*):(.*)%", parser_value)
+                            # field value operator based parsing,
+                            # '#<value operator method>:expected_value:expected_result#'
+                            field_value_operator_match = re.match("#(.*):(.*):(.*)#", parser_value)
+
+                            if operator_module_match:
+                                operator_method_name = operator_module_match.groups()[0]
+                                expected_value = operator_module_match.groups()[1]
+                                expected_result = operator_module_match.groups()[2]
+
+                                operator_method = getattr(operator, operator_method_name)
+                                # match the value of the manifest field against the expected value
+                                field_value_match = operator_method(field_value, expected_value)
+
+                            if field_value_operator_match:
+                                operator_method_name = field_value_operator_match.groups()[0]
+                                expected_value = field_value_operator_match.groups()[1]
+                                expected_result = field_value_operator_match.groups()[2]
+
+                                operator_method = getattr(field_value, operator_method_name)
+                                # match the value of the manifest field against the expected value
+                                field_value_match = operator_method(expected_value)
+
+                            # if this is not a boolean get the expected result from the info
+                            if not isinstance(field_value_match, bool):
+                                value_type = type(field_value_match)
+                                try:
+                                    field_value_match = (field_value_match == value_type(expected_result))
+                                except:
+                                    field_value_match = False
+
+                            if field_value_match:
+                                # drop the value of resolution order by that much amount
+                                match_score += 1
+
+                            self.logger.info("Manifest field filter info for field %s." % field,
+                                             extra={
+                                                  "action_show_more_info": {
+                                                      "label": "Show Data",
+                                                      "tooltip": "Show the data",
+                                                      "text": "Value: %s\nParser String: %s"
+                                                              "\nOperator Method: %s\nExpected Value: %s"
+                                                              "\nMatch Score: %s\nExpected Result: %s"
+                                                              "\nPath: %s\nManifest Fields: %s" %
+                                                              (field_value, parser_value, operator_method,
+                                                               expected_value, match_score, expected_result, path,
+                                                               pprint.pformat(manifest_file_fields))
+                                                  }
+                                              })
+
+                    # if all the conditions match, only then we need to update the resolution order
+                    # else drop the priority of this item type to last so a normal item type will get picked, this is
+                    # to maintain backwards compatibility.
+                    if match_score == len(manifest_field_filters.keys()):
+                        found_matching_manifest_filter = True
+                        # TODO: See if this needs to be changed to use highest resolution oreder instead of items'
+                        resolution_order = resolution_order - match_score
+                    else:
+                        resolution_order = resolution_order + max_resolution_order
+                # add the mapping with the updated resolution order, if any.
+                filtered_template_item_type_mapping.append((resolution_order, work_path_template, item_type))
+
+        # in case of non manifest based ingestion, item types with type info containing manifest_field_filters
+        # will be removed from the mapping list, if they don't have a matching work_path_template.
+        else:
+            for resolution_order, work_path_template, item_type in template_item_type_mapping:
+                type_info = self._get_item_type_info(settings, item_type)
+                if not type_info["manifest_field_filters"]:
+                    filtered_template_item_type_mapping.append((resolution_order, work_path_template, item_type))
+
+        # sort the list on resolution_order, giving preference to a matching template
+        filtered_template_item_type_mapping.sort(
+            key=lambda elem: elem[0] if not elem[1] else elem[0]-max_resolution_order)
+
+        return filtered_template_item_type_mapping
 
     def _get_item_context_from_path(self, work_path_template, path, parent_item, default_entities=list()):
         """Updates the context of the item from the work_path_template/template, if needed.
