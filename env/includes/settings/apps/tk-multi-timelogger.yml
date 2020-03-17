@@ -45,7 +45,6 @@ settings.tk-multi-timelogger.entities: &timelogger_entities
     filters:
       - [entity, type_is, Sequence]
       - [sg_status_list, is, "tlg"]
-      - [step.Step.short_name, is, "tlg"]
     hierarchy: [entity, step, content]
 
 settings.tk-multi-timelogger:
