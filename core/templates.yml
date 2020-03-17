@@ -398,22 +398,32 @@ paths:
     shot_asset_publish_model:               '@shot_asset_publish_area_model/{geo.ext}/@geom_subdirs/@shot_asset_version_name[.{SEQ}].{geo.ext}'
 
     # FX GEO CACHE
-    project_publish_fx_geo_cache:            '@project_publish_area_fx/{geo.ext}/@geom_subdirs/@project_version_name[.{SEQ}].{geo.ext}'
-    sequence_publish_fx_geo_cache:           '@sequence_publish_area_fx/{geo.ext}/@geom_subdirs/@sequence_version_name[.{SEQ}].{geo.ext}'
-    shot_publish_fx_geo_cache:               '@shot_publish_area_fx/{geo.ext}/@geom_subdirs/@shot_version_name[.{SEQ}].{geo.ext}'
+    project_publish_fx_geo_cache:           '@project_publish_area_fx/{geo.ext}/@geom_subdirs/@project_version_name[.{SEQ}].{geo.ext}'
+    sequence_publish_fx_geo_cache:          '@sequence_publish_area_fx/{geo.ext}/@geom_subdirs/@sequence_version_name[.{SEQ}].{geo.ext}'
+    shot_publish_fx_geo_cache:              '@shot_publish_area_fx/{geo.ext}/@geom_subdirs/@shot_version_name[.{SEQ}].{geo.ext}'
 
-    project_asset_publish_fx_geo_cache:      '@project_asset_publish_area_fx/{geo.ext}/@geom_subdirs/@project_asset_version_name[.{SEQ}].{geo.ext}'
-    sequence_asset_publish_fx_geo_cache:     '@sequence_asset_publish_area_fx/{geo.ext}/@geom_subdirs/@sequence_asset_version_name[.{SEQ}].{geo.ext}'
-    shot_asset_publish_fx_geo_cache:         '@shot_asset_publish_area_fx/{geo.ext}/@geom_subdirs/@shot_asset_version_name[.{SEQ}].{geo.ext}'
+    project_asset_publish_fx_geo_cache:     '@project_asset_publish_area_fx/{geo.ext}/@geom_subdirs/@project_asset_version_name[.{SEQ}].{geo.ext}'
+    sequence_asset_publish_fx_geo_cache:    '@sequence_asset_publish_area_fx/{geo.ext}/@geom_subdirs/@sequence_asset_version_name[.{SEQ}].{geo.ext}'
+    shot_asset_publish_fx_geo_cache:        '@shot_asset_publish_area_fx/{geo.ext}/@geom_subdirs/@shot_asset_version_name[.{SEQ}].{geo.ext}'
 
     # FX ABC CACHE
-    project_publish_fx_abc_cache:            '@project_publish_area_fx/alembic/@geom_subdirs/@project_version_name.abc'
-    sequence_publish_fx_abc_cache:           '@sequence_publish_area_fx/alembic/@geom_subdirs/@sequence_version_name.abc'
-    shot_publish_fx_abc_cache:               '@shot_publish_area_fx/alembic/@geom_subdirs/@shot_version_name.abc'
+    project_publish_fx_abc_cache:           '@project_publish_area_fx/alembic/@geom_subdirs/@project_version_name.abc'
+    sequence_publish_fx_abc_cache:          '@sequence_publish_area_fx/alembic/@geom_subdirs/@sequence_version_name.abc'
+    shot_publish_fx_abc_cache:              '@shot_publish_area_fx/alembic/@geom_subdirs/@shot_version_name.abc'
 
-    project_asset_publish_fx_abc_cache:      '@project_asset_publish_area_fx/alembic/@geom_subdirs/@project_asset_version_name.abc'
-    sequence_asset_publish_fx_abc_cache:     '@sequence_asset_publish_area_fx/alembic/@geom_subdirs/@sequence_asset_version_name.abc'
-    shot_asset_publish_fx_abc_cache:         '@shot_asset_publish_area_fx/alembic/@geom_subdirs/@shot_asset_version_name.abc'
+    project_asset_publish_fx_abc_cache:     '@project_asset_publish_area_fx/alembic/@geom_subdirs/@project_asset_version_name.abc'
+    sequence_asset_publish_fx_abc_cache:    '@sequence_asset_publish_area_fx/alembic/@geom_subdirs/@sequence_asset_version_name.abc'
+    shot_asset_publish_fx_abc_cache:        '@shot_asset_publish_area_fx/alembic/@geom_subdirs/@shot_asset_version_name.abc'
+
+    # FBX FILES
+    project_publish_fbx:                    '@project_publish_area_anim/fbx/@geom_subdirs/@project_version_name.fbx'
+    sequence_publish_fbx:                   '@sequence_publish_area_anim/fbx/@geom_subdirs/@sequence_version_name.fbx'
+    shot_publish_fbx:                       '@shot_publish_area_anim/fbx/@geom_subdirs/@shot_version_name.fbx'
+
+    project_asset_publish_fbx:              '@project_asset_publish_area_anim/fbx/@geom_subdirs/@project_asset_version_name.fbx'
+    sequence_asset_publish_fbx:             '@sequence_asset_publish_area_anim/fbx/@geom_subdirs/@sequence_asset_version_name.fbx'
+    shot_asset_publish_fbx:                 '@shot_asset_publish_area_anim/fbx/@geom_subdirs/@shot_asset_version_name.fbx'
+
 
     # ANIM CACHE
     project_publish_cache:                  '@project_publish_area_anim/alembic/@geom_subdirs/@project_version_name.abc'
@@ -425,13 +435,13 @@ paths:
     shot_asset_publish_cache:               '@shot_asset_publish_area_anim/alembic/@geom_subdirs/@shot_asset_version_name.abc'
 
     # GPU CACHE
-    project_publish_gpucache:                  '@project_publish_area_anim/gpu_cache/@geom_subdirs/@project_version_name.abc'
-    sequence_publish_gpucache:                 '@sequence_publish_area_anim/gpu_cache/@geom_subdirs/@sequence_version_name.abc'
-    shot_publish_gpucache:                     '@shot_publish_area_anim/gpu_cache/@geom_subdirs/@shot_version_name.abc'
+    project_publish_gpucache:               '@project_publish_area_anim/gpu_cache/@geom_subdirs/@project_version_name.abc'
+    sequence_publish_gpucache:              '@sequence_publish_area_anim/gpu_cache/@geom_subdirs/@sequence_version_name.abc'
+    shot_publish_gpucache:                  '@shot_publish_area_anim/gpu_cache/@geom_subdirs/@shot_version_name.abc'
 
-    project_asset_publish_gpucache:            '@project_asset_publish_area_anim/gpu_cache/@geom_subdirs/@project_asset_version_name.abc'
-    sequence_asset_publish_gpucache:           '@sequence_asset_publish_area_anim/gpu_cache/@geom_subdirs/@sequence_asset_version_name.abc'
-    shot_asset_publish_gpucache:               '@shot_asset_publish_area_anim/gpu_cache/@geom_subdirs/@shot_asset_version_name.abc'
+    project_asset_publish_gpucache:         '@project_asset_publish_area_anim/gpu_cache/@geom_subdirs/@project_asset_version_name.abc'
+    sequence_asset_publish_gpucache:        '@sequence_asset_publish_area_anim/gpu_cache/@geom_subdirs/@sequence_asset_version_name.abc'
+    shot_asset_publish_gpucache:            '@shot_asset_publish_area_anim/gpu_cache/@geom_subdirs/@shot_asset_version_name.abc'
 
     # STANDIN
     project_publish_standin:                '@project_publish_area_scene/standin/@geom_subdirs/@project_version_name.{maya.std.ext}'
