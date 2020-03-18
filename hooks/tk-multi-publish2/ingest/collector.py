@@ -575,7 +575,7 @@ class IngestCollectorPlugin(HookBaseClass):
         if "default_fields" in item_info:
             for key, value in item_info["default_fields"].iteritems():
                 if key not in fields:
-                    item_attr_match = re.match("%(.*)%", value)
+                    item_attr_match = re.match("%(.*)%", value) if value and isinstance(value, str) else False
                     # to assign value on item fields with attributes on the item object
                     if item_attr_match:
                         fields[key] = getattr(item, item_attr_match.groups()[0])
@@ -932,8 +932,10 @@ class IngestCollectorPlugin(HookBaseClass):
 
         found_matching_manifest_filter = False
         filtered_template_item_type_mapping = list()
-        max_resolution_order = max(
-            [resolution_order for resolution_order, work_path_template, item_type in template_item_type_mapping])
+        resolution_order_list = [
+            resolution_order for resolution_order, work_path_template, item_type in template_item_type_mapping
+        ]
+        max_resolution_order = max(resolution_order_list) if resolution_order_list else 0
 
         # contains the logic that further filters the items based on creation_properties
         # which in case of manifest file based ingestion would contain a list of manifest_file_fields
