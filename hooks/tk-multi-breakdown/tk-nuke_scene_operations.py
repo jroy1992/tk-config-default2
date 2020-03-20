@@ -83,27 +83,30 @@ class BreakdownSceneOperations(HookBaseClass):
 
         # first let's look at the read nodes
         for node in nuke.allNodes("Read"):
-            node_name = node.name()
+            if not node.knob('disable').value():
+                node_name = node.name()
 
-            # note! We are getting the "abstract path", so contains
-            # %04d and %V rather than actual values.
-            path = node.knob('file').value().replace("/", os.path.sep)
+                # note! We are getting the "abstract path", so contains
+                # %04d and %V rather than actual values.
+                path = node.knob('file').value().replace("/", os.path.sep)
 
-            reads.append({"node": node_name, "type": "Read", "path": path})
+                reads.append({"node": node_name, "type": "Read", "path": path})
 
         # then the read geometry nodes
         for node in nuke.allNodes("ReadGeo2"):
-            node_name = node.name()
+            if not node.knob('disable').value():
+                node_name = node.name()
 
-            path = node.knob('file').value().replace("/", os.path.sep)
-            reads.append({"node": node_name, "type": "ReadGeo2", "path": path})
+                path = node.knob('file').value().replace("/", os.path.sep)
+                reads.append({"node": node_name, "type": "ReadGeo2", "path": path})
 
         # then the read camera nodes
         for node in nuke.allNodes("Camera2"):
-            node_name = node.name()
+            if not node.knob('disable').value():
+                node_name = node.name()
 
-            path = node.knob('file').value().replace("/", os.path.sep)
-            reads.append({"node": node_name, "type": "Camera2", "path": path})
+                path = node.knob('file').value().replace("/", os.path.sep)
+                reads.append({"node": node_name, "type": "Camera2", "path": path})
 
         return reads
 
