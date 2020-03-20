@@ -70,6 +70,22 @@ class CustomHoudiniActions(HookBaseClass):
                 "description": "Creates image plane for the selected camera or adds a new camera node with image plane set."
             })
 
+        if "import_geometry" in actions:
+            action_instances.append({
+                "name": "import_geometry",
+                "params": None,
+                "caption": "Import Geometry",
+                "description": "Imports model geometry"
+            })
+
+        if "import_animation" in actions:
+            action_instances.append({
+                "name": "import_animation",
+                "params": None,
+                "caption": "Import Animation",
+                "description": "Imports animation for a particular action eg. walk cycle"
+            })
+
         return action_instances
 
     ##############################################################################################################
@@ -90,6 +106,10 @@ class CustomHoudiniActions(HookBaseClass):
 
         if name == "image_plane":
             self._create_image_plane(sg_publish_data)
+        elif name == "import_geometry":
+            self._import_geometry(sg_publish_data)
+        elif name == "import_animation":
+            self._import_animation(sg_publish_data)
 
     ##############################################################################################################
     def _import(self, path, sg_publish_data):
@@ -213,3 +233,98 @@ class CustomHoudiniActions(HookBaseClass):
             )
 
             parent_module._show_node(camera_node)
+
+    def _create_geo_and_ropnet_nodes(self, node_nm):
+        """
+        Create geo and ropnet nodes or return if already present.
+
+        :node_nm: name to bet set on geo node
+
+        :return geo and ropnet node
+        """
+        geo_node = hou.node('/obj/' + node_nm)
+        ropnet_node = hou.node('/obj/' + node_nm + '/ropnet1')
+        # Check if already present
+        if not geo_node:
+            # Create geo node
+            geo_node = hou.node('/obj').createNode('geo', node_name=node_nm)
+            # Delete file node inside geo node
+            for child in geo_node.children(): child.destroy()
+            # Create ropnet node
+            ropnet_node = hou.node('/obj/' + node_nm).createNode('ropnet')
+        return (geo_node, ropnet_node)
+
+    def _create_geo_ropnet_agent_nodes(self, path, name, geo_node, ropnet_node):
+        """
+        Create agent nodes inside geo and ropnet nodes
+
+        :file_path: all the files selected from the particular path
+        :files: separated file names from their respective paths
+        :geo_node: geo node
+        :ropnet_node: ropnet node
+
+        :return agent nodes inside ropnet node
+        """
+        geo_agent_node = hou.node(geo_node.path()).createNode('agent', node_name=name)
+        geo_agent_node.parm('input').set(2)
+        geo_agent_node.parm('fbxfile').set(path[0])
+        geo_agent_node.moveToGoodPosition()
+        ropnet_agent_node = hou.node(ropnet_node.path()).createNode('agent', node_name=name)
+        ropnet_agent_node.parm('source').set(2)
+        ropnet_agent_node.parm('soppath').set(geo_node.path())
+        ropnet_agent_node.moveToGoodPosition()
+        return ropnet_agent_node, geo_agent_node
+
+    def set_parms(self, ropnet_agent_node, folder_name, option):
+        """
+        Setting parameter on agent nodes inside ropnet node based on user choice
+
+        :ropnet_agent_nodes: agent nodes inside ropnet node
+        :folder_name: name of folder from where files are imported
+        :option: user option of animation or geometry
+        """
+        ropnet_agent_node.parm('source').set(1)
+        ropnet_agent_node.parm('agentname').set(folder_name)
+        ropnet_agent_node.parm('soppath').set(ropnet_agent_node.path())
+        if option == "animation":
+            ropnet_agent_node.parm('bakerig').set(0)
+            ropnet_agent_node.parm('bakelayers').set(0)
+            ropnet_agent_node.parm('bakeshapes').set(0)
+            clip_parm_value = ropnet_agent_node.parm('clips').rawValue()
+            ropnet_agent_node.parm('clips').set(clip_parm_value.replace('{CLIP}', 'OS'))
+        elif option == "geometry":
+            ropnet_agent_node.parm('bakeclip').set(0)
+
+    def merge_nodes(self, ropnet_node, agent_nodes):
+        """
+        Connect all the agent nodes to a merge node
+
+        :ropnet_node: ropnet node
+        :agent_nodes: agent nodes within a ropnet node
+        """
+        merge_node = hou.node(ropnet_node.path() + '/merge1')
+        if not merge_node:
+            merge_node = hou.node(ropnet_node.path()).createNode('merge')
+        inputs = len(merge_node.inputs())
+        # for node in agent_nodes:
+        merge_node.setInput(inputs, agent_nodes)
+        inputs += 1
+        merge_node.moveToGoodPosition()
+
+    def _import_geometry(self, sg_publish_data):
+        name = sg_publish_data.get("name")
+        path = self.get_publish_path(sg_publish_data)
+        # get the name of the geo node from the user
+        geo_node, ropnet_node = self._create_geo_and_ropnet_nodes("geometry_node")
+        ropnet_agent_node, geo_agent_node = self._create_geo_ropnet_agent_nodes(path, name, geo_node, ropnet_node)
+        self.set_parms(ropnet_agent_node, "geometry_node", option="geometry")
+        self.merge_nodes(ropnet_node, ropnet_agent_node)
+
+    def _import_animation(self, sg_publish_data):
+        name = sg_publish_data.get("name")
+        path = self.get_publish_path(sg_publish_data)
+        # get the name of the geo node from the user
+        geo_node, ropnet_node = self._create_geo_and_ropnet_nodes("geometry_node")
+        ropnet_agent_node, geo_agent_node = self._create_geo_ropnet_agent_nodes(path, name, geo_node, ropnet_node)
+        self.set_parms(ropnet_agent_node, "geometry_node", option="animation")
+        self.merge_nodes(ropnet_node, ropnet_agent_node)
