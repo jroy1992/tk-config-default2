@@ -28,6 +28,11 @@
 #
 keys:
     # Shotgun Entity keys (CamelCase)
+    Show:
+        type: str
+        shotgun_entity_type: Project
+        shotgun_field_name: name
+        filter_by: alphanumeric
     Sequence:
         type: str
         shotgun_entity_type: Sequence
@@ -235,6 +240,10 @@ paths:
     project_publish_area_cdl:               '@project_publish_area/SCRIPTS/nuke'
     sequence_publish_area_cdl:              '@sequence_publish_area/SCRIPTS/nuke'
     shot_publish_area_cdl:                  '@shot_publish_area/SCRIPTS/nuke'
+
+    project_publish_area_icc:               '@project_publish_area/SCRIPTS/adobe'
+    sequence_publish_area_icc:              '@sequence_publish_area/SCRIPTS/adobe'
+    shot_publish_area_icc:                  '@shot_publish_area/SCRIPTS/adobe'
 
 
     #################################
@@ -562,6 +571,11 @@ paths:
     colorprocessfiles_slate_logo_file:      '@project_publish_area/etc/reviewsubmit_presets/color_process_files_logo.png'
     colorprocessfiles_render_script_path:   '@project_publish_area/etc/reviewsubmit_presets/nuke_batch_color_process_files.py'
 
+    # ICC GENERATION
+    icc_generation_burnin_nuke_file:        '@project_publish_area/etc/reviewsubmit_presets/icc_generation.nk'
+    icc_generation_slate_logo_file:         '@project_publish_area/etc/reviewsubmit_presets/icc_generation_logo.png'
+    icc_generation_render_script_path:      '@project_publish_area/etc/reviewsubmit_presets/nuke_batch_icc_generation.py'
+
     # CDL PUBLISHING
     # TODO: we only support cc publishing currently
     project_publish_cdl:                    '@project_publish_area_cdl/grades/grade_v{version}/{name}.cc'
@@ -580,6 +594,16 @@ paths:
     project_publish_cube_symlink:            '@project_publish_area_cdl/grades/grade/{name}.cube'
     sequence_publish_cube_symlink:           '@sequence_publish_area_cdl/grades/grade/{name}.cube'
     shot_publish_cube_symlink:               '@shot_publish_area_cdl/grades/grade/{name}.cube'
+
+    # /dd/shows/[getenv DD_SHOW]/[getenv DD_SEQ]/[getenv DD_SHOT]/SHARED/SCRIPTS/adobe/icc/[getenv DD_SHOW]_[getenv DD_SEQ][getenv DD_SHOT]_avid_log.icc
+    # TODO: we only support avid log icc profiles
+    project_publish_icc:                    '@project_publish_area_icc/icc/icc_v{version}/{Show}_avid_log.icc'
+    sequence_publish_icc:                   '@sequence_publish_area_icc/icc/icc_v{version}/{Show}_{Sequence}_avid_log.icc'
+    shot_publish_icc:                       '@shot_publish_area_icc/icc/icc_v{version}/{Show}_{Sequence}{Shot}_avid_log.icc'
+
+    project_publish_icc_symlink:            '@project_publish_area_icc/icc/{Show}_avid_log.icc'
+    sequence_publish_icc_symlink:           '@sequence_publish_area_icc/icc/{Show}_{Sequence}_avid_log.icc'
+    shot_publish_icc_symlink:               '@shot_publish_area_icc/icc/{Show}_{Sequence}{Shot}_avid_log.icc'
 
 #
 # The aliases section allows you to map one template to another without worrying
