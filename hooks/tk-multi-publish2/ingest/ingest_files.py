@@ -111,10 +111,6 @@ class IngestFilesPlugin(HookBaseClass):
 
         accept_data = super(IngestFilesPlugin, self).accept(task_settings, item)
 
-        # this plugin shouldn't accept CDL files! Ever!
-        if item.type == "file.cdl":
-            accept_data["accepted"] = False
-
         return accept_data
 
     def validate(self, task_settings, item):
