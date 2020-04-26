@@ -33,9 +33,6 @@ class ColorProcessFilesPlugin(HookBaseClass):
         # call base init
         super(ColorProcessFilesPlugin, self).__init__(parent, **kwargs)
 
-        # cache the color process files app, which is an instance of review submission app.
-        self.__color_process_files_app = self.parent.engine.apps.get("tk-multi-colorprocessfiles")
-
     @property
     def settings_schema(self):
         """
@@ -65,7 +62,8 @@ class ColorProcessFilesPlugin(HookBaseClass):
                     "description": "",
                     "fields": ["context", "version", "[output]", "[name]", "*"],
                 },
-                "default_value": {"2K": "{env_name}_2k_image", "Proxy": "{env_name}_proxy_image"},
+                "default_value": {"2K": "{env_name}_2k_image", "Proxy": "{env_name}_proxy_image",
+                                  None: "ingest_{env_name}_output_render"},
                 "description": (
                     "Dictionary of Identifier to Publish Path "
                     "This identifier will be added to publish name and publish type for creating PublishedFile entity."
@@ -78,6 +76,13 @@ class ColorProcessFilesPlugin(HookBaseClass):
 
         # make sure this plugin only accepts render sequences.
         schema["Item Type Filters"]["default_value"] = ["file.*.sequence"]
+
+        schema["Review Submit App Name"] = {
+            "type": "str",
+            "allows_empty": True,
+            "default_value": "tk-multi-colorprocessfiles",
+            "description": "Name of the Review Submit App, to be used by the plugin."
+        }
 
         return schema
 
@@ -105,10 +110,6 @@ class ColorProcessFilesPlugin(HookBaseClass):
         """
 
         accept_data = super(ColorProcessFilesPlugin, self).accept(task_settings, item)
-
-        # this plugin shouldn't accept CDL files! Ever!
-        if item.type == "file.cdl":
-            accept_data["accepted"] = False
 
         return accept_data
 
@@ -260,7 +261,8 @@ class ColorProcessFilesPlugin(HookBaseClass):
 
         if status:
 
-            resolved_identifiers = {item.properties.publish_path: None}
+            # resolved_identifiers = {item.properties.publish_path: None}
+            resolved_identifiers = dict()
 
             # First copy the item's fields
             fields = copy.copy(item.properties.fields)
@@ -268,10 +270,20 @@ class ColorProcessFilesPlugin(HookBaseClass):
             # Update with the fields from the context
             fields.update(item.context.as_template_fields())
 
-            # set review_submission app's env/context based on item (ingest)
-            self.__color_process_files_app.change_context(item.context)
+            review_submit_app_name = task_settings["Review Submit App Name"].value
 
-            extra_write_node_mapping = self.__color_process_files_app.resolve_extra_write_nodes(fields)
+            # color process files app, which is an instance of review submission app.
+            review_submit_app = self.parent.engine.apps.get(review_submit_app_name)
+
+            if not review_submit_app:
+                self.logger.error("Review submission App not found with name, %s." %
+                                  review_submit_app_name)
+                return False
+
+            # set review_submission app's env/context based on item (ingest)
+            review_submit_app.change_context(item.context)
+
+            extra_write_node_mapping = review_submit_app.resolve_extra_write_nodes(fields)
 
             # potential processed paths
             processed_paths = extra_write_node_mapping.values()
@@ -353,8 +365,14 @@ class ColorProcessFilesPlugin(HookBaseClass):
         fields.update(item.context.as_template_fields())
 
         self.logger.info("Processing the frames...")
+
+        review_submit_app_name = task_settings["Review Submit App Name"].value
+
+        # color process files app, which is an instance of review submission app.
+        review_submit_app = self.parent.engine.apps.get(review_submit_app_name)
+
         # run the render hook
-        pre_processed_paths = self.__color_process_files_app.render(item.properties.path, fields, first_frame,
+        pre_processed_paths = review_submit_app.render(item.properties.path, fields, first_frame,
                                                                     last_frame,
                                                                     sg_publish_data_list, item.context.task,
                                                                     item.description, item.get_thumbnail_as_path(),
@@ -472,14 +490,18 @@ class ColorProcessFilesPlugin(HookBaseClass):
         # Update with the fields from the context
         fields.update(item.context.as_template_fields())
 
+        review_submit_app_name = task_settings["Review Submit App Name"].value
+        # color process files app, which is an instance of review submission app.
+        review_submit_app = self.parent.engine.apps.get(review_submit_app_name)
+
         # Movie output width and height
-        width = self.__color_process_files_app.get_setting("movie_width")
-        height = self.__color_process_files_app.get_setting("movie_height")
+        width = review_submit_app.get_setting("movie_width")
+        height = review_submit_app.get_setting("movie_height")
         fields["width"] = width
         fields["height"] = height
 
         # Get an output path for the movie.
-        output_path_template = self.__color_process_files_app.get_template("movie_path_template")
+        output_path_template = review_submit_app.get_template("movie_path_template")
         output_path = output_path_template.apply_fields(fields)
 
         return output_path

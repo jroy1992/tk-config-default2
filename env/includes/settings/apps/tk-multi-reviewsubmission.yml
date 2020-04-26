@@ -52,3 +52,21 @@ settings.tk-multi-colorprocessfiles:
   mov_has_slate: '@settings.tk-multi-colorprocessfiles.mov_has_slate'
   entity_burnin_sg_fields: '@settings.tk-multi-reviewsubmission.entity_burnin_sg_fields'
   task_burnin_sg_fields: '@settings.tk-multi-reviewsubmission.task_burnin_sg_fields'
+
+settings.tk-multi-icc_generation:
+  movie_width: '@settings.tk-multi-icc_generation.width'
+  movie_height: '@settings.tk-multi-icc_generation.height'
+  movie_path_template: '@settings.tk-multi-icc_generation.movie_path_template'
+  extra_write_nodes_path_info: '@settings.tk-multi-icc_generation.extra_write_nodes_path_info'
+  sg_version_name_template: '@settings.tk-multi-icc_generation.sg_version_name_template'
+  slate_logo: 'icc_generation_slate_logo_file'
+  codec_settings_hook: '{config}/codec_settings.py'
+  # app location is same as review submit :)
+  location: "@apps.tk-multi-reviewsubmission.location"
+  nuke_linux_path: "@path.linux.nuke"
+  burnin_path: 'icc_generation_burnin_nuke_file'
+  render_script: 'icc_generation_render_script_path'
+  preprocess_nuke_hook: '{config}/tk-multi-icc_generation/preprocess_nuke.py'
+  mov_has_slate: '@settings.tk-multi-icc_generation.mov_has_slate'
+  entity_burnin_sg_fields: '@settings.tk-multi-reviewsubmission.entity_burnin_sg_fields'
+  task_burnin_sg_fields: '@settings.tk-multi-reviewsubmission.task_burnin_sg_fields'

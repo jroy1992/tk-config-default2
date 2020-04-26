@@ -34,5 +34,6 @@ settings.tk-shell:
     tk-multi-reviewsubmission: "@settings.tk-multi-reviewsubmission"
     # add the color processing overrides for review submit
     tk-multi-colorprocessfiles: "@settings.tk-multi-colorprocessfiles"
+    tk-multi-icc_generation: "@settings.tk-multi-icc_generation"
     tk-multi-screeningroom: '@settings.tk-multi-screeningroom.rv'
   location: '@engines.tk-shell.location'
