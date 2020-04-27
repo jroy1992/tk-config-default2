@@ -292,7 +292,7 @@ class ColorProcessFilesPlugin(HookBaseClass):
             for identifier, template in task_settings.get("publish_file_identifiers").value.iteritems():
                 resolved_template = self._get_resolved_path(task_settings, item, template)
                 # these paths should never be the same as publish path
-                if resolved_template and resolved_template != item.properties.publish_path:
+                if resolved_template:
                     resolved_identifiers[resolved_template] = identifier
 
             diff_list = list(set(processed_paths) - set(resolved_identifiers.keys()))
