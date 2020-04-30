@@ -17,6 +17,10 @@ import sgtk
 import sys
 import hou
 
+from dd.runtime import api
+api.load('qt_py')
+from Qt import QtWidgets, QtGui, QtCore
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
 class CustomHoudiniActions(HookBaseClass):
@@ -275,7 +279,7 @@ class CustomHoudiniActions(HookBaseClass):
         ropnet_agent_node.moveToGoodPosition()
         return ropnet_agent_node, geo_agent_node
 
-    def set_parms(self, ropnet_agent_node, folder_name, option):
+    def _set_parms(self, ropnet_agent_node, folder_name, option):
         """
         Setting parameter on agent nodes inside ropnet node based on user choice
 
@@ -295,7 +299,7 @@ class CustomHoudiniActions(HookBaseClass):
         elif option == "geometry":
             ropnet_agent_node.parm('bakeclip').set(0)
 
-    def merge_nodes(self, ropnet_node, agent_nodes):
+    def _merge_nodes(self, ropnet_node, agent_nodes):
         """
         Connect all the agent nodes to a merge node
 
@@ -314,11 +318,12 @@ class CustomHoudiniActions(HookBaseClass):
     def _import_geometry(self, sg_publish_data):
         name = sg_publish_data.get("name")
         path = self.get_publish_path(sg_publish_data)
+        print "import geo path", path
         # get the name of the geo node from the user
         geo_node, ropnet_node = self._create_geo_and_ropnet_nodes("geometry_node")
         ropnet_agent_node, geo_agent_node = self._create_geo_ropnet_agent_nodes(path, name, geo_node, ropnet_node)
-        self.set_parms(ropnet_agent_node, "geometry_node", option="geometry")
-        self.merge_nodes(ropnet_node, ropnet_agent_node)
+        self._set_parms(ropnet_agent_node, "geometry_node", option="geometry")
+        self._merge_nodes(ropnet_node, ropnet_agent_node)
 
     def _import_animation(self, sg_publish_data):
         name = sg_publish_data.get("name")
@@ -326,5 +331,84 @@ class CustomHoudiniActions(HookBaseClass):
         # get the name of the geo node from the user
         geo_node, ropnet_node = self._create_geo_and_ropnet_nodes("geometry_node")
         ropnet_agent_node, geo_agent_node = self._create_geo_ropnet_agent_nodes(path, name, geo_node, ropnet_node)
-        self.set_parms(ropnet_agent_node, "geometry_node", option="animation")
-        self.merge_nodes(ropnet_node, ropnet_agent_node)
+        self._set_parms(ropnet_agent_node, "geometry_node", option="animation")
+        self._merge_nodes(ropnet_node, ropnet_agent_node)
+
+
+class ImportFBXUI(QtWidgets.QDialog):
+    def __init__(self, render=None, parent=None):
+        super(ImportFBXUI, self).__init__(parent)
+        self.layout = QtWidgets.QGridLayout()
+        self.setLayout(self.layout)
+        self.render_obj = render
+        self.mantra_option = None
+        self.frange_option = None
+        self.custom_frame_range = None
+        self.chunk_size = None
+        self.mem = None
+        self.submit_button = None
+        self.raceview_button = None
+
+    def create_ui(self):
+        self.use_existing_geo_node = QtWidgets.QCheckBox("Add to existing geo node")
+        self.use_existing_geo_node.stateChanged.connect(lambda: self.disable_unused_option(self.use_existing_geo_node))
+        self.layout.addWidget(self.use_existing_geo_node, 0, 0)
+        self.existing_geo_nodes = QtWidgets.QComboBox()
+        node_type = hou.nodeType(hou.objNodeTypeCategory(), "geo")
+        geo_nodes = node_type.instances()
+        self.existing_geo_nodes.insertItems(0, [node.name() for node in geo_nodes])
+        self.existing_nodes_paths_dict = {node.name():{'name':node.name(), 'path':node.path()} for node in geo_nodes}
+        self.layout.addWidget(self.existing_geo_nodes, 0, 1)
+
+        self.use_new_geo_node = QtWidgets.QCheckBox("Add to new geo node (/obj)")
+        self.use_new_geo_node.stateChanged.connect(lambda: self.disable_unused_option(self.use_new_geo_node))
+        self.layout.addWidget(self.use_new_geo_node, 1, 0)
+        self.new_geo_node = QtWidgets.QLineEdit()
+        self.new_geo_node.textChanged.connect(self.enable_ok_button)
+        self.new_geo_node.setStyleSheet("border: 1px solid black;")
+        self.layout.addWidget(self.new_geo_node, 1, 1)
+
+        sublayout = QtWidgets.QGridLayout()
+        self.ok_button = QtWidgets.QPushButton("Ok")
+        self.ok_button.setEnabled(False)
+        sublayout.addWidget(self.ok_button, 0, 0)
+        self.ok_button.clicked.connect(self.submit)
+
+        self.cancel_button = QtWidgets.QPushButton("Cancel")
+        sublayout.addWidget(self.cancel_button, 0, 1)
+        self.cancel_button.clicked.connect(self.close)
+        self.layout.addLayout(sublayout, 4, 1)
+        self.setWindowTitle("Import Agent FBX")
+        self.show()
+
+    def enable_ok_button(self):
+        if self.new_geo_node.text():
+            self.ok_button.setEnabled(True)
+        else:
+            self.ok_button.setEnabled(False)
+
+    def disable_unused_option(self, current_option):
+        if current_option.text() == "Add to existing geo node":
+            if current_option.isChecked():
+                self.ok_button.setEnabled(True)
+                self.use_new_geo_node.setEnabled(False)
+                self.new_geo_node.setEnabled(False)
+                self.new_geo_node.setStyleSheet("border: 0px solid black;")
+            else:
+                self.ok_button.setEnabled(False)
+                self.use_new_geo_node.setEnabled(True)
+                self.new_geo_node.setEnabled(True)
+                self.new_geo_node.setStyleSheet("border: 1px solid black;")
+        elif current_option.text() == "Add to new geo node (/obj)":
+            if current_option.isChecked():
+                self.use_existing_geo_node.setEnabled(False)
+                self.existing_geo_nodes.setEnabled(False)
+            else:
+                self.use_existing_geo_node.setEnabled(True)
+                self.existing_geo_nodes.setEnabled(True)
+
+    def submit(self):
+        if self.use_existing_geo_node.isChecked():
+            return self.existing_nodes_paths_dict[self.existing_geo_nodes.currentText()]
+        elif self.use_new_geo_node.isChecked():
+            return {'name': self.new_geo_node.text(), 'path': '/obj'}
